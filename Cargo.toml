@@ -1,0 +1,6 @@
+[package]
+name = "pbrt"
+version = "0.1.0"
+authors = ["Bill Thiede <rust@xinu.tv>"]
+
+[dependencies]
