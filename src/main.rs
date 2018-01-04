@@ -1,3 +1,7 @@
+extern crate pbrt;
+
+use pbrt::core;
+
 fn main() {
-    println!("Hello, world!");
+    core::something();
 }
