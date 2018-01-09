@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Bill Thiede <rust@xinu.tv>"]
 
 [dependencies]
+getopts = "0.2.15"
+nom = "3.2.1"
