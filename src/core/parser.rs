@@ -3,7 +3,7 @@ use std::str;
 use std::str::FromStr;
 
 extern crate nom;
-use self::nom::{alphanumeric, digit, double, double_s, is_digit, space, IResult};
+use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, IResult};
 
 #[derive(Debug, PartialEq)]
 struct Param {
@@ -33,6 +33,26 @@ fn number(input: &[u8]) -> IResult<&[u8], f64> {
         parse_to!(f64)
     )
 }
+
+fn is_line_ending_or_comment(chr: u8) -> bool {
+    chr == b'#' || chr == b'\n'
+}
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    strip_comment_line,
+    do_parse!(
+        content: take_till!(is_line_ending_or_comment) >>
+        opt!(pair!(tag!("#"), take_until!("\n"))) >>
+        tag!("\n") >>
+        (content)
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(strip_comment<Vec<&[u8]>>,
+    many1!(strip_comment_line)
+);
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values<Vec<f64>>,
@@ -87,6 +107,53 @@ mod tests {
             &IResult::Incomplete(n) => panic!("need: {:?}", n),
         }
     }
+
+    //#[test]
+    //fn test_prefix() {
+    //    named!( preceded_wrap<&[u8], &[u8]>, preceded!(tag!("a"), alphanumeric) );
+    //    assert_eq!(
+    //        preceded_wrap(&b"axyz"[..]),
+    //        IResult::Done(&b""[..], &b"xyz"[..])
+    //    );
+    //    named!( terminated_wrap<&[u8], &[u8]>, terminated!(alphanumeric, tag!("\n")) );
+    //    assert_eq!(
+    //        terminated_wrap(&b"xyz\n"[..]),
+    //        IResult::Done(&b"\n"[..], &b"xyz"[..])
+    //    );
+    //}
+
+    #[test]
+    fn test_strip_comment_line() {
+        assert_eq!(
+            strip_comment_line(&b"a # comment\n"[..]),
+            IResult::Done(&b""[..], &b"a "[..])
+        );
+        assert_eq!(
+            strip_comment_line(&b"a\n"[..]),
+            IResult::Done(&b""[..], &b"a"[..])
+        );
+    }
+
+    #[test]
+    fn test_strip_comment() {
+        assert_eq!(
+            strip_comment(&b"a # comment\nb # comment\n"[..]),
+            IResult::Done(&b""[..], vec![&b"a "[..], &b"b "[..]]) //IResult::Done(&b""[..], &b"a \nb "[..])
+        );
+        assert_eq!(
+            strip_comment(&b"a # comment\nb\n"[..]),
+            IResult::Done(&b""[..], vec![&b"a "[..], &b"b"[..]]) //IResult::Done(&b""[..], &b"a \nb"[..])
+        );
+        assert_eq!(
+            strip_comment(&b"a\nb\n"[..]),
+            IResult::Done(&b""[..], vec![&b"a"[..], &b"b"[..]]) //IResult::Done(&b""[..], &b"a\nb"[..])
+        );
+        assert_eq!(
+            strip_comment(&b"a\nb # comment\n"[..]),
+            IResult::Done(&b""[..], vec![&b"a"[..], &b"b "[..]]) //IResult::Done(&b""[..], &b"a\nb "[..])
+        );
+    }
+
     #[test]
     fn test_number() {
         assert_eq!(number(&b"3.14"[..]), IResult::Done(&b""[..], 3.14));
