@@ -34,7 +34,13 @@ fn number(input: &[u8]) -> IResult<&[u8], f64> {
     )
 }
 
-named!(param_set_item_values<Vec<f64>>, many1!(ws!(number)));
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values<Vec<f64>>,
+    alt!(
+        ws!(delimited!(tag!("["), many1!(number), tag!("]")))
+        | ws!(many1!(number))
+    )
+);
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
@@ -109,16 +115,18 @@ mod tests {
         let ref res = param_set_item_values(input);
         dump(res);
         assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
+
+        // TODO(wathiede): support non-float types:
+        // "string filename" "foo.exr"
+        // "point origin" [ 0 1 2 ]
+        // "normal N" [ 0 1 0  0 0 1 ] # array of 2 normal values
+        // "bool renderquickly" "true"
     }
 
     #[test]
     fn test_param_set_item() {
         let input = &b"\"float foo\" [ 0 1 2 ]"[..];
         let ref res = param_set_item(input);
-        match res {
-            &IResult::Done(ref i, ref o) => println!("i: {:?} | o: {:?}", str::from_utf8(i), o),
-            _ => panic!("error"),
-        }
         assert_eq!(
             res,
             &IResult::Done(
