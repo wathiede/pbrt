@@ -55,6 +55,7 @@ fn number(input: &[u8]) -> IResult<&[u8], f64> {
 }
 
 fn strip_comment(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
+    // TODO(wathiede): handle "#" if necessary.
     let re = regex::bytes::Regex::new(r"#.*\n").unwrap();
     let res = re.replace_all(input, &b"\n"[..]);
 
@@ -161,8 +162,7 @@ mod tests {
     #[test]
     fn test_number_comment_number() {
         if let IResult::Done(_, input) = strip_comment(&b"[ 1 # comment\n2 3]\n"[..]) {
-            let input: &[u8] = &input;
-            let ref res = param_set_item_values(input);
+            let ref res = param_set_item_values(&input);
             dump(res);
             assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
         };
