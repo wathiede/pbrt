@@ -9,6 +9,23 @@ use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, Er
 extern crate regex;
 
 #[derive(Debug, PartialEq)]
+struct LookAt {
+    values: Vec<f64>,
+}
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    look_at<LookAt>,
+    ws!(do_parse!(
+        tag!("LookAt") >>
+        values: many1!(number) >>
+        (LookAt{
+            values: values
+        })
+    ))
+);
+
+#[derive(Debug, PartialEq)]
 struct Param {
     typ: String,
     name: String,
@@ -168,7 +185,6 @@ mod tests {
 
         let input = &b"[  1 2 3]"[..];
         let ref res = param_set_item_values(input);
-        dump(res);
         assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
 
         // TODO(wathiede): support non-float types:
@@ -193,5 +209,26 @@ mod tests {
                 }
             )
         );
+    }
+
+    #[test]
+    fn test_look_at() {
+        let input = &b"LookAt 3 4 1.5  # eye\n \
+    .5 .5 0  # look at point\n \
+    0 0 1    # up vector\n"[..];
+        if let IResult::Done(_, input) = strip_comment(input) {
+            let input: &[u8] = &input;
+            let ref res = look_at(input);
+            dump(res);
+            assert_eq!(
+                res,
+                &IResult::Done(
+                    &b""[..],
+                    LookAt {
+                        values: vec![3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.],
+                    }
+                )
+            );
+        };
     }
 }
