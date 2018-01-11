@@ -3,7 +3,10 @@ use std::str;
 use std::str::FromStr;
 
 extern crate nom;
-use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, IResult};
+use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, ErrorKind, IResult,
+                InputLength, Slice};
+
+extern crate regex;
 
 #[derive(Debug, PartialEq)]
 struct Param {
@@ -34,25 +37,12 @@ fn number(input: &[u8]) -> IResult<&[u8], f64> {
     )
 }
 
-fn is_line_ending_or_comment(chr: u8) -> bool {
-    chr == b'#' || chr == b'\n'
+fn strip_comment(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
+    let re = regex::bytes::Regex::new(r"#.*\n").unwrap();
+    let res = re.replace_all(input, &b"\n"[..]);
+
+    IResult::Done(&b""[..], Vec::from(res))
 }
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    strip_comment_line,
-    do_parse!(
-        content: take_till!(is_line_ending_or_comment) >>
-        opt!(pair!(tag!("#"), take_until!("\n"))) >>
-        tag!("\n") >>
-        (content)
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(strip_comment<Vec<&[u8]>>,
-    many1!(strip_comment_line)
-);
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values<Vec<f64>>,
@@ -123,34 +113,22 @@ mod tests {
     //}
 
     #[test]
-    fn test_strip_comment_line() {
-        assert_eq!(
-            strip_comment_line(&b"a # comment\n"[..]),
-            IResult::Done(&b""[..], &b"a "[..])
-        );
-        assert_eq!(
-            strip_comment_line(&b"a\n"[..]),
-            IResult::Done(&b""[..], &b"a"[..])
-        );
-    }
-
-    #[test]
     fn test_strip_comment() {
         assert_eq!(
             strip_comment(&b"a # comment\nb # comment\n"[..]),
-            IResult::Done(&b""[..], vec![&b"a "[..], &b"b "[..]]) //IResult::Done(&b""[..], &b"a \nb "[..])
+            IResult::Done(&b""[..], Vec::from(&b"a \nb \n"[..]))
         );
         assert_eq!(
             strip_comment(&b"a # comment\nb\n"[..]),
-            IResult::Done(&b""[..], vec![&b"a "[..], &b"b"[..]]) //IResult::Done(&b""[..], &b"a \nb"[..])
+            IResult::Done(&b""[..], Vec::from(&b"a \nb\n"[..]))
         );
         assert_eq!(
             strip_comment(&b"a\nb\n"[..]),
-            IResult::Done(&b""[..], vec![&b"a"[..], &b"b"[..]]) //IResult::Done(&b""[..], &b"a\nb"[..])
+            IResult::Done(&b""[..], Vec::from(&b"a\nb\n"[..]))
         );
         assert_eq!(
             strip_comment(&b"a\nb # comment\n"[..]),
-            IResult::Done(&b""[..], vec![&b"a"[..], &b"b "[..]]) //IResult::Done(&b""[..], &b"a\nb "[..])
+            IResult::Done(&b""[..], Vec::from(&b"a\nb \n"[..]))
         );
     }
 
@@ -161,6 +139,16 @@ mod tests {
         assert_eq!(number(&b"0.2"[..]), IResult::Done(&b""[..], 0.2));
         assert_eq!(number(&b"3."[..]), IResult::Done(&b""[..], 3.));
         assert_eq!(number(&b"4"[..]), IResult::Done(&b""[..], 4.));
+    }
+
+    #[test]
+    fn test_number_comment_number() {
+        if let IResult::Done(_, input) = strip_comment(&b"[ 1 # comment\n2 3]\n"[..]) {
+            let input: &[u8] = &input;
+            let ref res = param_set_item_values(input);
+            dump(res);
+            assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
+        };
     }
 
     #[test]
