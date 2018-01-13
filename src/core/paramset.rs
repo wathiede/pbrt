@@ -66,9 +66,25 @@ impl ParamSet {
         self.looked_up.insert(name.clone(), false);
     }
 
-    pub fn find(&self, name: &str) -> Option<Value> {
+    pub fn find(&mut self, name: &str) -> Option<Value> {
+        let n = String::from_str(name).unwrap();
+        self.looked_up.insert(n, true);
         // Defer unwrapping to call site or consider to use a macro.
         self.values.get(name).map(|psi| psi.values.clone())
+    }
+
+    pub fn report_unused(&self) -> bool {
+        let mut unused = false;
+        info!("report_unused");
+
+        for (key, val) in self.looked_up.iter() {
+            if !val {
+                info!("* '{}' not used", key);
+                unused = true
+            }
+        }
+
+        unused
     }
 
     // TODO(wathiede): remove or add helpers for all types.
@@ -88,9 +104,11 @@ impl ParamSet {
 #[cfg(test)]
 mod tests {
     use super::*;
+    extern crate env_logger;
 
     #[test]
     fn test_param_set() {
+        let _ = env_logger::init();
         let mut ps = ParamSet::new();
         ps.add_float("test1", &vec![1., 2.]);
         assert_eq!(
@@ -116,6 +134,11 @@ mod tests {
             Value::Bool(ParamList(vec![true, true, false]))
         );
         assert_eq!(ps.find("test3"), None);
+
+        assert!(!ps.report_unused());
+
+        ps.add("notused", Value::Bool(ParamList(vec![true, true, false])));
+        assert!(ps.report_unused());
     }
 
 }
