@@ -9,17 +9,39 @@ struct ParamList<T>(Vec<T>);
 
 // TODO(wathiede): replace these types with imported proper types.
 #[derive(Debug, Clone, PartialEq)]
-struct Point2f(Float, Float);
+struct Point2f {
+    x: Float,
+    y: Float,
+}
 #[derive(Debug, Clone, PartialEq)]
-struct Vector2f(Float, Float);
+struct Vector2f {
+    x: Float,
+    y: Float,
+}
 #[derive(Debug, Clone, PartialEq)]
-struct Point3f(Float, Float, Float);
+struct Point3f {
+    x: Float,
+    y: Float,
+    z: Float,
+}
 #[derive(Debug, Clone, PartialEq)]
-struct Vector3f(Float, Float, Float);
+struct Vector3f {
+    x: Float,
+    y: Float,
+    z: Float,
+}
 #[derive(Debug, Clone, PartialEq)]
-struct Normal3f(Float, Float, Float);
+struct Normal3f {
+    x: Float,
+    y: Float,
+    z: Float,
+}
 #[derive(Debug, Clone, PartialEq)]
-struct Spectrum(Float, Float, Float);
+struct Spectrum {
+    x: Float,
+    y: Float,
+    z: Float,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 enum Value {
