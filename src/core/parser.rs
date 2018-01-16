@@ -48,6 +48,14 @@ fn number(input: &[u8]) -> IResult<&[u8], Float> {
     )
 }
 
+fn integer(input: &[u8]) -> IResult<&[u8], i64> {
+    flat_map!(
+        input,
+        recognize!(tuple!(opt!(alt!(tag!("+") | tag!("-"))), complete!(digit))),
+        parse_to!(i64)
+    )
+}
+
 fn strip_comment(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
     // TODO(wathiede): handle "#" if necessary.
     let re = regex::bytes::Regex::new(r"#.*\n").unwrap();
@@ -86,10 +94,22 @@ named!(param_set_item_values_float<Value>,
     )
 );
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_integer<Value>,
+    do_parse!(
+        values: alt!(
+            ws!(delimited!(tag!("["), many1!(integer), tag!("]")))
+            | ws!(many1!(integer))
+        ) >>
+        (Value::Int(ParamList(values)))
+    )
+);
+
 fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult<&'a [u8], Value> {
     match psi_type {
         b"bool" => param_set_item_values_bool(input),
         b"float" => param_set_item_values_float(input),
+        b"integer" => param_set_item_values_integer(input),
         _ => IResult::Error(error_position!(ErrorKind::Custom(42), input)),
     }
 }
@@ -139,6 +159,10 @@ enum OptionsBlock {
         String, // name
         ParamSet, // parameter set for the camera
     ),
+    Sampler(
+        String, // name
+        ParamSet, // parameter set for the sampler
+    ),
 }
 
 enum WorldBlock {
@@ -185,6 +209,19 @@ named!(
             name: quoted_name >>
             ps: param_set >>
             (OptionsBlock::Camera(String::from(name), param_set_from_vec(ps)))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    sampler<OptionsBlock>,
+    ws!(
+        do_parse!(
+            tag!("Sampler") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (OptionsBlock::Sampler(String::from(name), param_set_from_vec(ps)))
         )
     )
 );
@@ -247,6 +284,17 @@ mod tests {
                 &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
             );
         };
+    }
+
+    #[test]
+    fn test_param_set_item_values_integer() {
+        let input = &b"[1 2 3]\n"[..];
+        let ref res = param_set_item_values_integer(&input);
+        dump(res);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Int(ParamList(vec![1, 2, 3])))
+        );
     }
 
     #[test]
@@ -338,13 +386,27 @@ mod tests {
             let ref mut res = camera(&input);
             let mut ps = ParamSet::new();
             ps.add("fov", Value::Float(ParamList(vec![45.])));
-            dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(
                     &b""[..],
                     OptionsBlock::Camera(String::from("perspective"), ps)
                 )
+            );
+        };
+    }
+
+    #[test]
+    fn test_sampler() {
+        let input = &b"Sampler \"halton\" \"integer pixelsamples\" 128"[..];
+        if let IResult::Done(_, input) = strip_comment(input) {
+            let ref mut res = sampler(&input);
+            let mut ps = ParamSet::new();
+            ps.add("pixelsamples", Value::Int(ParamList(vec![128])));
+            dump(res);
+            assert_eq!(
+                res,
+                &IResult::Done(&b""[..], OptionsBlock::Sampler(String::from("halton"), ps))
             );
         };
     }

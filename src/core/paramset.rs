@@ -55,7 +55,6 @@ pub enum Value {
     Spectrum(ParamList<Spectrum>),
     String(ParamList<String>),
     Texture(ParamList<String>),
-    None,
 }
 
 #[derive(Debug, Clone, PartialEq)]
