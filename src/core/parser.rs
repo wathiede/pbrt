@@ -144,33 +144,24 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set<Vec<ParamSetItem>>,
-    many1!(param_set_item)
+    many0!(param_set_item)
 );
 
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(rustfmt, rustfmt_skip)]
 enum OptionsBlock {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     LookAt(
         Float, Float, Float, // eye xyz
         Float, Float, Float, // look xyz
         Float, Float, Float, // up xyz
     ),
-    Camera(
-        String, // name
-        ParamSet, // parameter set for the camera
-    ),
-    Sampler(
-        String, // name
-        ParamSet, // parameter set for the sampler
-    ),
+    Camera(String, ParamSet),
+    Sampler(String, ParamSet),
+    Integrator(String, ParamSet),
 }
 
 enum WorldBlock {
 }
-
-// fn look_at<'a, 'b>(i: &'a [u8], api: &'b mut Pbrt) -> IResult<&'a [u8], &'b mut Pbrt> {
-//     println!("input: {:?}", str::from_utf8(i));
-// }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
@@ -222,6 +213,19 @@ named!(
             name: quoted_name >>
             ps: param_set >>
             (OptionsBlock::Sampler(String::from(name), param_set_from_vec(ps)))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    integrator<OptionsBlock>,
+    ws!(
+        do_parse!(
+            tag!("Integrator") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (OptionsBlock::Integrator(String::from(name), param_set_from_vec(ps)))
         )
     )
 );
@@ -407,6 +411,20 @@ mod tests {
             assert_eq!(
                 res,
                 &IResult::Done(&b""[..], OptionsBlock::Sampler(String::from("halton"), ps))
+            );
+        };
+    }
+
+    #[test]
+    fn test_integrator() {
+        let input = &b"Integrator \"path\""[..];
+        if let IResult::Done(_, input) = strip_comment(input) {
+            let ref mut res = integrator(&input);
+            let mut ps = ParamSet::new();
+            dump(res);
+            assert_eq!(
+                res,
+                &IResult::Done(&b""[..], OptionsBlock::Integrator(String::from("path"), ps))
             );
         };
     }
