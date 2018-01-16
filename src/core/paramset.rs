@@ -4,47 +4,46 @@ use std::str::FromStr;
 use core::pbrt::Float;
 
 #[derive(Debug, Clone, PartialEq)]
-struct ParamList<T>(Vec<T>);
-// One idea, Vec<ParamList> where ParamList has a .first() method.
+pub struct ParamList<T>(pub Vec<T>);
 
 // TODO(wathiede): replace these types with imported proper types.
 #[derive(Debug, Clone, PartialEq)]
-struct Point2f {
+pub struct Point2f {
     x: Float,
     y: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
-struct Vector2f {
+pub struct Vector2f {
     x: Float,
     y: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
-struct Point3f {
-    x: Float,
-    y: Float,
-    z: Float,
-}
-#[derive(Debug, Clone, PartialEq)]
-struct Vector3f {
+pub struct Point3f {
     x: Float,
     y: Float,
     z: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
-struct Normal3f {
+pub struct Vector3f {
     x: Float,
     y: Float,
     z: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
-struct Spectrum {
+pub struct Normal3f {
+    x: Float,
+    y: Float,
+    z: Float,
+}
+#[derive(Debug, Clone, PartialEq)]
+pub struct Spectrum {
     x: Float,
     y: Float,
     z: Float,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-enum Value {
+pub enum Value {
     Bool(ParamList<bool>),
     Float(ParamList<Float>),
     Int(ParamList<i64>),
@@ -56,14 +55,17 @@ enum Value {
     Spectrum(ParamList<Spectrum>),
     String(ParamList<String>),
     Texture(ParamList<String>),
+    None,
 }
 
-struct ParamSetItem {
-    name: String,
-    values: Value,
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParamSetItem {
+    pub name: String,
+    pub values: Value,
 }
 
-struct ParamSet {
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParamSet {
     values: collections::HashMap<String, ParamSetItem>,
     looked_up: collections::HashMap<String, bool>,
 }

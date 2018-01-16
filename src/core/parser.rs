@@ -8,34 +8,28 @@ use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, Er
 
 extern crate regex;
 
-#[derive(Debug, PartialEq)]
-struct LookAt {
-    values: Vec<f64>,
-}
+use core::api::Pbrt;
+use core::pbrt::Float;
+use core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    look_at<LookAt>,
-    ws!(do_parse!(
-        tag!("LookAt") >>
-        values: many1!(number) >>
-        (LookAt{
-            values: values
-        })
-    ))
+named!(quoted_name<&str>,
+   map_res!(
+       delimited!(tag!("\""), alphanumeric, tag!("\"")),
+       str::from_utf8
+   )
 );
 
-#[derive(Debug, PartialEq)]
-struct Param {
-    typ: String,
-    name: String,
-    // TODO(wathiede): make this a trait that handles GetFirst, etc. and only the concrete types
-    // are converted to int, float, etc.
-    values: Vec<f64>,
+fn bool(input: &[u8]) -> IResult<&[u8], bool> {
+    flat_map!(
+        input,
+        recognize!(alt!(tag!("true") | tag!("false"))),
+        parse_to!(bool)
+    )
 }
 
 // number is a superset of nom::double! that includes '1' and '1.'
-fn number(input: &[u8]) -> IResult<&[u8], f64> {
+fn number(input: &[u8]) -> IResult<&[u8], Float> {
     flat_map!(
         input,
         recognize!(tuple!(
@@ -50,7 +44,7 @@ fn number(input: &[u8]) -> IResult<&[u8], f64> {
                 digit
             )))
         )),
-        parse_to!(f64)
+        parse_to!(Float)
     )
 }
 
@@ -63,12 +57,42 @@ fn strip_comment(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-named!(param_set_item_values<Vec<f64>>,
+named!(maybe_bracketed,
     alt!(
-        ws!(delimited!(tag!("["), many1!(number), tag!("]")))
-        | ws!(many1!(number))
+        ws!(delimited!(tag!("["), digit, tag!("]")))
+        | ws!(digit)
     )
 );
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_bool<Value>,
+    do_parse!(
+        values: alt!(
+            ws!(delimited!(tag!("["), many1!(bool), tag!("]")))
+            | ws!(many1!(bool))
+        ) >>
+        (Value::Bool(ParamList(values)))
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_float<Value>,
+    do_parse!(
+        values: alt!(
+            ws!(delimited!(tag!("["), many1!(number), tag!("]")))
+            | ws!(many1!(number))
+        ) >>
+        (Value::Float(ParamList(values)))
+    )
+);
+
+fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult<&'a [u8], Value> {
+    match psi_type {
+        b"bool" => param_set_item_values_bool(input),
+        b"float" => param_set_item_values_float(input),
+        _ => IResult::Error(error_position!(ErrorKind::Custom(42), input)),
+    }
+}
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
@@ -83,17 +107,85 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    param_set_item<Param>,
+    param_set_item<ParamSetItem>,
     do_parse!(
         tag!("\"") >>
-        tn: param_set_item_type_name >>
+        typ: alphanumeric >>
+        space >>
+        name: map_res!(alphanumeric, str::from_utf8) >>
         tag!("\"") >>
-        values: param_set_item_values >>
-        (Param {
-            typ: tn.0.to_owned(),
-            name: tn.1.to_owned(),
+        values: call!(param_set_item_values,typ) >>
+        (ParamSetItem {
+            name: name.to_owned(),
             values: values,
         })
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set<Vec<ParamSetItem>>,
+    many1!(param_set_item)
+);
+
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(rustfmt, rustfmt_skip)]
+enum OptionsBlock {
+    LookAt(
+        Float, Float, Float, // eye xyz
+        Float, Float, Float, // look xyz
+        Float, Float, Float, // up xyz
+    ),
+    Camera(
+        String, // name
+        ParamSet, // parameter set for the camera
+    ),
+}
+
+enum WorldBlock {
+}
+
+// fn look_at<'a, 'b>(i: &'a [u8], api: &'b mut Pbrt) -> IResult<&'a [u8], &'b mut Pbrt> {
+//     println!("input: {:?}", str::from_utf8(i));
+// }
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    look_at<OptionsBlock>,
+    ws!(
+        do_parse!(
+            tag!("LookAt") >>
+            ex: number >>
+            ey: number >>
+            ez: number >>
+            lx: number >>
+            ly: number >>
+            lz: number >>
+            ux: number >>
+            uy: number >>
+            uz: number >>
+            (OptionsBlock::LookAt(ex, ey, ez, lx, ly, lz, ux, uy, uz))
+        )
+    )
+);
+
+fn param_set_from_vec(psis: Vec<ParamSetItem>) -> ParamSet {
+    let mut ps = ParamSet::new();
+    for ref psi in psis.iter() {
+        ps.add(&psi.name, psi.values.clone())
+    }
+    ps
+}
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    camera<OptionsBlock>,
+    ws!(
+        do_parse!(
+            tag!("Camera") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (OptionsBlock::Camera(String::from(name), param_set_from_vec(ps)))
+        )
     )
 );
 
@@ -115,20 +207,6 @@ mod tests {
             &IResult::Incomplete(n) => panic!("need: {:?}", n),
         }
     }
-
-    //#[test]
-    //fn test_prefix() {
-    //    named!( preceded_wrap<&[u8], &[u8]>, preceded!(tag!("a"), alphanumeric) );
-    //    assert_eq!(
-    //        preceded_wrap(&b"axyz"[..]),
-    //        IResult::Done(&b""[..], &b"xyz"[..])
-    //    );
-    //    named!( terminated_wrap<&[u8], &[u8]>, terminated!(alphanumeric, tag!("\n")) );
-    //    assert_eq!(
-    //        terminated_wrap(&b"xyz\n"[..]),
-    //        IResult::Done(&b"\n"[..], &b"xyz"[..])
-    //    );
-    //}
 
     #[test]
     fn test_strip_comment() {
@@ -162,9 +240,12 @@ mod tests {
     #[test]
     fn test_number_comment_number() {
         if let IResult::Done(_, input) = strip_comment(&b"[ 1 # comment\n2 3]\n"[..]) {
-            let ref res = param_set_item_values(&input);
+            let ref res = param_set_item_values_float(&input);
             dump(res);
-            assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
+            assert_eq!(
+                res,
+                &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
+            );
         };
     }
 
@@ -179,13 +260,19 @@ mod tests {
     #[test]
     fn test_param_set_item_values() {
         let input = &b"1 2. -3.0"[..];
-        let ref res = param_set_item_values(input);
+        let ref res = param_set_item_values_float(input);
         dump(res);
-        assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., -3.]));
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., -3.])))
+        );
 
         let input = &b"[  1 2 3]"[..];
-        let ref res = param_set_item_values(input);
-        assert_eq!(res, &IResult::Done(&b""[..], vec![1., 2., 3.]));
+        let ref res = param_set_item_values_float(input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
+        );
 
         // TODO(wathiede): support non-float types:
         // "string filename" "foo.exr"
@@ -195,17 +282,32 @@ mod tests {
     }
 
     #[test]
-    fn test_param_set_item() {
+    fn test_param_set_item_float() {
         let input = &b"\"float foo\" [ 0 1 2 ]"[..];
         let ref res = param_set_item(input);
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                Param {
-                    typ: "float".to_owned(),
+                ParamSetItem {
                     name: "foo".to_owned(),
-                    values: vec![0., 1., 2.],
+                    values: Value::Float(ParamList(vec![0., 1., 2.])),
+                }
+            )
+        );
+    }
+
+    #[test]
+    fn test_param_set_item_bool() {
+        let input = &b"\"bool foo\" [true false true false]"[..];
+        let ref res = param_set_item(input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                ParamSetItem {
+                    name: "foo".to_owned(),
+                    values: Value::Bool(ParamList(vec![true, false, true, false])),
                 }
             )
         );
@@ -217,16 +319,31 @@ mod tests {
     .5 .5 0  # look at point\n \
     0 0 1    # up vector\n"[..];
         if let IResult::Done(_, input) = strip_comment(input) {
-            let input: &[u8] = &input;
-            let ref res = look_at(input);
+            let ref mut res = look_at(&input);
             dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(
                     &b""[..],
-                    LookAt {
-                        values: vec![3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.],
-                    }
+                    OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)
+                )
+            );
+        };
+    }
+
+    #[test]
+    fn test_camera() {
+        let input = &b"Camera \"perspective\" \"float fov\" 45"[..];
+        if let IResult::Done(_, input) = strip_comment(input) {
+            let ref mut res = camera(&input);
+            let mut ps = ParamSet::new();
+            ps.add("fov", Value::Float(ParamList(vec![45.])));
+            dump(res);
+            assert_eq!(
+                res,
+                &IResult::Done(
+                    &b""[..],
+                    OptionsBlock::Camera(String::from("perspective"), ps)
                 )
             );
         };
