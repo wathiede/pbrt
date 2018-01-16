@@ -61,19 +61,28 @@ pub enum Value {
 pub struct ParamSetItem {
     pub name: String,
     pub values: Value,
+    looked_up: bool,
+}
+
+impl ParamSetItem {
+    pub fn new(name: &str, values: Value) -> ParamSetItem {
+        ParamSetItem {
+            name: String::from(name),
+            values: values.clone(),
+            looked_up: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParamSet {
     values: collections::HashMap<String, ParamSetItem>,
-    looked_up: collections::HashMap<String, bool>,
 }
 
 impl ParamSet {
     pub fn new() -> ParamSet {
         ParamSet {
             values: collections::HashMap::new(),
-            looked_up: collections::HashMap::new(),
         }
     }
 
@@ -84,24 +93,25 @@ impl ParamSet {
             ParamSetItem {
                 name: name.clone(),
                 values: values,
+                looked_up: false,
             },
         );
-        self.looked_up.insert(name.clone(), false);
     }
 
     pub fn find(&mut self, name: &str) -> Option<Value> {
-        let n = String::from_str(name).unwrap();
-        self.looked_up.insert(n, true);
         // Defer unwrapping to call site or consider to use a macro.
-        self.values.get(name).map(|psi| psi.values.clone())
+        self.values.get_mut(name).map(|psi| {
+            psi.looked_up = true;
+            psi.values.clone()
+        })
     }
 
     pub fn report_unused(&self) -> bool {
         let mut unused = false;
         info!("report_unused");
 
-        for (key, val) in self.looked_up.iter() {
-            if !val {
+        for (key, val) in self.values.iter() {
+            if !val.looked_up {
                 info!("* '{}' not used", key);
                 unused = true
             }
@@ -118,9 +128,9 @@ impl ParamSet {
             ParamSetItem {
                 name: name.clone(),
                 values: Value::Float(ParamList(values.to_vec())),
+                looked_up: false,
             },
         );
-        self.looked_up.insert(name.clone(), false);
     }
 }
 

@@ -65,14 +65,6 @@ fn strip_comment(input: &[u8]) -> IResult<&[u8], Vec<u8>> {
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-named!(maybe_bracketed,
-    alt!(
-        ws!(delimited!(tag!("["), digit, tag!("]")))
-        | ws!(digit)
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values_bool<Value>,
     do_parse!(
         values: alt!(
@@ -105,41 +97,58 @@ named!(param_set_item_values_integer<Value>,
     )
 );
 
+named!(
+    ascii<String>,
+    map_res!(
+        map_res!(
+            delimited!(tag!("\""), take_until!("\""), tag!("\"")),
+            str::from_utf8
+        ),
+        String::from_str
+    )
+);
+
+// TODO(wathiede): should we applu this pattern to everything, only perform many1! when brackets
+// are present?
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_string<Value>,
+    alt!(
+        do_parse!(
+            values: ws!(delimited!(tag!("["), many1!(ascii), tag!("]"))) >>
+            (Value::String(ParamList(values)))
+        ) |
+        do_parse!(
+            value: ws!(ascii) >>
+            (Value::String(ParamList(vec![value])))
+        )
+    )
+);
+
 fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult<&'a [u8], Value> {
     match psi_type {
         b"bool" => param_set_item_values_bool(input),
         b"float" => param_set_item_values_float(input),
         b"integer" => param_set_item_values_integer(input),
-        _ => IResult::Error(error_position!(ErrorKind::Custom(42), input)),
+        b"string" => param_set_item_values_string(input),
+        _ => panic!(format!(
+            "unhandled param_set_item {:?}",
+            str::from_utf8(psi_type)
+        )),
     }
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    param_set_item_type_name<(&str, &str)>,
-    do_parse!(
-        typ: map_res!(alphanumeric, str::from_utf8) >>
-        space >>
-        name: map_res!(alphanumeric, str::from_utf8) >>
-        ((typ, name))
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
     param_set_item<ParamSetItem>,
-    do_parse!(
+    dbg_dmp!(do_parse!(
         tag!("\"") >>
         typ: alphanumeric >>
         space >>
         name: map_res!(alphanumeric, str::from_utf8) >>
         tag!("\"") >>
-        values: call!(param_set_item_values,typ) >>
-        (ParamSetItem {
-            name: name.to_owned(),
-            values: values,
-        })
-    )
+        values: call!(param_set_item_values, typ) >>
+        (ParamSetItem::new(name, values))
+    ))
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -158,6 +167,7 @@ enum OptionsBlock {
     Camera(String, ParamSet),
     Sampler(String, ParamSet),
     Integrator(String, ParamSet),
+    Film(String, ParamSet),
 }
 
 enum WorldBlock {
@@ -230,6 +240,19 @@ named!(
     )
 );
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    film<OptionsBlock>,
+    ws!(
+        do_parse!(
+            tag!("Film") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (OptionsBlock::Film(String::from(name), param_set_from_vec(ps)))
+        )
+    )
+);
+
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
@@ -282,7 +305,6 @@ mod tests {
     fn test_number_comment_number() {
         if let IResult::Done(_, input) = strip_comment(&b"[ 1 # comment\n2 3]\n"[..]) {
             let ref res = param_set_item_values_float(&input);
-            dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
@@ -292,28 +314,42 @@ mod tests {
 
     #[test]
     fn test_param_set_item_values_integer() {
-        let input = &b"[1 2 3]\n"[..];
+        let input = &b"[-1 2 3]\n"[..];
         let ref res = param_set_item_values_integer(&input);
-        dump(res);
         assert_eq!(
             res,
-            &IResult::Done(&b""[..], Value::Int(ParamList(vec![1, 2, 3])))
+            &IResult::Done(&b""[..], Value::Int(ParamList(vec![-1, 2, 3])))
+        );
+
+        let input = &b"[400]\n"[..];
+        let ref res = param_set_item_values_integer(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Int(ParamList(vec![400])))
         );
     }
 
     #[test]
-    fn test_param_set_item_type_name() {
-        let input = &b"float foo"[..];
-        let ref res = param_set_item_type_name(input);
-        dump(res);
-        assert_eq!(res, &IResult::Done(&b""[..], ("float", "foo")));
+    fn test_param_set_item_values_string() {
+        let input = &b"[\"foo\"]\n"[..];
+        let ref res = param_set_item_values_string(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::String(ParamList(vec!["foo".to_owned()])))
+        );
+
+        let input = &b"\"foo\"\n"[..];
+        let ref res = param_set_item_values_string(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::String(ParamList(vec!["foo".to_owned()])))
+        );
     }
 
     #[test]
     fn test_param_set_item_values() {
         let input = &b"1 2. -3.0"[..];
         let ref res = param_set_item_values_float(input);
-        dump(res);
         assert_eq!(
             res,
             &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., -3.])))
@@ -341,10 +377,20 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                ParamSetItem {
-                    name: "foo".to_owned(),
-                    values: Value::Float(ParamList(vec![0., 1., 2.])),
-                }
+                ParamSetItem::new("foo", Value::Float(ParamList(vec![0., 1., 2.])))
+            )
+        );
+    }
+
+    #[test]
+    fn test_param_set_item_integer() {
+        let input = &b"\"integer foo\" [400]"[..];
+        let ref res = param_set_item(input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                ParamSetItem::new("foo", Value::Int(ParamList(vec![400])))
             )
         );
     }
@@ -357,22 +403,79 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                ParamSetItem {
-                    name: "foo".to_owned(),
-                    values: Value::Bool(ParamList(vec![true, false, true, false])),
-                }
+                ParamSetItem::new(
+                    "foo",
+                    Value::Bool(ParamList(vec![true, false, true, false]))
+                )
+            )
+        );
+    }
+
+    #[test]
+    fn test_param_set_item_multi() {
+        let input = &b"\"bool foo\" [true false true false]
+\"integer bar\" [ 0 1 2 ]
+"[..];
+        let ref res = param_set(input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                vec![
+                    ParamSetItem::new(
+                        "foo",
+                        Value::Bool(ParamList(vec![true, false, true, false])),
+                    ),
+                    ParamSetItem::new("bar", Value::Int(ParamList(vec![0, 1, 2]))),
+                ]
+            )
+        );
+
+        let input = &b"\"integer xresolution\" [400] \"integer yresolution\" [200]
+\"string filename\" \"simple.png\"
+"[..];
+        let ref res = param_set(input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                vec![
+                    ParamSetItem::new("xresolution", Value::Int(ParamList(vec![400]))),
+                    ParamSetItem::new("yresolution", Value::Int(ParamList(vec![200]))),
+                    ParamSetItem::new(
+                        "filename",
+                        Value::String(ParamList(vec!["simple.png".to_owned()])),
+                    ),
+                ]
+            )
+        );
+        let input = &b"\"string filename\" \"simple.png\"
+\"integer xresolution\" [400] \"integer yresolution\" [200]"[..];
+        let ref res = param_set(input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                vec![
+                    ParamSetItem::new(
+                        "filename",
+                        Value::String(ParamList(vec!["simple.png".to_owned()])),
+                    ),
+                    ParamSetItem::new("xresolution", Value::Int(ParamList(vec![400]))),
+                    ParamSetItem::new("yresolution", Value::Int(ParamList(vec![200]))),
+                ]
             )
         );
     }
 
     #[test]
     fn test_look_at() {
-        let input = &b"LookAt 3 4 1.5  # eye\n \
-    .5 .5 0  # look at point\n \
-    0 0 1    # up vector\n"[..];
+        let input = &b"LookAt 3 4 1.5  # eye
+.5 .5 0  # look at point
+0 0 1    # up vector
+"[..];
         if let IResult::Done(_, input) = strip_comment(input) {
             let ref mut res = look_at(&input);
-            dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(
@@ -407,7 +510,6 @@ mod tests {
             let ref mut res = sampler(&input);
             let mut ps = ParamSet::new();
             ps.add("pixelsamples", Value::Int(ParamList(vec![128])));
-            dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(&b""[..], OptionsBlock::Sampler(String::from("halton"), ps))
@@ -421,11 +523,29 @@ mod tests {
         if let IResult::Done(_, input) = strip_comment(input) {
             let ref mut res = integrator(&input);
             let mut ps = ParamSet::new();
-            dump(res);
             assert_eq!(
                 res,
                 &IResult::Done(&b""[..], OptionsBlock::Integrator(String::from("path"), ps))
             );
         };
+    }
+
+    #[test]
+    fn test_film() {
+        let input = &b"Film \"image\" \"string filename\" \"simple.png\"
+\"integer xresolution\" [400] \"integer yresolution\" [200]"[..];
+        let ref mut res = film(&input);
+        let mut ps = ParamSet::new();
+        ps.add(
+            "filename",
+            Value::String(ParamList(vec!["simple.png".to_owned()])),
+        );
+        ps.add("xresolution", Value::Int(ParamList(vec![400])));
+        ps.add("yresolution", Value::Int(ParamList(vec![200])));
+        dump(res);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], OptionsBlock::Film(String::from("image"), ps))
+        );
     }
 }
