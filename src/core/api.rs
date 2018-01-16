@@ -32,6 +32,10 @@ impl Pbrt {
         uy: Float,
         uz: Float,
     ) -> &mut Self {
+        println!(
+            "eye: {:?} {:?} {:?} look: {:?} {:?} {:?} up: {:?} {:?} {:?}",
+            ex, ey, ez, lx, ly, lz, ux, uy, uz
+        );
         self
     }
 }
