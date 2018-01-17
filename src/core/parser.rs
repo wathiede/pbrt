@@ -10,7 +10,7 @@ extern crate regex;
 
 use core::api::Pbrt;
 use core::pbrt::Float;
-use core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
+use core::paramset::{ParamList, ParamSet, ParamSetItem, Point2f, Point3f, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 enum OptionsBlock {
@@ -102,6 +102,29 @@ named!(param_set_item_values_bool<Value>,
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_point<Value>,
+    ws!(
+        alt!(
+            do_parse!(
+                    tag!("[") >>
+                    x: number >>
+                    y: number >>
+                    tag!("]") >>
+                (Value::Point2f(ParamList(vec![Point2f{x,y}])))
+            )
+            | do_parse!(
+                    tag!("[") >>
+                    x: number >>
+                    y: number >>
+                    z: number >>
+                    tag!("]") >>
+                (Value::Point3f(ParamList(vec![Point3f{x,y,z}])))
+            )
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values_float<Value>,
     do_parse!(
         values: alt!(
@@ -120,6 +143,17 @@ named!(param_set_item_values_rgb<Value>,
             | ws!(many1!(number))
         ) >>
         (Value::RGB(ParamList(values)))
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_blackbody<Value>,
+    do_parse!(
+        values: alt!(
+            ws!(delimited!(tag!("["), many1!(number), tag!("]")))
+            | ws!(many1!(number))
+        ) >>
+        (Value::Blackbody(ParamList(values)))
     )
 );
 
@@ -167,7 +201,9 @@ fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult
         b"float" => param_set_item_values_float(input),
         b"integer" => param_set_item_values_integer(input),
         b"string" => param_set_item_values_string(input),
+        b"point" => param_set_item_values_point(input),
         b"rgb" => param_set_item_values_rgb(input),
+        b"blackbody" => param_set_item_values_blackbody(input),
         _ => panic!(format!(
             "unhandled param_set_item {:?}",
             str::from_utf8(psi_type)
@@ -625,7 +661,6 @@ mod tests {
         );
         ps.add("xresolution", Value::Int(ParamList(vec![400])));
         ps.add("yresolution", Value::Int(ParamList(vec![200])));
-        dump(res);
         assert_eq!(
             res,
             &IResult::Done(&b""[..], OptionsBlock::Film(String::from("image"), ps))
@@ -638,7 +673,6 @@ mod tests {
         let ref mut res = light_source(&input);
         let mut ps = ParamSet::new();
         ps.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
-        dump(res);
         assert_eq!(
             res,
             &IResult::Done(
@@ -652,15 +686,30 @@ mod tests {
         let input = include_bytes!("testdata/scene1.pbrt");
         if let IResult::Done(_, input) = strip_comment(input) {
             let res = parse_scene(&input);
-            let mut ps = ParamSet::new();
-            ps.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
+            let mut ps1 = ParamSet::new();
+            ps1.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
+            let mut ps2 = ParamSet::new();
+            ps2.add(
+                "from",
+                Value::Point3f(ParamList(vec![
+                    Point3f {
+                        x: -30.,
+                        y: 40.,
+                        z: 100.,
+                    },
+                ])),
+            );
+            ps2.add("L", Value::Blackbody(ParamList(vec![3000., 1.5])));
             assert_eq!(
                 res,
                 IResult::Done(
                     &b""[..],
                     Scene {
                         options: vec![OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)],
-                        world_objects: vec![WorldBlock::LightSource(String::from("infinite"), ps)],
+                        world_objects: vec![
+                            WorldBlock::LightSource(String::from("infinite"), ps1),
+                            WorldBlock::LightSource(String::from("distant"), ps2),
+                        ],
                     }
                 )
             );

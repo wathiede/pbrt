@@ -9,37 +9,37 @@ pub struct ParamList<T>(pub Vec<T>);
 // TODO(wathiede): replace these types with imported proper types.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point2f {
-    x: Float,
-    y: Float,
+    pub x: Float,
+    pub y: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector2f {
-    x: Float,
-    y: Float,
+    pub x: Float,
+    pub y: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point3f {
-    x: Float,
-    y: Float,
-    z: Float,
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector3f {
-    x: Float,
-    y: Float,
-    z: Float,
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Normal3f {
-    x: Float,
-    y: Float,
-    z: Float,
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Spectrum {
-    x: Float,
-    y: Float,
-    z: Float,
+    pub x: Float,
+    pub y: Float,
+    pub z: Float,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -57,6 +57,7 @@ pub enum Value {
     Texture(ParamList<String>),
     // TODO(wathiede): make a generic 'Spectrum' type?
     RGB(ParamList<Float>),
+    Blackbody(ParamList<Float>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
