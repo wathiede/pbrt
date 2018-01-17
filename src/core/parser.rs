@@ -12,6 +12,32 @@ use core::api::Pbrt;
 use core::pbrt::Float;
 use core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
 
+#[derive(Debug, Clone, PartialEq)]
+enum OptionsBlock {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    LookAt(
+        Float, Float, Float, // eye xyz
+        Float, Float, Float, // look xyz
+        Float, Float, Float, // up xyz
+    ),
+    Camera(String, ParamSet),
+    Sampler(String, ParamSet),
+    Integrator(String, ParamSet),
+    Film(String, ParamSet),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum WorldBlock {
+    Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
+    LightSource(String, ParamSet),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Scene {
+    options: Vec<OptionsBlock>,
+    world_objects: Vec<WorldBlock>,
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(quoted_name<&str>,
    map_res!(
@@ -87,6 +113,17 @@ named!(param_set_item_values_float<Value>,
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_rgb<Value>,
+    do_parse!(
+        values: alt!(
+            ws!(delimited!(tag!("["), many1!(number), tag!("]")))
+            | ws!(many1!(number))
+        ) >>
+        (Value::RGB(ParamList(values)))
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values_integer<Value>,
     do_parse!(
         values: alt!(
@@ -130,6 +167,7 @@ fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult
         b"float" => param_set_item_values_float(input),
         b"integer" => param_set_item_values_integer(input),
         b"string" => param_set_item_values_string(input),
+        b"rgb" => param_set_item_values_rgb(input),
         _ => panic!(format!(
             "unhandled param_set_item {:?}",
             str::from_utf8(psi_type)
@@ -140,7 +178,7 @@ fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
     param_set_item<ParamSetItem>,
-    dbg_dmp!(do_parse!(
+    do_parse!(
         tag!("\"") >>
         typ: alphanumeric >>
         space >>
@@ -148,30 +186,13 @@ named!(
         tag!("\"") >>
         values: call!(param_set_item_values, typ) >>
         (ParamSetItem::new(name, values))
-    ))
+    )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set<Vec<ParamSetItem>>,
     many0!(param_set_item)
 );
-
-#[derive(Debug, Clone, PartialEq)]
-enum OptionsBlock {
-    #[cfg_attr(rustfmt, rustfmt_skip)]
-    LookAt(
-        Float, Float, Float, // eye xyz
-        Float, Float, Float, // look xyz
-        Float, Float, Float, // up xyz
-    ),
-    Camera(String, ParamSet),
-    Sampler(String, ParamSet),
-    Integrator(String, ParamSet),
-    Film(String, ParamSet),
-}
-
-enum WorldBlock {
-}
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
@@ -253,6 +274,58 @@ named!(
     )
 );
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    option_block<Vec<OptionsBlock>>,
+    dbg_dmp!(many1!(
+        alt!(
+            look_at
+            | camera
+            | sampler
+            | integrator
+            | film
+        )
+    )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    light_source<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("LightSource") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (WorldBlock::LightSource(String::from(name), param_set_from_vec(ps)))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    world_objects<Vec<WorldBlock>>,
+    many1!(
+        alt!(
+            light_source
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    parse_scene<Scene>,
+    ws!(
+        do_parse!(
+            options: option_block >>
+            tag!("WorldBegin") >>
+            world_objects: world_objects >>
+            tag!("WorldEnd") >>
+            (Scene{options, world_objects})
+        )
+    )
+);
+
 #[cfg(test)]
 mod tests {
     use std::fmt::Debug;
@@ -310,6 +383,16 @@ mod tests {
                 &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
             );
         };
+    }
+
+    #[test]
+    fn test_param_set_item_values_float() {
+        let input = &b"[.4 .45 .5]\n"[..];
+        let ref res = param_set_item_values_float(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Float(ParamList(vec![0.4, 0.45, 0.5])))
+        );
     }
 
     #[test]
@@ -547,5 +630,40 @@ mod tests {
             res,
             &IResult::Done(&b""[..], OptionsBlock::Film(String::from("image"), ps))
         );
+    }
+
+    #[test]
+    fn test_light_source() {
+        let input = &b"LightSource \"infinite\" \"rgb L\" [.4 .45 .5]"[..];
+        let ref mut res = light_source(&input);
+        let mut ps = ParamSet::new();
+        ps.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
+        dump(res);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::LightSource(String::from("infinite"), ps)
+            )
+        );
+    }
+    #[test]
+    fn test_parse_scene() {
+        let input = include_bytes!("testdata/scene1.pbrt");
+        if let IResult::Done(_, input) = strip_comment(input) {
+            let res = parse_scene(&input);
+            let mut ps = ParamSet::new();
+            ps.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
+            assert_eq!(
+                res,
+                IResult::Done(
+                    &b""[..],
+                    Scene {
+                        options: vec![OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)],
+                        world_objects: vec![WorldBlock::LightSource(String::from("infinite"), ps)],
+                    }
+                )
+            );
+        };
     }
 }

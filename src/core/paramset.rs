@@ -55,6 +55,8 @@ pub enum Value {
     Spectrum(ParamList<Spectrum>),
     String(ParamList<String>),
     Texture(ParamList<String>),
+    // TODO(wathiede): make a generic 'Spectrum' type?
+    RGB(ParamList<Float>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
