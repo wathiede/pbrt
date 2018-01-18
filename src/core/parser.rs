@@ -1,14 +1,11 @@
-use std::convert;
 use std::str;
 use std::str::FromStr;
 
 extern crate nom;
-use self::nom::{alphanumeric, digit, double, double_s, is_digit, rest, space, ErrorKind, IResult,
-                InputLength, Slice};
+use self::nom::{alphanumeric, digit, space, IResult};
 
 extern crate regex;
 
-use core::api::Pbrt;
 use core::pbrt::Float;
 use core::paramset::{ParamList, ParamSet, ParamSetItem, Point2f, Point3f, Value};
 
@@ -28,12 +25,12 @@ enum OptionsBlock {
 
 #[derive(Debug, Clone, PartialEq)]
 enum WorldBlock {
-    Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
+    #[allow(dead_code)] Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
     LightSource(String, ParamSet),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct Scene {
+pub struct Scene {
     options: Vec<OptionsBlock>,
     world_objects: Vec<WorldBlock>,
 }
@@ -340,9 +337,23 @@ named!(
     )
 );
 
+pub fn parse_scene(input: &[u8]) -> IResult<&[u8], Scene> {
+    match strip_comment(input) {
+        // TODO(wathiede): wtf:
+        // borrowed value does not live long enough
+        IResult::Done(_, i) => match parse_scene_macro(&i) {
+            IResult::Done(_, scene) => IResult::Done(&b""[..], scene),
+            IResult::Error(e) => IResult::Error(e),
+            IResult::Incomplete(n) => IResult::Incomplete(n),
+        },
+        IResult::Error(e) => IResult::Error(e),
+        IResult::Incomplete(n) => IResult::Incomplete(n),
+    }
+}
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    parse_scene<Scene>,
+    parse_scene_macro<Scene>,
     ws!(
         do_parse!(
             options: option_block >>
@@ -694,62 +705,60 @@ mod tests {
     #[test]
     fn test_parse_scene() {
         let input = include_bytes!("testdata/scene1.pbrt");
-        if let IResult::Done(_, input) = strip_comment(input) {
-            let res = parse_scene(&input);
-            let want = Scene {
-                options: vec![
-                    OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
-                    OptionsBlock::Camera(
-                        "perspective".into(),
-                        vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into(),
-                    ),
-                    OptionsBlock::Sampler(
-                        "halton".into(),
-                        vec![
-                            ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
-                        ].into(),
-                    ),
-                    OptionsBlock::Integrator("path".into(), vec![].into()),
-                    OptionsBlock::Film(
-                        "image".into(),
-                        vec![
-                            ParamSetItem::new(
-                                "filename",
-                                Value::String(vec!["simple.png".to_owned()].into()),
+        let res = parse_scene(&input[..]);
+        let want = Scene {
+            options: vec![
+                OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
+                OptionsBlock::Camera(
+                    "perspective".into(),
+                    vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into(),
+                ),
+                OptionsBlock::Sampler(
+                    "halton".into(),
+                    vec![
+                        ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
+                    ].into(),
+                ),
+                OptionsBlock::Integrator("path".into(), vec![].into()),
+                OptionsBlock::Film(
+                    "image".into(),
+                    vec![
+                        ParamSetItem::new(
+                            "filename",
+                            Value::String(vec!["simple.png".to_owned()].into()),
+                        ),
+                        ParamSetItem::new("xresolution", Value::Int(vec![400].into())),
+                        ParamSetItem::new("yresolution", Value::Int(vec![300].into())),
+                    ].into(),
+                ),
+            ],
+            world_objects: vec![
+                WorldBlock::LightSource(
+                    "infinite".into(),
+                    vec![
+                        ParamSetItem::new("L", Value::RGB(vec![0.4, 0.45, 0.5].into())),
+                    ].into(),
+                ),
+                WorldBlock::LightSource(
+                    "distant".into(),
+                    vec![
+                        ParamSetItem::new(
+                            "from",
+                            Value::Point3f(
+                                vec![
+                                    Point3f {
+                                        x: -30.,
+                                        y: 40.,
+                                        z: 100.,
+                                    },
+                                ].into(),
                             ),
-                            ParamSetItem::new("xresolution", Value::Int(vec![400].into())),
-                            ParamSetItem::new("yresolution", Value::Int(vec![300].into())),
-                        ].into(),
-                    ),
-                ],
-                world_objects: vec![
-                    WorldBlock::LightSource(
-                        "infinite".into(),
-                        vec![
-                            ParamSetItem::new("L", Value::RGB(vec![0.4, 0.45, 0.5].into())),
-                        ].into(),
-                    ),
-                    WorldBlock::LightSource(
-                        "distant".into(),
-                        vec![
-                            ParamSetItem::new(
-                                "from",
-                                Value::Point3f(
-                                    vec![
-                                        Point3f {
-                                            x: -30.,
-                                            y: 40.,
-                                            z: 100.,
-                                        },
-                                    ].into(),
-                                ),
-                            ),
-                            ParamSetItem::new("L", Value::Blackbody(vec![3000., 1.5].into())),
-                        ].into(),
-                    ),
-                ],
-            };
-            assert_eq!(res, IResult::Done(&b""[..], want));
+                        ),
+                        ParamSetItem::new("L", Value::Blackbody(vec![3000., 1.5].into())),
+                    ].into(),
+                ),
+            ],
         };
+        assert_eq!(res, IResult::Done(&b""[..], want));
     }
 }
