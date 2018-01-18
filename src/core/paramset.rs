@@ -6,6 +6,12 @@ use core::pbrt::Float;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);
 
+impl<T> From<Vec<T>> for ParamList<T> {
+    fn from(vs: Vec<T>) -> Self {
+        ParamList(vs)
+    }
+}
+
 // TODO(wathiede): replace these types with imported proper types.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point2f {
@@ -122,18 +128,15 @@ impl ParamSet {
 
         unused
     }
+}
 
-    // TODO(wathiede): remove or add helpers for all types.
-    pub fn add_float(&mut self, name: &str, values: &[Float]) {
-        let name = String::from_str(name).unwrap();
-        self.values.insert(
-            name.clone(),
-            ParamSetItem {
-                name: name.clone(),
-                values: Value::Float(ParamList(values.to_vec())),
-                looked_up: false,
-            },
-        );
+impl From<Vec<ParamSetItem>> for ParamSet {
+    fn from(psis: Vec<ParamSetItem>) -> Self {
+        let mut ps = ParamSet::new();
+        for ref psi in psis.iter() {
+            ps.add(&psi.name, psi.values.clone())
+        }
+        ps
     }
 }
 
@@ -145,8 +148,17 @@ mod tests {
     #[test]
     fn test_param_set() {
         let _ = env_logger::init();
-        let mut ps = ParamSet::new();
-        ps.add_float("test1", &vec![1., 2.]);
+        let mut ps: ParamSet = vec![
+            ParamSetItem::new("test0", Value::Float(vec![1., 2.].into())),
+        ].into();
+        assert_eq!(
+            ps.find("test0").unwrap(),
+            Value::Float(ParamList(vec![1., 2.]))
+        );
+
+        let mut ps: ParamSet = vec![
+            ParamSetItem::new("test1", Value::Float(ParamList(vec![1., 2.]))),
+        ].into();
         assert_eq!(
             ps.find("test1").unwrap(),
             Value::Float(ParamList(vec![1., 2.]))
@@ -176,5 +188,4 @@ mod tests {
         ps.add("notused", Value::Bool(ParamList(vec![true, true, false])));
         assert!(ps.report_unused());
     }
-
 }

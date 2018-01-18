@@ -250,14 +250,6 @@ named!(
     )
 );
 
-fn param_set_from_vec(psis: Vec<ParamSetItem>) -> ParamSet {
-    let mut ps = ParamSet::new();
-    for ref psi in psis.iter() {
-        ps.add(&psi.name, psi.values.clone())
-    }
-    ps
-}
-
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
     camera<OptionsBlock>,
@@ -266,7 +258,7 @@ named!(
             tag!("Camera") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Camera(String::from(name), param_set_from_vec(ps)))
+            (OptionsBlock::Camera(String::from(name), ps.into()))
         )
     )
 );
@@ -279,7 +271,7 @@ named!(
             tag!("Sampler") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Sampler(String::from(name), param_set_from_vec(ps)))
+            (OptionsBlock::Sampler(String::from(name), ps.into()))
         )
     )
 );
@@ -292,7 +284,7 @@ named!(
             tag!("Integrator") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Integrator(String::from(name), param_set_from_vec(ps)))
+            (OptionsBlock::Integrator(String::from(name), ps.into()))
         )
     )
 );
@@ -305,7 +297,7 @@ named!(
             tag!("Film") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Film(String::from(name), param_set_from_vec(ps)))
+            (OptionsBlock::Film(String::from(name), ps.into()))
         )
     )
 );
@@ -333,7 +325,7 @@ named!(
             tag!("LightSource") >>
             name: quoted_name >>
             ps: param_set >>
-            (WorldBlock::LightSource(String::from(name), param_set_from_vec(ps)))
+            (WorldBlock::LightSource(String::from(name), ps.into()))
         )
     )
 );
@@ -610,13 +602,14 @@ mod tests {
         let input = &b"Camera \"perspective\" \"float fov\" 45"[..];
         if let IResult::Done(_, input) = strip_comment(input) {
             let ref mut res = camera(&input);
-            let mut ps = ParamSet::new();
-            ps.add("fov", Value::Float(ParamList(vec![45.])));
             assert_eq!(
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::Camera(String::from("perspective"), ps)
+                    OptionsBlock::Camera(
+                        String::from("perspective"),
+                        vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into()
+                    ),
                 )
             );
         };
@@ -627,11 +620,17 @@ mod tests {
         let input = &b"Sampler \"halton\" \"integer pixelsamples\" 128"[..];
         if let IResult::Done(_, input) = strip_comment(input) {
             let ref mut res = sampler(&input);
-            let mut ps = ParamSet::new();
-            ps.add("pixelsamples", Value::Int(ParamList(vec![128])));
             assert_eq!(
                 res,
-                &IResult::Done(&b""[..], OptionsBlock::Sampler(String::from("halton"), ps))
+                &IResult::Done(
+                    &b""[..],
+                    OptionsBlock::Sampler(
+                        String::from("halton"),
+                        vec![
+                            ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
+                        ].into()
+                    )
+                )
             );
         };
     }
@@ -641,10 +640,12 @@ mod tests {
         let input = &b"Integrator \"path\""[..];
         if let IResult::Done(_, input) = strip_comment(input) {
             let ref mut res = integrator(&input);
-            let mut ps = ParamSet::new();
             assert_eq!(
                 res,
-                &IResult::Done(&b""[..], OptionsBlock::Integrator(String::from("path"), ps))
+                &IResult::Done(
+                    &b""[..],
+                    OptionsBlock::Integrator(String::from("path"), vec![].into())
+                )
             );
         };
     }
@@ -654,16 +655,22 @@ mod tests {
         let input = &b"Film \"image\" \"string filename\" \"simple.png\"
 \"integer xresolution\" [400] \"integer yresolution\" [200]"[..];
         let ref mut res = film(&input);
-        let mut ps = ParamSet::new();
-        ps.add(
-            "filename",
-            Value::String(ParamList(vec!["simple.png".to_owned()])),
-        );
-        ps.add("xresolution", Value::Int(ParamList(vec![400])));
-        ps.add("yresolution", Value::Int(ParamList(vec![200])));
         assert_eq!(
             res,
-            &IResult::Done(&b""[..], OptionsBlock::Film(String::from("image"), ps))
+            &IResult::Done(
+                &b""[..],
+                OptionsBlock::Film(
+                    String::from("image"),
+                    vec![
+                        ParamSetItem::new(
+                            "filename",
+                            Value::String(vec!["simple.png".to_owned()].into()),
+                        ),
+                        ParamSetItem::new("xresolution", Value::Int(vec![400].into())),
+                        ParamSetItem::new("yresolution", Value::Int(vec![200].into())),
+                    ].into()
+                )
+            )
         );
     }
 
@@ -671,13 +678,16 @@ mod tests {
     fn test_light_source() {
         let input = &b"LightSource \"infinite\" \"rgb L\" [.4 .45 .5]"[..];
         let ref mut res = light_source(&input);
-        let mut ps = ParamSet::new();
-        ps.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::LightSource(String::from("infinite"), ps)
+                WorldBlock::LightSource(
+                    String::from("infinite"),
+                    vec![
+                        ParamSetItem::new("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5]))),
+                    ].into()
+                )
             )
         );
     }
@@ -686,33 +696,36 @@ mod tests {
         let input = include_bytes!("testdata/scene1.pbrt");
         if let IResult::Done(_, input) = strip_comment(input) {
             let res = parse_scene(&input);
-            let mut ps1 = ParamSet::new();
-            ps1.add("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5])));
-            let mut ps2 = ParamSet::new();
-            ps2.add(
-                "from",
-                Value::Point3f(ParamList(vec![
-                    Point3f {
-                        x: -30.,
-                        y: 40.,
-                        z: 100.,
-                    },
-                ])),
-            );
-            ps2.add("L", Value::Blackbody(ParamList(vec![3000., 1.5])));
-            assert_eq!(
-                res,
-                IResult::Done(
-                    &b""[..],
-                    Scene {
-                        options: vec![OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)],
-                        world_objects: vec![
-                            WorldBlock::LightSource(String::from("infinite"), ps1),
-                            WorldBlock::LightSource(String::from("distant"), ps2),
-                        ],
-                    }
-                )
-            );
+            let want = Scene {
+                options: vec![OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)],
+                world_objects: vec![
+                    WorldBlock::LightSource(
+                        String::from("infinite"),
+                        vec![
+                            ParamSetItem::new("L", Value::RGB(vec![0.4, 0.45, 0.5].into())),
+                        ].into(),
+                    ),
+                    WorldBlock::LightSource(
+                        String::from("distant"),
+                        vec![
+                            ParamSetItem::new(
+                                "from",
+                                Value::Point3f(
+                                    vec![
+                                        Point3f {
+                                            x: -30.,
+                                            y: 40.,
+                                            z: 100.,
+                                        },
+                                    ].into(),
+                                ),
+                            ),
+                            ParamSetItem::new("L", Value::Blackbody(vec![3000., 1.5].into())),
+                        ].into(),
+                    ),
+                ],
+            };
+            assert_eq!(res, IResult::Done(&b""[..], want));
         };
     }
 }
