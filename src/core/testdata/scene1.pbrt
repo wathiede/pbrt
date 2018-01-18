@@ -1,6 +1,12 @@
 LookAt 3 4 1.5  # eye
        .5 .5 0  # look at point
        0 0 1    # up vector
+Camera "perspective" "float fov" 45
+
+Sampler "halton" "integer pixelsamples" 128
+Integrator "path"
+Film "image" "string filename" "simple.png"
+     "integer xresolution" [400] "integer yresolution" [300]
 
 WorldBegin
 

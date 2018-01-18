@@ -697,7 +697,31 @@ mod tests {
         if let IResult::Done(_, input) = strip_comment(input) {
             let res = parse_scene(&input);
             let want = Scene {
-                options: vec![OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)],
+                options: vec![
+                    OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
+                    OptionsBlock::Camera(
+                        String::from("perspective"),
+                        vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into(),
+                    ),
+                    OptionsBlock::Sampler(
+                        String::from("halton"),
+                        vec![
+                            ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
+                        ].into(),
+                    ),
+                    OptionsBlock::Integrator(String::from("path"), vec![].into()),
+                    OptionsBlock::Film(
+                        String::from("image"),
+                        vec![
+                            ParamSetItem::new(
+                                "filename",
+                                Value::String(vec!["simple.png".to_owned()].into()),
+                            ),
+                            ParamSetItem::new("xresolution", Value::Int(vec![400].into())),
+                            ParamSetItem::new("yresolution", Value::Int(vec![300].into())),
+                        ].into(),
+                    ),
+                ],
                 world_objects: vec![
                     WorldBlock::LightSource(
                         String::from("infinite"),
