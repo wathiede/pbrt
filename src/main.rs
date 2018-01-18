@@ -38,7 +38,7 @@ fn main() {
     let ref pbrt = api::Pbrt::new();
     for f in matches.free {
         match pbrt.parse_file(&f) {
-            Ok(_) => println!("Rendered {}", f),
+            Ok(res) => println!("Rendered {}\n{:#?}", f, res),
             Err(err) => panic!("Failed to parse {}: {:?}", f, &err),
         }
     }
