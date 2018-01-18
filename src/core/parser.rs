@@ -258,7 +258,7 @@ named!(
             tag!("Camera") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Camera(String::from(name), ps.into()))
+            (OptionsBlock::Camera(name.into(), ps.into()))
         )
     )
 );
@@ -271,7 +271,7 @@ named!(
             tag!("Sampler") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Sampler(String::from(name), ps.into()))
+            (OptionsBlock::Sampler(name.into(), ps.into()))
         )
     )
 );
@@ -284,7 +284,7 @@ named!(
             tag!("Integrator") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Integrator(String::from(name), ps.into()))
+            (OptionsBlock::Integrator(name.into(), ps.into()))
         )
     )
 );
@@ -297,7 +297,7 @@ named!(
             tag!("Film") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Film(String::from(name), ps.into()))
+            (OptionsBlock::Film(name.into(), ps.into()))
         )
     )
 );
@@ -325,7 +325,7 @@ named!(
             tag!("LightSource") >>
             name: quoted_name >>
             ps: param_set >>
-            (WorldBlock::LightSource(String::from(name), ps.into()))
+            (WorldBlock::LightSource(name.into(), ps.into()))
         )
     )
 );
@@ -607,7 +607,7 @@ mod tests {
                 &IResult::Done(
                     &b""[..],
                     OptionsBlock::Camera(
-                        String::from("perspective"),
+                        "perspective".into(),
                         vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into()
                     ),
                 )
@@ -625,7 +625,7 @@ mod tests {
                 &IResult::Done(
                     &b""[..],
                     OptionsBlock::Sampler(
-                        String::from("halton"),
+                        "halton".into(),
                         vec![
                             ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
                         ].into()
@@ -644,7 +644,7 @@ mod tests {
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::Integrator(String::from("path"), vec![].into())
+                    OptionsBlock::Integrator("path".into(), vec![].into())
                 )
             );
         };
@@ -660,7 +660,7 @@ mod tests {
             &IResult::Done(
                 &b""[..],
                 OptionsBlock::Film(
-                    String::from("image"),
+                    "image".into(),
                     vec![
                         ParamSetItem::new(
                             "filename",
@@ -683,7 +683,7 @@ mod tests {
             &IResult::Done(
                 &b""[..],
                 WorldBlock::LightSource(
-                    String::from("infinite"),
+                    "infinite".into(),
                     vec![
                         ParamSetItem::new("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5]))),
                     ].into()
@@ -700,18 +700,18 @@ mod tests {
                 options: vec![
                     OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
                     OptionsBlock::Camera(
-                        String::from("perspective"),
+                        "perspective".into(),
                         vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into(),
                     ),
                     OptionsBlock::Sampler(
-                        String::from("halton"),
+                        "halton".into(),
                         vec![
                             ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
                         ].into(),
                     ),
-                    OptionsBlock::Integrator(String::from("path"), vec![].into()),
+                    OptionsBlock::Integrator("path".into(), vec![].into()),
                     OptionsBlock::Film(
-                        String::from("image"),
+                        "image".into(),
                         vec![
                             ParamSetItem::new(
                                 "filename",
@@ -724,13 +724,13 @@ mod tests {
                 ],
                 world_objects: vec![
                     WorldBlock::LightSource(
-                        String::from("infinite"),
+                        "infinite".into(),
                         vec![
                             ParamSetItem::new("L", Value::RGB(vec![0.4, 0.45, 0.5].into())),
                         ].into(),
                     ),
                     WorldBlock::LightSource(
-                        String::from("distant"),
+                        "distant".into(),
                         vec![
                             ParamSetItem::new(
                                 "from",
