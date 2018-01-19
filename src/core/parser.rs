@@ -18,6 +18,7 @@ pub enum Error {
 #[derive(Debug, Clone, PartialEq)]
 enum OptionsBlock {
     #[cfg_attr(rustfmt, rustfmt_skip)]
+    // TODO(wathiede): convert to 3 x Vector3f?
     LookAt(
         Float, Float, Float, // eye xyz
         Float, Float, Float, // look xyz
@@ -35,6 +36,8 @@ enum WorldBlock {
     LightSource(String, ParamSet),
     Material(String, ParamSet),
     Shape(String, ParamSet),
+    // TODO(wathiede): convert to Vector3f?
+    Translate(Float, Float, Float),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -376,12 +379,27 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
+    translate<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("Translate") >>
+            x:number >>
+            y:number >>
+            z:number >>
+            (WorldBlock::Translate(x, y, z))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
     world_objects<Vec<WorldBlock>>,
     many1!(
         alt!(
             shape
             | material
             | attribute
+            | translate
             | light_source
         )
     )
@@ -849,6 +867,16 @@ mod tests {
     }
 
     #[test]
+    fn test_translate() {
+        let input = &b"Translate 0 0 -1"[..];
+        let ref mut res = translate(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], WorldBlock::Translate(0., 0., -1.))
+        );
+    }
+
+    #[test]
     fn test_parse_scene() {
         let input = include_bytes!("testdata/scene1.pbrt");
         let res = parse_scene(&input[..]);
@@ -910,6 +938,7 @@ mod tests {
                         vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
                     ),
                 ]),
+                WorldBlock::Translate(0., 0., -1.),
             ],
         };
         assert_eq!(res, Ok(want));
