@@ -1,3 +1,4 @@
+use std::error;
 use std::fs::File;
 use std::io::Read;
 use std::io;
@@ -9,6 +10,24 @@ use self::nom::IResult;
 use core::pbrt::Float;
 use core::parser;
 
+#[derive(Debug)]
+pub enum Error {
+    Io(io::Error),
+    Parser(parser::Error),
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Error {
+        Error::Io(err)
+    }
+}
+
+impl From<parser::Error> for Error {
+    fn from(err: parser::Error) -> Error {
+        Error::Parser(err)
+    }
+}
+
 // Pbrt is the top-level global container for all rendering functionality.
 #[derive(Debug)]
 pub struct Pbrt {}
@@ -18,17 +37,14 @@ impl Pbrt {
         Pbrt {}
     }
 
-    pub fn parse_file<P: AsRef<Path>>(&self, path: P) -> Result<parser::Scene, io::Error> {
+    pub fn parse_file<P: AsRef<Path>>(&self, path: P) -> Result<parser::Scene, Error> {
         let mut f = File::open(path)?;
         let mut buffer = Vec::new();
 
         // read the whole file
         f.read_to_end(&mut buffer)?;
-        match parser::parse_scene(&buffer[..]) {
-            IResult::Done(_, res) => Ok(res),
-            IResult::Error(ref e) => panic!("e: {:#?}", e),
-            IResult::Incomplete(n) => panic!("need: {:?}", n),
-        }
+        let scene = parser::parse_scene(&buffer[..])?;
+        Ok(scene)
     }
 
     pub fn look_at(

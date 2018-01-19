@@ -39,7 +39,7 @@ fn main() {
     for f in matches.free {
         match pbrt.parse_file(&f) {
             Ok(res) => println!("Rendered {}\n{:#?}", f, res),
-            Err(err) => panic!("Failed to parse {}: {:?}", f, &err),
+            Err(err) => panic!("Failed to parse {}: {:?}", f, err),
         }
     }
 }

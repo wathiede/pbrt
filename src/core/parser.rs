@@ -9,6 +9,12 @@ extern crate regex;
 use core::pbrt::Float;
 use core::paramset::{ParamList, ParamSet, ParamSetItem, Point2f, Point3f, Value};
 
+#[derive(PartialEq, Debug)]
+pub enum Error {
+    NomError(nom::Err),
+    NomIncomplete(nom::Needed),
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum OptionsBlock {
     #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -337,17 +343,17 @@ named!(
     )
 );
 
-pub fn parse_scene(input: &[u8]) -> IResult<&[u8], Scene> {
+pub fn parse_scene(input: &[u8]) -> Result<Scene, Error> {
     match strip_comment(input) {
         // TODO(wathiede): wtf:
         // borrowed value does not live long enough
         IResult::Done(_, i) => match parse_scene_macro(&i) {
-            IResult::Done(_, scene) => IResult::Done(&b""[..], scene),
-            IResult::Error(e) => IResult::Error(e),
-            IResult::Incomplete(n) => IResult::Incomplete(n),
+            IResult::Done(_, scene) => Ok(scene),
+            IResult::Error(e) => Err(Error::NomError(e)),
+            IResult::Incomplete(n) => Err(Error::NomIncomplete(n)),
         },
-        IResult::Error(e) => IResult::Error(e),
-        IResult::Incomplete(n) => IResult::Incomplete(n),
+        IResult::Error(e) => Err(Error::NomError(e)),
+        IResult::Incomplete(n) => Err(Error::NomIncomplete(n)),
     }
 }
 
@@ -759,6 +765,6 @@ mod tests {
                 ),
             ],
         };
-        assert_eq!(res, IResult::Done(&b""[..], want));
+        assert_eq!(res, Ok(want));
     }
 }
