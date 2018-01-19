@@ -17,4 +17,10 @@ LightSource "infinite" "rgb L" [.4 .45 .5]
 LightSource "distant"  "point from" [ -30 40  100 ]
    "blackbody L" [3000 1.5]
 
+AttributeBegin
+  Material "mirror"
+  Shape "sphere" "float radius" 1
+AttributeEnd
+
+
 WorldEnd

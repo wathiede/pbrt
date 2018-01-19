@@ -31,8 +31,10 @@ enum OptionsBlock {
 
 #[derive(Debug, Clone, PartialEq)]
 enum WorldBlock {
-    #[allow(dead_code)] Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
+    Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
     LightSource(String, ParamSet),
+    Material(String, ParamSet),
+    Shape(String, ParamSet),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -322,6 +324,19 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
+    attribute<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("AttributeBegin") >>
+            world_objects: world_objects >>
+            tag!("AttributeEnd") >>
+            (WorldBlock::Attribute(world_objects))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
     light_source<WorldBlock>,
     ws!(
         do_parse!(
@@ -335,10 +350,39 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
+    material<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("Material") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (WorldBlock::Material(name.into(), ps.into()))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    shape<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("Shape") >>
+            name: quoted_name >>
+            ps: param_set >>
+            (WorldBlock::Shape(name.into(), ps.into()))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
     world_objects<Vec<WorldBlock>>,
     many1!(
         alt!(
-            light_source
+            shape
+            | material
+            | attribute
+            | light_source
         )
     )
 );
@@ -692,6 +736,72 @@ mod tests {
     }
 
     #[test]
+    fn test_attribute() {
+        let input =
+            &b"AttributeBegin\n  LightSource \"infinite\" \"rgb L\" [.4 .45 .5]\nAttributeEnd"[..];
+        let ref mut res = attribute(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Attribute(vec![
+                    WorldBlock::LightSource(
+                        "infinite".into(),
+                        vec![
+                            ParamSetItem::new("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5]))),
+                        ].into(),
+                    ),
+                ])
+            )
+        );
+
+        let input = &b"AttributeBegin\n  Material \"mirror\"\nAttributeEnd"[..];
+        let ref mut res = attribute(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Attribute(vec![WorldBlock::Material("mirror".into(), vec![].into())])
+            )
+        );
+
+        let input = &b"AttributeBegin\n  Shape \"sphere\" \"float radius\" 1\nAttributeEnd"[..];
+        let ref mut res = attribute(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Attribute(
+                    vec![
+                        WorldBlock::Shape(
+                            "sphere".into(),
+                            vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                        ),
+                    ].into(),
+                ),
+            )
+        );
+
+        let input = &b"AttributeBegin\n  Material \"mirror\"\n  Shape \"sphere\" \"float radius\" 1\nAttributeEnd"[..];
+        let ref mut res = attribute(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Attribute(
+                    vec![
+                        WorldBlock::Material("mirror".into(), vec![].into()),
+                        WorldBlock::Shape(
+                            "sphere".into(),
+                            vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                        ),
+                    ].into(),
+                ),
+            )
+        );
+    }
+
+    #[test]
     fn test_light_source() {
         let input = &b"LightSource \"infinite\" \"rgb L\" [.4 .45 .5]"[..];
         let ref mut res = light_source(&input);
@@ -708,6 +818,36 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_material() {
+        let input = &b"Material \"mirror\""[..];
+        let ref mut res = material(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Material("mirror".into(), vec![].into()),
+            )
+        );
+    }
+
+    #[test]
+    fn test_shape() {
+        let input = &b"Shape \"sphere\" \"float radius\" 1"[..];
+        let ref mut res = shape(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                WorldBlock::Shape(
+                    "sphere".into(),
+                    vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                ),
+            )
+        );
+    }
+
     #[test]
     fn test_parse_scene() {
         let input = include_bytes!("testdata/scene1.pbrt");
@@ -763,6 +903,13 @@ mod tests {
                         ParamSetItem::new("L", Value::Blackbody(vec![3000., 1.5].into())),
                     ].into(),
                 ),
+                WorldBlock::Attribute(vec![
+                    WorldBlock::Material("mirror".into(), vec![].into()),
+                    WorldBlock::Shape(
+                        "sphere".into(),
+                        vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                    ),
+                ]),
             ],
         };
         assert_eq!(res, Ok(want));
