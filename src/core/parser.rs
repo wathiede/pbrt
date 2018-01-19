@@ -38,6 +38,12 @@ enum WorldBlock {
     Shape(String, ParamSet),
     // TODO(wathiede): convert to Vector3f?
     Translate(Float, Float, Float),
+    Texture(
+        String, // name
+        String, // type
+        String, // class
+        ParamSet,
+    ),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -330,11 +336,11 @@ named!(
     option_block<Vec<OptionsBlock>>,
     dbg_dmp!(many1!(
         alt!(
-            look_at
+            film
+            | look_at
             | camera
             | sampler
             | integrator
-            | film
         )
     )
     )
@@ -398,10 +404,25 @@ named!(
     ws!(
         do_parse!(
             tag!("Translate") >>
-            x:number >>
-            y:number >>
-            z:number >>
+            x: number >>
+            y: number >>
+            z: number >>
             (WorldBlock::Translate(x, y, z))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
+    texture<WorldBlock>,
+    ws!(
+        do_parse!(
+            tag!("Texture") >>
+            name: quoted_name >>
+            typ: quoted_name >>
+            class: quoted_name >>
+            ps: param_set >>
+            (WorldBlock::Texture(name.into(), typ.into(), class.into(), ps.into()))
         )
     )
 );
@@ -412,6 +433,7 @@ named!(
     many1!(
         alt!(
             shape
+            | texture
             | material
             | attribute
             | translate
@@ -970,15 +992,33 @@ mod tests {
                         vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
                     ),
                 ]),
-                WorldBlock::Material(
-                    "matte".into(),
-                    vec![
-                        ParamSetItem::new("Kd", Value::Texture(vec!["checks".into()].into())),
-                    ].into(),
-                ),
-                WorldBlock::Translate(0., 0., -1.),
+                WorldBlock::Attribute(vec![
+                    WorldBlock::Texture(
+                        "checks".into(),
+                        "spectrum".into(),
+                        "checkerboard".into(),
+                        vec![
+                            ParamSetItem::new("uscale", Value::Float(vec![8.].into())),
+                            ParamSetItem::new("vscale", Value::Float(vec![8.].into())),
+                            ParamSetItem::new("tex1", Value::RGB(ParamList(vec![0.1, 0.1, 0.1]))),
+                            ParamSetItem::new("tex2", Value::RGB(ParamList(vec![0.8, 0.8, 0.8]))),
+                        ].into(),
+                    ),
+                    WorldBlock::Material(
+                        "matte".into(),
+                        vec![
+                            ParamSetItem::new("Kd", Value::Texture(vec!["checks".into()].into())),
+                        ].into(),
+                    ),
+                    WorldBlock::Translate(0., 0., -1.),
+                ]),
             ],
         };
         assert_eq!(res, Ok(want));
     }
 }
+/*
+ * Texture "checks" "spectrum" "checkerboard"
+ *         "float uscale" [8] "float vscale" [8]
+ *         "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+ */
