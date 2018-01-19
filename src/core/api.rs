@@ -1,11 +1,9 @@
-use std::error;
 use std::fs::File;
 use std::io::Read;
 use std::io;
 use std::path::Path;
 
 extern crate nom;
-use self::nom::IResult;
 
 use core::pbrt::Float;
 use core::parser;
