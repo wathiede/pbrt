@@ -22,6 +22,7 @@ AttributeBegin
   Shape "sphere" "float radius" 1
 AttributeEnd
 
+  Material "matte" "texture Kd" "checks"
   Translate 0 0 -1
 
 WorldEnd

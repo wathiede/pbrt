@@ -203,6 +203,20 @@ named!(param_set_item_values_string<Value>,
     )
 );
 
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(param_set_item_values_texture<Value>,
+    alt!(
+        do_parse!(
+            values: ws!(delimited!(tag!("["), many1!(ascii), tag!("]"))) >>
+            (Value::Texture(ParamList(values)))
+        ) |
+        do_parse!(
+            value: ws!(ascii) >>
+            (Value::Texture(ParamList(vec![value])))
+        )
+    )
+);
+
 fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult<&'a [u8], Value> {
     match psi_type {
         b"bool" => param_set_item_values_bool(input),
@@ -211,10 +225,11 @@ fn param_set_item_values<'a, 'b>(input: &'a [u8], psi_type: &'b [u8]) -> IResult
         b"string" => param_set_item_values_string(input),
         b"point" => param_set_item_values_point(input),
         b"rgb" => param_set_item_values_rgb(input),
+        b"texture" => param_set_item_values_texture(input),
         b"blackbody" => param_set_item_values_blackbody(input),
         _ => panic!(format!(
             "unhandled param_set_item {:?}",
-            str::from_utf8(psi_type)
+            str::from_utf8(psi_type).unwrap()
         )),
     }
 }
@@ -938,6 +953,12 @@ mod tests {
                         vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
                     ),
                 ]),
+                WorldBlock::Material(
+                    "matte".into(),
+                    vec![
+                        ParamSetItem::new("Kd", Value::Texture(vec!["checks".into()].into())),
+                    ].into(),
+                ),
                 WorldBlock::Translate(0., 0., -1.),
             ],
         };
