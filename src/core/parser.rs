@@ -15,6 +15,17 @@ pub enum Error {
     NomIncomplete(nom::Needed),
 }
 
+// TODO(wathiede): why does this result in:
+//      expected at least 2 type arguments
+// impl From<IResult> for Error {
+//     fn from(err: IResult) -> Error {
+//         match err {
+//             IResult::Error(e) => Error::NomError(e),
+//             IResult::Incomplete(n) => Error::NomIncomplete(n),
+//         }
+//     }
+// }
+
 #[derive(Debug, Clone, PartialEq)]
 enum OptionsBlock {
     #[cfg_attr(rustfmt, rustfmt_skip)]
