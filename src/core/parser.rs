@@ -115,25 +115,21 @@ named!(param_set_item_values_bool<Value>,
     )
 );
 
+named!(
+    parse_point3f<Point3f>,
+    ws!(do_parse!(
+        x: number >> y: number >> z: number >> (Point3f { x, y, z })
+    ))
+);
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values_point<Value>,
     ws!(
-        alt!(
-            do_parse!(
-                    tag!("[") >>
-                    x: number >>
-                    y: number >>
-                    tag!("]") >>
-                (Value::Point2f(ParamList(vec![Point2f{x,y}])))
-            )
-            | do_parse!(
-                    tag!("[") >>
-                    x: number >>
-                    y: number >>
-                    z: number >>
-                    tag!("]") >>
-                (Value::Point3f(ParamList(vec![Point3f{x,y,z}])))
-            )
+        do_parse!(
+                tag!("[") >>
+                points: many1!(parse_point3f) >>
+                tag!("]") >>
+            (Value::Point3f(points.into()))
         )
     )
 );
@@ -193,8 +189,6 @@ named!(
     )
 );
 
-// TODO(wathiede): should we applu this pattern to everything, only perform many1! when brackets
-// are present?
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(param_set_item_values_string<Value>,
     alt!(
@@ -444,8 +438,7 @@ named!(
 
 pub fn parse_scene(input: &[u8]) -> Result<Scene, Error> {
     match strip_comment(input) {
-        // TODO(wathiede): wtf:
-        // borrowed value does not live long enough
+        // TODO(wathiede): Implement From for IResult and use ? operator here.
         IResult::Done(_, i) => match parse_scene_macro(&i) {
             IResult::Done(_, scene) => Ok(scene),
             IResult::Error(e) => Err(Error::NomError(e)),
@@ -530,12 +523,52 @@ mod tests {
     }
 
     #[test]
+    fn test_param_set_item_values_point() {
+        let input = &b"[.1 .2 .3  .4 .5 .6]\n"[..];
+        let ref res = param_set_item_values_point(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(
+                &b""[..],
+                Value::Point3f(
+                    vec![
+                        Point3f {
+                            x: 0.1,
+                            y: 0.2,
+                            z: 0.3,
+                        },
+                        Point3f {
+                            x: 0.4,
+                            y: 0.5,
+                            z: 0.6,
+                        },
+                    ].into()
+                )
+            )
+        );
+    }
+
+    #[test]
     fn test_param_set_item_values_float() {
         let input = &b"[.4 .45 .5]\n"[..];
         let ref res = param_set_item_values_float(&input);
         assert_eq!(
             res,
             &IResult::Done(&b""[..], Value::Float(ParamList(vec![0.4, 0.45, 0.5])))
+        );
+
+        let input = &b"1 2. -3.0"[..];
+        let ref res = param_set_item_values_float(input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., -3.])))
+        );
+
+        let input = &b"[  1 2 3]"[..];
+        let ref res = param_set_item_values_float(input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
         );
     }
 
@@ -588,29 +621,6 @@ mod tests {
             res,
             &IResult::Done(&b""[..], Value::Texture(ParamList(vec!["foo".to_owned()])))
         );
-    }
-
-    #[test]
-    fn test_param_set_item_values() {
-        let input = &b"1 2. -3.0"[..];
-        let ref res = param_set_item_values_float(input);
-        assert_eq!(
-            res,
-            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., -3.])))
-        );
-
-        let input = &b"[  1 2 3]"[..];
-        let ref res = param_set_item_values_float(input);
-        assert_eq!(
-            res,
-            &IResult::Done(&b""[..], Value::Float(ParamList(vec![1., 2., 3.])))
-        );
-
-        // TODO(wathiede): support non-float types:
-        // "string filename" "foo.exr"
-        // "point origin" [ 0 1 2 ]
-        // "normal N" [ 0 1 0  0 0 1 ] # array of 2 normal values
-        // "bool renderquickly" "true"
     }
 
     #[test]
@@ -1011,6 +1021,43 @@ mod tests {
                         ].into(),
                     ),
                     WorldBlock::Translate(0., 0., -1.),
+                    WorldBlock::Shape(
+                        "trianglemesh".into(),
+                        vec![
+                            ParamSetItem::new("indices", Value::Int(vec![0, 1, 2, 0, 2, 3].into())),
+                            ParamSetItem::new(
+                                "P",
+                                Value::Point3f(
+                                    vec![
+                                        Point3f {
+                                            x: -20.,
+                                            y: -20.,
+                                            z: 0.,
+                                        },
+                                        Point3f {
+                                            x: 20.,
+                                            y: -20.,
+                                            z: 0.,
+                                        },
+                                        Point3f {
+                                            x: 20.,
+                                            y: 20.,
+                                            z: 0.,
+                                        },
+                                        Point3f {
+                                            x: -20.,
+                                            y: 20.,
+                                            z: 0.,
+                                        },
+                                    ].into(),
+                                ),
+                            ),
+                            ParamSetItem::new(
+                                "st",
+                                Value::Float(vec![0., 0., 1., 0., 1., 1., 0., 1.].into()),
+                            ),
+                        ].into(),
+                    ),
                 ]),
             ],
         };
@@ -1018,7 +1065,9 @@ mod tests {
     }
 }
 /*
- * Texture "checks" "spectrum" "checkerboard"
- *         "float uscale" [8] "float vscale" [8]
- *         "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+Shape "trianglemesh"
+    "integer indices" [0 1 2 0 2 3]
+    "point P" [ -20 -20 0   20 -20 0   20 20 0   -20 20 0 ]
+    "float st" [ 0 0   1 0    1 1   0 1 ]
+
  */
