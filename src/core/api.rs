@@ -5,7 +5,7 @@ use std::path::Path;
 
 extern crate nom;
 
-use core::pbrt::Float;
+use core::pbrt::{Float, Options};
 use core::parser;
 
 #[derive(Debug)]
@@ -28,11 +28,13 @@ impl From<parser::Error> for Error {
 
 // Pbrt is the top-level global container for all rendering functionality.
 #[derive(Debug)]
-pub struct Pbrt {}
+pub struct Pbrt {
+    opt: Options,
+}
 
 impl Pbrt {
-    pub fn new() -> Pbrt {
-        Pbrt {}
+    pub fn new(opt: Options) -> Pbrt {
+        Pbrt { opt }
     }
 
     pub fn parse_file<P: AsRef<Path>>(&self, path: P) -> Result<parser::Scene, Error> {
