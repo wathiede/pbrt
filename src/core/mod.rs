@@ -1,5 +1,6 @@
 pub mod api;
-pub mod pbrt;
+pub mod geometry;
 pub mod paramset;
+pub mod pbrt;
 
 mod parser;

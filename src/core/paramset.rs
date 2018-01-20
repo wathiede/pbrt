@@ -1,6 +1,7 @@
 use std::collections;
 use std::str::FromStr;
 
+use core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use core::pbrt::Float;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -12,35 +13,6 @@ impl<T> From<Vec<T>> for ParamList<T> {
     }
 }
 
-// TODO(wathiede): replace these types with imported proper types.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Point2f {
-    pub x: Float,
-    pub y: Float,
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct Vector2f {
-    pub x: Float,
-    pub y: Float,
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct Point3f {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float,
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct Vector3f {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float,
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct Normal3f {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float,
-}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Spectrum {
     pub x: Float,

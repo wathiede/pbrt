@@ -6,8 +6,9 @@ use self::nom::{alphanumeric, digit, space, IResult};
 
 extern crate regex;
 
+use core::geometry::Point3f;
+use core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
 use core::pbrt::Float;
-use core::paramset::{ParamList, ParamSet, ParamSetItem, Point3f, Value};
 
 #[derive(PartialEq, Debug)]
 pub enum Error {
