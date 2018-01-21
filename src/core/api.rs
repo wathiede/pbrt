@@ -1,12 +1,14 @@
 use std::fs::File;
 use std::io::Read;
 use std::io;
+use std::ops::{Index, IndexMut};
 use std::path::Path;
 
 extern crate nom;
 
 use core::pbrt::{Float, Options};
 use core::parser;
+use core::transform::Transform;
 
 #[derive(Debug)]
 pub enum Error {
@@ -33,6 +35,79 @@ enum APIState {
     WorldBlock,
 }
 
+// API Local Classes
+const MAX_TRANSFORMS: usize = 2;
+const START_TRANSFORM_BITS: usize = 1 << 0;
+const END_TRANSFORM_BITS: usize = 1 << 1;
+const ALL_TRANSFORM_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
+
+#[derive(Debug, Default)]
+struct TransformSet {
+    t: [Transform; MAX_TRANSFORMS],
+}
+
+impl TransformSet {
+    fn is_animated(&self) -> bool {
+        for i in 0..(MAX_TRANSFORMS - 1) {
+            if self.t[i] != self.t[i + 1] {
+                return true;
+            }
+        }
+        false
+    }
+    fn inverse(ts: &TransformSet) -> TransformSet {
+        let mut t_inv: TransformSet = Default::default();
+        for i in 0..MAX_TRANSFORMS {
+            t_inv.t[i] = ts.t[i].inverse();
+        }
+        t_inv
+    }
+}
+
+impl Index<usize> for TransformSet {
+    type Output = Transform;
+    fn index(&self, idx: usize) -> &Transform {
+        debug_assert!(idx > 0);
+        debug_assert!(idx < ALL_TRANSFORM_BITS);
+        &self.t[idx]
+    }
+}
+
+impl IndexMut<usize> for TransformSet {
+    fn index_mut(&mut self, idx: usize) -> &mut Transform {
+        debug_assert!(idx > 0);
+        debug_assert!(idx < ALL_TRANSFORM_BITS);
+        &mut self.t[idx]
+    }
+}
+
+/*
+struct TransformSet {
+    // TransformSet Public Methods
+    Transform &operator[](int i) {
+        Assert(i >= 0 && i < MaxTransforms);
+        return t[i];
+    }
+    const Transform &operator[](int i) const {
+        Assert(i >= 0 && i < MaxTransforms);
+        return t[i];
+    }
+    friend TransformSet Inverse(const TransformSet &ts) {
+        TransformSet tInv;
+        for (int i = 0; i < MaxTransforms; ++i) tInv.t[i] = Inverse(ts.t[i]);
+        return tInv;
+    }
+    bool IsAnimated() const {
+        for (int i = 0; i < MaxTransforms - 1; ++i)
+            if (t[i] != t[i + 1]) return true;
+        return false;
+    }
+
+  private:
+    Transform t[MaxTransforms];
+};
+*/
+
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => (
         if $pbrt.current_api_state == APIState::Uninitialized {
@@ -42,6 +117,7 @@ macro_rules! verify_initialized {
     )
 }
 
+#[allow(unused_macros)]
 macro_rules! verify_options {
     ($pbrt:expr, $func:expr) => (
         verify_initialized!($pbrt, $func);
@@ -53,6 +129,7 @@ macro_rules! verify_options {
     )
 }
 
+#[allow(unused_macros)]
 macro_rules! verify_world {
     ($pbrt:expr, $func:expr) => (
         verify_initialized!($pbrt, $func);
@@ -69,6 +146,8 @@ macro_rules! verify_world {
 pub struct Pbrt {
     opt: Options,
     current_api_state: APIState,
+    current_transform: TransformSet,
+    active_transform_bits: usize,
     // TODO(wathiede):
     // static TransformSet curTransform;
     // static uint32_t activeTransformBits = AllTransformsBits;
@@ -86,6 +165,8 @@ impl Pbrt {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
+            current_transform: Default::default(),
+            active_transform_bits: ALL_TRANSFORM_BITS,
         }
     }
 
@@ -132,5 +213,16 @@ impl Pbrt {
             "eye: {:?} {:?} {:?} look: {:?} {:?} {:?} up: {:?} {:?} {:?}",
             ex, ey, ez, lx, ly, lz, ux, uy, uz
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_transform_set() {
+        let ts: TransformSet = Default::default();
+        assert!(!ts.is_animated());
     }
 }
