@@ -111,7 +111,7 @@ struct TransformSet {
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => (
         if $pbrt.current_api_state == APIState::Uninitialized {
-            error!("Pbrt.init() must be before calling \"{}()\".  Ignoring.", $func);
+            error!("init() must be before calling \"{}()\".  Ignoring.", $func);
             return;
         }
     )
@@ -182,20 +182,35 @@ impl Pbrt {
 
     pub fn init(&mut self) {
         if self.current_api_state != APIState::Uninitialized {
-            error!("Pbrt.init() has already been called.");
+            error!("init() has already been called.");
         }
         self.current_api_state = APIState::OptionsBlock;
     }
 
     pub fn cleaup(&mut self) {
         if self.current_api_state == APIState::Uninitialized {
-            error!("Pbrt.cleanup() called without Pbrt.init().");
+            error!("cleanup() called without init().");
         } else if self.current_api_state == APIState::WorldBlock {
-            error!("Pbrt.cleanup() called while inside world block.");
+            error!("cleanup() called while inside world block.");
         }
         self.current_api_state = APIState::Uninitialized;
     }
 
+    fn for_active_transforms<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut Transform),
+    {
+        for i in 0..MAX_TRANSFORMS {
+            if self.active_transform_bits & (1 << i) > 0 {
+                f(&mut self.current_transform[i])
+            }
+        }
+    }
+
+    pub fn identity(&mut self) {
+        verify_initialized!(self, "identity");
+        self.for_active_transforms(|ct| *ct = Default::default());
+    }
     pub fn look_at(
         &mut self,
         ex: Float,
@@ -208,7 +223,7 @@ impl Pbrt {
         uy: Float,
         uz: Float,
     ) {
-        verify_initialized!(self, "Pbrt.look_at");
+        verify_initialized!(self, "pbrt.look_at");
         info!(
             "eye: {:?} {:?} {:?} look: {:?} {:?} {:?} up: {:?} {:?} {:?}",
             ex, ey, ez, lx, ly, lz, ux, uy, uz
