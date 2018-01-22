@@ -8,7 +8,8 @@ extern crate nom;
 
 use core::pbrt::{Float, Options};
 use core::parser;
-use core::transform::Transform;
+use core::transform::{Matrix4x4, Transform};
+use core::geometry::Vector3f;
 
 #[derive(Debug)]
 pub enum Error {
@@ -211,23 +212,51 @@ impl Pbrt {
         verify_initialized!(self, "identity");
         self.for_active_transforms(|ct| *ct = Default::default());
     }
-    pub fn look_at(
-        &mut self,
-        ex: Float,
-        ey: Float,
-        ez: Float,
-        lx: Float,
-        ly: Float,
-        lz: Float,
-        ux: Float,
-        uy: Float,
-        uz: Float,
-    ) {
+
+    pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
+        verify_initialized!(self, "translate");
+        self.for_active_transforms(|ct| {
+            // TODO(wathiede): is it wrong to clone ct? I needed to convert a &mut to a non-mutable
+            // type.
+            *ct = ct.clone() * Transform::translate(Vector3f::new(dx, dy, dz))
+        });
+    }
+
+    pub fn rotate(&mut self, angle: Float, ax: Float, ay: Float, az: Float) {
+        self.for_active_transforms(|ct| {
+            *ct = ct.clone() * Transform::rotate(angle, Vector3f::new(ax, ay, az))
+        });
+    }
+
+    pub fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
         verify_initialized!(self, "pbrt.look_at");
-        info!(
-            "eye: {:?} {:?} {:?} look: {:?} {:?} {:?} up: {:?} {:?} {:?}",
-            ex, ey, ez, lx, ly, lz, ux, uy, uz
-        );
+        info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
+    }
+    pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
+        self.for_active_transforms(|ct| *ct = ct.clone() * Transform::scale(sx, sy, sz));
+    }
+    pub fn concat_transform(&mut self, transform: [Float; 16]) {
+        self.for_active_transforms(|ct| {
+            let t = transform;
+            *ct = ct.clone()
+                * Transform::new_with_matrix(Matrix4x4::new_with_values(
+                    [t[0], t[1], t[2], t[3]],
+                    [t[4], t[5], t[6], t[7]],
+                    [t[8], t[9], t[10], t[11]],
+                    [t[12], t[13], t[14], t[15]],
+                ))
+        });
+    }
+    pub fn transform(&mut self, transform: [Float; 16]) {
+        self.for_active_transforms(|ct| {
+            let t = transform;
+            *ct = Transform::new_with_matrix(Matrix4x4::new_with_values(
+                [t[0], t[1], t[2], t[3]],
+                [t[4], t[5], t[6], t[7]],
+                [t[8], t[9], t[10], t[11]],
+                [t[12], t[13], t[14], t[15]],
+            ))
+        });
     }
 }
 
