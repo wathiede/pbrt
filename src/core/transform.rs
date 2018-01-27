@@ -7,7 +7,7 @@ use core::geometry::Vector3f;
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
 /// the row number and j is the column number.
 pub struct Matrix4x4 {
-    m: [[Float; 4]; 4],
+    pub m: [[Float; 4]; 4],
 }
 
 impl Matrix4x4 {
@@ -155,6 +155,14 @@ impl Transform {
                 ],
             },
         }
+    }
+
+    pub fn matrix(self) -> Matrix4x4 {
+        self.m
+    }
+
+    pub fn matrix_inverse(self) -> Matrix4x4 {
+        self.m_inv
     }
 }
 

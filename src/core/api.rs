@@ -1,3 +1,4 @@
+use std::collections;
 use std::fs::File;
 use std::io::Read;
 use std::io;
@@ -42,7 +43,7 @@ const START_TRANSFORM_BITS: usize = 1 << 0;
 const END_TRANSFORM_BITS: usize = 1 << 1;
 const ALL_TRANSFORM_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
 
-#[derive(Debug, Default)]
+#[derive(Copy, Clone, Debug, Default)]
 struct TransformSet {
     t: [Transform; MAX_TRANSFORMS],
 }
@@ -81,33 +82,6 @@ impl IndexMut<usize> for TransformSet {
         &mut self.t[idx]
     }
 }
-
-/*
-struct TransformSet {
-    // TransformSet Public Methods
-    Transform &operator[](int i) {
-        Assert(i >= 0 && i < MaxTransforms);
-        return t[i];
-    }
-    const Transform &operator[](int i) const {
-        Assert(i >= 0 && i < MaxTransforms);
-        return t[i];
-    }
-    friend TransformSet Inverse(const TransformSet &ts) {
-        TransformSet tInv;
-        for (int i = 0; i < MaxTransforms; ++i) tInv.t[i] = Inverse(ts.t[i]);
-        return tInv;
-    }
-    bool IsAnimated() const {
-        for (int i = 0; i < MaxTransforms - 1; ++i)
-            if (t[i] != t[i + 1]) return true;
-        return false;
-    }
-
-  private:
-    Transform t[MaxTransforms];
-};
-*/
 
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => (
@@ -149,10 +123,8 @@ pub struct Pbrt {
     current_api_state: APIState,
     current_transform: TransformSet,
     active_transform_bits: usize,
+    named_coordinate_systems: collections::HashMap<String, TransformSet>,
     // TODO(wathiede):
-    // static TransformSet curTransform;
-    // static uint32_t activeTransformBits = AllTransformsBits;
-    // static std::map<std::string, TransformSet> namedCoordinateSystems;
     // static std::unique_ptr<RenderOptions> renderOptions;
     // static GraphicsState graphicsState;
     // static std::vector<GraphicsState> pushedGraphicsStates;
@@ -162,12 +134,14 @@ pub struct Pbrt {
 }
 
 impl Pbrt {
+    // TODO(wathiede): make options a reference.
     pub fn new(opt: Options) -> Pbrt {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
             current_transform: Default::default(),
             active_transform_bits: ALL_TRANSFORM_BITS,
+            named_coordinate_systems: collections::HashMap::new(),
         }
     }
 
@@ -210,6 +184,7 @@ impl Pbrt {
 
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
+        // TODO(wathiede): default isn't actually the  identity, make it so.
         self.for_active_transforms(|ct| *ct = Default::default());
     }
 
@@ -258,6 +233,20 @@ impl Pbrt {
             ))
         });
     }
+
+    pub fn coordinate_system(&mut self, name: String) {
+        verify_initialized!(self, "pbrt.coordinate_system");
+        self.named_coordinate_systems
+            .insert(name, self.current_transform);
+    }
+
+    pub fn coordinate_system_transform(&mut self, name: String) {
+        verify_initialized!(self, "pbrt.coordinate_system_transform");
+        match self.named_coordinate_systems.get(&name) {
+            Some(t) => self.current_transform = *t,
+            None => warn!("Couldn’t find named coordinate system \"{}\"", name),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -268,5 +257,29 @@ mod tests {
     fn test_transform_set() {
         let ts: TransformSet = Default::default();
         assert!(!ts.is_animated());
+    }
+
+    #[test]
+    fn test_named_coordinate_systems() {
+        let mut pbrt = Pbrt::new(Options {
+            num_threads: 1,
+            quick_render: false,
+            quiet: false,
+            verbose: true,
+            image_file: String::from(""),
+        });
+        pbrt.transform([
+            2., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+        ]);
+        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
+
+        pbrt.coordinate_system("two".into());
+        pbrt.transform([
+            3., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+        ]);
+        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 3.);
+
+        pbrt.coordinate_system_transform("two".into());
+        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
     }
 }
