@@ -261,11 +261,12 @@ mod tests {
     #[test]
     fn test_named_coordinate_systems() {
         let opts = Options {
-            num_threads: 1,
+            num_threads: None,
             quick_render: false,
             quiet: false,
             verbose: true,
-            image_file: String::from(""),
+            image_file: None,
+            scene_files: vec![],
         };
         let mut pbrt = Pbrt::new(&opts);
         pbrt.transform([
