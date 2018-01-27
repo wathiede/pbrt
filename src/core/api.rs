@@ -118,8 +118,8 @@ macro_rules! verify_world {
 
 // Pbrt is the top-level global container for all rendering functionality.
 #[derive(Debug)]
-pub struct Pbrt {
-    opt: Options,
+pub struct Pbrt<'a> {
+    opt: &'a Options,
     current_api_state: APIState,
     current_transform: TransformSet,
     active_transform_bits: usize,
@@ -133,9 +133,8 @@ pub struct Pbrt {
     // static TransformCache transformCache;
 }
 
-impl Pbrt {
-    // TODO(wathiede): make options a reference.
-    pub fn new(opt: Options) -> Pbrt {
+impl<'a> Pbrt<'a> {
+    pub fn new(opt: &'a Options) -> Pbrt<'a> {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
@@ -261,13 +260,14 @@ mod tests {
 
     #[test]
     fn test_named_coordinate_systems() {
-        let mut pbrt = Pbrt::new(Options {
+        let opts = Options {
             num_threads: 1,
             quick_render: false,
             quiet: false,
             verbose: true,
             image_file: String::from(""),
-        });
+        };
+        let mut pbrt = Pbrt::new(&opts);
         pbrt.transform([
             2., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
         ]);

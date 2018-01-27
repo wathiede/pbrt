@@ -93,7 +93,7 @@ fn main() {
 
     info!("Options: {:#?}", &opt);
     info!("Inputs: {:?}", &matches.free);
-    let ref pbrt = api::Pbrt::new(opt.clone());
+    let ref pbrt = api::Pbrt::new(&opt);
     for f in matches.free {
         match pbrt.parse_file(&f) {
             Ok(res) => {
