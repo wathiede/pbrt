@@ -3,7 +3,7 @@ use std::ops::Mul;
 use core::pbrt::{degrees, radians, Float};
 use core::geometry::Vector3f;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy)]
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
 /// the row number and j is the column number.
 pub struct Matrix4x4 {
@@ -44,7 +44,77 @@ impl Matrix4x4 {
     }
 
     pub fn inverse(&self) -> Matrix4x4 {
-        unimplemented!("matrix inverse is hard");
+        // TODO(wathiede): how come the C++ version doesn't need to deal with non-invertable
+        // matrix.
+        let mut indxc: [usize; 4] = Default::default();
+        let mut indxr: [usize; 4] = Default::default();
+        let mut ipiv: [usize; 4] = Default::default();
+        let mut minv = self.m.clone();
+
+        for i in 0..4 {
+            let mut irow: usize = 0;
+            let mut icol: usize = 0;
+            let mut big: Float = 0.;
+            // Choose pivot
+            for j in 0..4 {
+                if ipiv[j] != 1 {
+                    for k in 0..4 {
+                        if ipiv[k] == 0 {
+                            if minv[j][k].abs() >= big {
+                                big = minv[j][k].abs();
+                                irow = j;
+                                icol = k;
+                            }
+                        } else if ipiv[k] > 1 {
+                            error!("Singular matrix in MatrixInvert");
+                        }
+                    }
+                }
+            }
+            ipiv[icol] += 1;
+            // Swap rows _irow_ and _icol_ for pivot
+            if irow != icol {
+                for k in 0..4 {
+                    let tmp = minv[irow][k];
+                    minv[irow][k] = minv[icol][k];
+                    minv[icol][k] = tmp;
+                }
+            }
+            indxr[i] = irow;
+            indxc[i] = icol;
+            if minv[icol][icol] == 0. {
+                error!("Singular matrix in MatrixInvert");
+            }
+
+            // Set $m[icol][icol]$ to one by scaling row _icol_ appropriately
+            let pivinv: Float = 1. / minv[icol][icol];
+            minv[icol][icol] = 1.;
+            for j in 0..4 {
+                minv[icol][j] *= pivinv;
+            }
+
+            // Subtract this row from others to zero out their columns
+            for j in 0..4 {
+                if j != icol {
+                    let save = minv[j][icol];
+                    minv[j][icol] = 0.;
+                    for k in 0..4 {
+                        minv[j][k] -= minv[icol][k] * save;
+                    }
+                }
+            }
+        }
+        // Swap columns to reflect permutation
+        for j in (0..4).rev() {
+            if indxr[j] != indxc[j] {
+                for k in 0..4 {
+                    let tmp = minv[k][indxr[j]];
+                    minv[k][indxr[j]] = minv[k][indxc[j]];
+                    minv[k][indxc[j]] = tmp;
+                }
+            }
+        }
+        Matrix4x4 { m: minv }
     }
 }
 
@@ -60,6 +130,23 @@ impl Mul<Matrix4x4> for Matrix4x4 {
             }
         }
         r
+    }
+}
+
+impl PartialEq for Matrix4x4 {
+    fn eq(&self, rhs: &Matrix4x4) -> bool {
+        let eps = 0.1; // 1.0e-6;
+        let l = self.m;
+        let r = rhs.m;
+        for i in 0..4 {
+            for j in 0..4 {
+                let d = (l[i][j] - r[i][j]).abs();
+                if d > eps {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }
 
@@ -190,6 +277,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_4x4_inverse() {
+        // Identity
+        let i = Matrix4x4::new();
+        assert_eq!(i.inverse() * i, i);
+
+        let m = Matrix4x4::new_with_values(
+            [2., 0., 0., 0.],
+            [0., 3., 0., 0.],
+            [0., 0., 4., 0.],
+            [0., 0., 0., 1.],
+        );
+        assert_eq!(m.inverse() * m, i);
+        assert_eq!(m * m.inverse(), i);
+    }
+
+    #[test]
     fn test_transform_mul() {
         // Test that std::ops::Mul compiles.
         let i = Matrix4x4::new();
@@ -198,4 +301,17 @@ mod tests {
         assert_eq!(m1 * m2, i);
     }
 
+    #[test]
+    fn test_scale() {
+        // Test that std::ops::Mul compiles.
+        let m1 = Matrix4x4::new();
+        let t = Transform::scale(2., 3., 4.);
+        let m2 = Matrix4x4::new_with_values(
+            [2., 0., 0., 0.],
+            [0., 3., 0., 0.],
+            [0., 0., 4., 0.],
+            [0., 0., 0., 1.],
+        );
+        assert_eq!(t.m * m1, m2);
+    }
 }
