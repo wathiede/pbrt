@@ -181,8 +181,7 @@ impl<'a> Pbrt<'a> {
 
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
-        // TODO(wathiede): default isn't actually the  identity, make it so.
-        self.for_active_transforms(|ct| *ct = Default::default());
+        self.for_active_transforms(|ct| *ct = Transform::new());
     }
 
     pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
@@ -195,6 +194,7 @@ impl<'a> Pbrt<'a> {
     }
 
     pub fn rotate(&mut self, angle: Float, ax: Float, ay: Float, az: Float) {
+        verify_initialized!(self, "pbrt.rotate");
         self.for_active_transforms(|ct| {
             *ct = ct.clone() * Transform::rotate(angle, Vector3f::new(ax, ay, az))
         });
@@ -204,10 +204,14 @@ impl<'a> Pbrt<'a> {
         verify_initialized!(self, "pbrt.look_at");
         info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
     }
+
     pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
+        verify_initialized!(self, "pbrt.scale");
         self.for_active_transforms(|ct| *ct = ct.clone() * Transform::scale(sx, sy, sz));
     }
+
     pub fn concat_transform(&mut self, transform: [Float; 16]) {
+        verify_initialized!(self, "pbrt.concat_transform");
         self.for_active_transforms(|ct| {
             let t = transform;
             *ct = ct.clone()
@@ -219,7 +223,9 @@ impl<'a> Pbrt<'a> {
                 ))
         });
     }
+
     pub fn transform(&mut self, transform: [Float; 16]) {
+        verify_initialized!(self, "pbrt.transform");
         self.for_active_transforms(|ct| {
             let t = transform;
             *ct = Transform::new_with_matrix(Matrix4x4::new_with_values(
@@ -266,15 +272,14 @@ mod tests {
             image_file: "".to_owned(),
         };
         let mut pbrt = Pbrt::new(&opts);
-        pbrt.transform([
-            2., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        pbrt.init();
+        pbrt.identity();
+        pbrt.scale(2., 2., 2.);
         assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
 
         pbrt.coordinate_system("two".into());
-        pbrt.transform([
-            3., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
-        ]);
+        pbrt.identity();
+        pbrt.scale(3., 3., 3.);
         assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 3.);
 
         pbrt.coordinate_system_transform("two".into());

@@ -157,6 +157,13 @@ pub struct Transform {
 }
 
 impl Transform {
+    /// Returns a new transform with m and m_inv set to identity.
+    pub fn new() -> Transform {
+        Transform {
+            m: Matrix4x4::new(),
+            m_inv: Matrix4x4::new(),
+        }
+    }
     pub fn new_with_matrix(m: Matrix4x4) -> Transform {
         Transform {
             m,
