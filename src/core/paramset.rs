@@ -115,11 +115,9 @@ impl From<Vec<ParamSetItem>> for ParamSet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    extern crate env_logger;
 
     #[test]
     fn test_param_set() {
-        let _ = env_logger::init();
         let mut ps: ParamSet = vec![
             ParamSetItem::new("test0", Value::Float(vec![1., 2.].into())),
         ].into();

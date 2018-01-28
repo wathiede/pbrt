@@ -1,0 +1,11 @@
+[package]
+name = "pbrt-bin"
+version = "0.1.0"
+authors = ["Bill Thiede <rust@xinu.tv>"]
+
+[dependencies]
+pbrt = { version="0.1.0", path="../" }
+simplelog = "0.4.4"
+structopt = "0.1.7"
+structopt-derive = "0.1.6"
+log = "0.4.1"
