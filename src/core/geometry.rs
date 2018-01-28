@@ -40,6 +40,7 @@ impl Vector3f {
     pub fn length_squared(&self) -> Float {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
+
     pub fn length(&self) -> Float {
         self.length_squared().sqrt()
     }
@@ -59,6 +60,33 @@ impl<'a> Div<Float> for &'a Vector3f {
 }
 
 pub type Vector3i = Vector3<Int>;
+
+impl Vector3i {
+    pub fn normalize(&self) -> Vector3i {
+        self / self.length()
+    }
+
+    pub fn length_squared(&self) -> Float {
+        (self.x * self.x + self.y * self.y + self.z * self.z) as Float
+    }
+
+    pub fn length(&self) -> Float {
+        self.length_squared().sqrt()
+    }
+}
+
+// TODO(wathiede): Make this generic over float vs int.
+impl<'a> Div<Float> for &'a Vector3i {
+    type Output = Vector3i;
+
+    fn div(self, rhs: Float) -> Vector3i {
+        Vector3 {
+            x: (self.x as Float / rhs) as Int,
+            y: (self.y as Float / rhs) as Int,
+            z: (self.z as Float / rhs) as Int,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point2<T> {
@@ -87,3 +115,60 @@ pub struct Normal3<T> {
 }
 
 pub type Normal3f = Normal3<Float>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize() {
+        let v3f = Vector3f {
+            x: 1.,
+            y: 0.,
+            z: 0.,
+        };
+        assert_eq!(v3f.length(), 1.);
+        assert_eq!(
+            v3f.normalize(),
+            Vector3f {
+                x: 1.,
+                y: 0.,
+                z: 0.,
+            }
+        );
+
+        let v3f = Vector3f {
+            x: 0.,
+            y: 1.,
+            z: 0.,
+        };
+        assert_eq!(v3f.length(), 1.);
+        assert_eq!(
+            v3f.normalize(),
+            Vector3f {
+                x: 0.,
+                y: 1.,
+                z: 0.,
+            }
+        );
+
+        let v3f = Vector3f {
+            x: 0.,
+            y: 0.,
+            z: 1.,
+        };
+        assert_eq!(v3f.length(), 1.);
+        assert_eq!(
+            v3f.normalize(),
+            Vector3f {
+                x: 0.,
+                y: 0.,
+                z: 1.,
+            }
+        );
+
+        let v3i = Vector3i { x: 0, y: 0, z: 1 };
+        assert_eq!(v3i.length(), 1.);
+        assert_eq!(v3i.normalize(), Vector3i { x: 0, y: 0, z: 1 });
+    }
+}
