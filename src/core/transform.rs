@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use core::pbrt::{radians, Float};
+use core::pbrt::Float;
 use core::geometry::Vector3f;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -197,8 +197,8 @@ impl Transform {
     /// rotate generates a Tranform for the rotation of theta (in degrees) about axis.
     pub fn rotate(theta: Float, axis: Vector3f) -> Transform {
         let a = axis.normalize();
-        let sin_theta = radians(theta).sin();
-        let cos_theta = radians(theta).cos();
+        let sin_theta = theta.to_radians().sin();
+        let cos_theta = theta.to_radians().cos();
         let m = Matrix4x4 {
             // Compute rotation of first basis vector
             m: [
