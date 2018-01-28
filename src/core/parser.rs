@@ -483,6 +483,7 @@ mod tests {
 
     use super::*;
 
+    #[allow(dead_code)]
     fn dump<O>(res: &IResult<&[u8], O>)
     where
         O: Debug,

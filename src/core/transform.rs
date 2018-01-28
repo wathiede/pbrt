@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use core::pbrt::{degrees, radians, Float};
+use core::pbrt::{radians, Float};
 use core::geometry::Vector3f;
 
 #[derive(Debug, Default, Clone, Copy)]

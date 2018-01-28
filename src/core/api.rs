@@ -39,8 +39,8 @@ enum APIState {
 
 // API Local Classes
 const MAX_TRANSFORMS: usize = 2;
-const START_TRANSFORM_BITS: usize = 1 << 0;
-const END_TRANSFORM_BITS: usize = 1 << 1;
+//const START_TRANSFORM_BITS: usize = 1 << 0;
+//const END_TRANSFORM_BITS: usize = 1 << 1;
 const ALL_TRANSFORM_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
 
 #[derive(Copy, Clone, Debug, Default)]

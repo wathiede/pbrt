@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul};
+use std::ops::Div;
 
 use core::pbrt::{Float, Int};
 
