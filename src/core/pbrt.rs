@@ -1,29 +1,15 @@
-use structopt::StructOpt;
-
 // Set this type alias to modify all floats in pbrt to be 32 or 64-bit.
 pub type Float = f32;
 // Set this type alias to modify all ints in pbrt to be 32 or 64-bit.
 pub type Int = i32;
 
-#[derive(Clone, Debug, Default, StructOpt)]
-#[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
+#[derive(Clone, Debug, Default)]
 pub struct Options {
-    #[structopt(short = "n", long = "nthreads")]
-    /// Use specified number of threads for rendering.
-    pub num_threads: Option<u32>,
-    #[structopt(long = "quick")]
-    /// Automatically reduce a number of quality settings to render more quickly.
+    pub num_threads: u32,
     pub quick_render: bool,
-    #[structopt(short = "q", long = "quiet")]
-    /// Suppress all text output other than error messages.
     pub quiet: bool,
-    #[structopt(short = "v", long = "verbose")]
-    /// Print out more detailed logging information.
     pub verbose: bool,
-    #[structopt(short = "o", long = "outfile")]
-    /// Write the final image to the given filename.
-    pub image_file: Option<String>,
-    pub scene_files: Vec<String>,
+    pub image_file: String,
 }
 
 const PI: Float = 3.14159265358979323846;

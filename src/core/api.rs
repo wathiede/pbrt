@@ -69,7 +69,6 @@ impl TransformSet {
 impl Index<usize> for TransformSet {
     type Output = Transform;
     fn index(&self, idx: usize) -> &Transform {
-        debug_assert!(idx > 0);
         debug_assert!(idx < ALL_TRANSFORM_BITS);
         &self.t[idx]
     }
@@ -77,7 +76,6 @@ impl Index<usize> for TransformSet {
 
 impl IndexMut<usize> for TransformSet {
     fn index_mut(&mut self, idx: usize) -> &mut Transform {
-        debug_assert!(idx > 0);
         debug_assert!(idx < ALL_TRANSFORM_BITS);
         &mut self.t[idx]
     }
@@ -261,12 +259,11 @@ mod tests {
     #[test]
     fn test_named_coordinate_systems() {
         let opts = Options {
-            num_threads: None,
+            num_threads: 1,
             quick_render: false,
             quiet: false,
             verbose: true,
-            image_file: None,
-            scene_files: vec![],
+            image_file: "".to_owned(),
         };
         let mut pbrt = Pbrt::new(&opts);
         pbrt.transform([
