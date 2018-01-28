@@ -1,5 +1,7 @@
 // Set this type alias to modify all floats in pbrt to be 32 or 64-bit.
+use std::f32;
 pub type Float = f32;
+pub const EPSILON: Float = f32::EPSILON;
 // Set this type alias to modify all ints in pbrt to be 32 or 64-bit.
 pub type Int = i32;
 

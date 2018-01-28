@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use core::pbrt::Float;
+use core::pbrt::{Float, EPSILON};
 use core::geometry::Vector3f;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -87,7 +87,7 @@ impl Matrix4x4 {
             }
 
             // Set $m[icol][icol]$ to one by scaling row _icol_ appropriately
-            let pivinv: Float = 1. / minv[icol][icol];
+            let pivinv: Float = minv[icol][icol].recip();
             minv[icol][icol] = 1.;
             for j in 0..4 {
                 minv[icol][j] *= pivinv;
@@ -135,13 +135,12 @@ impl Mul<Matrix4x4> for Matrix4x4 {
 
 impl PartialEq for Matrix4x4 {
     fn eq(&self, rhs: &Matrix4x4) -> bool {
-        let eps = 0.1; // 1.0e-6;
         let l = self.m;
         let r = rhs.m;
         for i in 0..4 {
             for j in 0..4 {
                 let d = (l[i][j] - r[i][j]).abs();
-                if d > eps {
+                if d > EPSILON {
                     return false;
                 }
             }
@@ -242,9 +241,9 @@ impl Transform {
             },
             m_inv: Matrix4x4 {
                 m: [
-                    [1. / sx, 0., 0., 0.],
-                    [0., 1. / sy, 0., 0.],
-                    [0., 0., 1. / sz, 0.],
+                    [sx.recip(), 0., 0., 0.],
+                    [0., sy.recip(), 0., 0.],
+                    [0., 0., sz.recip(), 0.],
                     [0., 0., 0., 1.],
                 ],
             },
