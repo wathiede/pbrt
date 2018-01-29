@@ -44,7 +44,8 @@ fn main() {
         let _ = TermLogger::init(LogLevelFilter::Info, Config::default());
     }
     if flags.scene_files.is_empty() {
-        error!("One or more scene files required.");
+        println!("One or more scene files required.\n");
+        Options::clap().print_help().unwrap();
         process::exit(1);
     }
 
