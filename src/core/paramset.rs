@@ -87,6 +87,14 @@ impl ParamSet {
         })
     }
 
+    pub fn find_one_string(&mut self, name: &str, default: &str) -> String {
+        match self.find(name) {
+            Some(Value::String(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
+            None => default.into(),
+            _ => panic!("still working on it"),
+        }
+    }
+
     pub fn report_unused(&self) -> bool {
         let mut unused = false;
         info!("report_unused");
@@ -157,5 +165,23 @@ mod tests {
 
         ps.add("notused", Value::Bool(ParamList(vec![true, true, false])));
         assert!(ps.report_unused());
+    }
+
+    #[test]
+    fn test_param_set_find() {
+        let mut ps: ParamSet = vec![
+            ParamSetItem::new("test1", Value::Float(ParamList(vec![1., 2.]))),
+            ParamSetItem::new(
+                "test2",
+                Value::String(ParamList(vec!["one".to_owned(), "two".to_owned()])),
+            ),
+            ParamSetItem::new("test3", Value::String(ParamList(vec![]))),
+        ].into();
+
+        let test2: String = "one".to_owned();
+        assert_eq!(ps.find_one_string("test2", "one"), test2);
+
+        // let test3: String = "one".to_owned();
+        // assert_eq!(ps.find("test3").unwrap_or("one").first(), test3);
     }
 }

@@ -7,10 +7,13 @@ use std::path::Path;
 
 extern crate nom;
 
-use core::pbrt::{Float, Options};
-use core::parser;
-use core::transform::{Matrix4x4, Transform};
 use core::geometry::Vector3f;
+use core::light::Light;
+use core::medium::Medium;
+use core::paramset::ParamSet;
+use core::parser;
+use core::pbrt::{Float, Options};
+use core::transform::{Matrix4x4, Transform};
 
 #[derive(Debug)]
 pub enum Error {
@@ -39,16 +42,23 @@ enum APIState {
 
 // API Local Classes
 const MAX_TRANSFORMS: usize = 2;
-//const START_TRANSFORM_BITS: usize = 1 << 0;
-//const END_TRANSFORM_BITS: usize = 1 << 1;
-const ALL_TRANSFORM_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
+const START_TRANSFORM_BITS: usize = 1 << 0;
+const END_TRANSFORM_BITS: usize = 1 << 1;
+const ALL_TRANSFORMS_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug)]
 struct TransformSet {
     t: [Transform; MAX_TRANSFORMS],
 }
 
 impl TransformSet {
+    fn new() -> TransformSet {
+        let mut t: [Transform; MAX_TRANSFORMS] = Default::default();
+        for i in 0..MAX_TRANSFORMS {
+            t[i] = Transform::new();
+        }
+        TransformSet { t }
+    }
     fn is_animated(&self) -> bool {
         for i in 0..(MAX_TRANSFORMS - 1) {
             if self.t[i] != self.t[i + 1] {
@@ -57,10 +67,10 @@ impl TransformSet {
         }
         false
     }
-    fn inverse(ts: &TransformSet) -> TransformSet {
-        let mut t_inv: TransformSet = Default::default();
+    fn inverse(&self) -> TransformSet {
+        let mut t_inv: TransformSet = TransformSet::new();
         for i in 0..MAX_TRANSFORMS {
-            t_inv.t[i] = ts.t[i].inverse();
+            t_inv.t[i] = self.t[i].inverse();
         }
         t_inv
     }
@@ -69,22 +79,103 @@ impl TransformSet {
 impl Index<usize> for TransformSet {
     type Output = Transform;
     fn index(&self, idx: usize) -> &Transform {
-        debug_assert!(idx < ALL_TRANSFORM_BITS);
+        debug_assert!(idx < ALL_TRANSFORMS_BITS);
         &self.t[idx]
     }
 }
 
 impl IndexMut<usize> for TransformSet {
     fn index_mut(&mut self, idx: usize) -> &mut Transform {
-        debug_assert!(idx < ALL_TRANSFORM_BITS);
+        debug_assert!(idx < ALL_TRANSFORMS_BITS);
         &mut self.t[idx]
     }
 }
 
+#[derive(Debug)]
+struct RenderOptions {
+    transform_start_time: Float,
+    transform_end_time: Float,
+    filter_name: String,
+    filter_params: ParamSet,
+    film_name: String,
+    film_params: ParamSet,
+    sampler_name: String,
+    sampler_params: ParamSet,
+    accelerator_name: String,
+    accelerator_params: ParamSet,
+    integrator_name: String,
+    integrator_params: ParamSet,
+    camera_name: String,
+    camera_params: ParamSet,
+    camera_to_world: TransformSet,
+    named_media: collections::HashMap<String, Medium>,
+    lights: Vec<Light>,
+    have_scattering_media: bool,
+    // TODO(wathiede):
+    // std::vector<std::shared_ptr<Primitive>> primitives;
+    // std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
+    // std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
+}
+
+impl RenderOptions {
+    fn new() -> RenderOptions {
+        RenderOptions {
+            transform_start_time: 0.,
+            transform_end_time: 0.,
+            filter_name: "box".to_owned(),
+            filter_params: ParamSet::new(),
+            film_name: "image".to_owned(),
+            film_params: ParamSet::new(),
+            sampler_name: "halton".to_owned(),
+            sampler_params: ParamSet::new(),
+            accelerator_name: "bvh".to_owned(),
+            accelerator_params: ParamSet::new(),
+            integrator_name: "path".to_owned(),
+            integrator_params: ParamSet::new(),
+            camera_name: "perspective".to_owned(),
+            camera_params: ParamSet::new(),
+            camera_to_world: TransformSet::new(),
+            named_media: collections::HashMap::new(),
+            lights: Vec::new(),
+            have_scattering_media: false,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct GraphicsState {
+    current_inside_medium: String,
+    current_outside_medium: String,
+    // TODO(wathiede):
+    // // Graphics State Methods
+    // std::shared_ptr<Material> CreateMaterial(const ParamSet &params);
+    // MediumInterface CreateMediumInterface();
+
+    // // Graphics State
+    // std::map<std::string, std::shared_ptr<Texture<Float>>> floatTextures;
+    // std::map<std::string, std::shared_ptr<Texture<Spectrum>>> spectrumTextures;
+    // ParamSet materialParams;
+    // std::string material = "matte";
+    // std::map<std::string, std::shared_ptr<Material>> namedMaterials;
+    // std::string currentNamedMaterial;
+    // ParamSet areaLightParams;
+    // std::string areaLight;
+    // bool reverseOrientation = false;
+}
+
+impl GraphicsState {
+    fn new() -> GraphicsState {
+        GraphicsState {
+            current_inside_medium: "".to_owned(),
+            current_outside_medium: "".to_owned(),
+        }
+    }
+}
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => (
         if $pbrt.current_api_state == APIState::Uninitialized {
             error!("init() must be before calling \"{}()\".  Ignoring.", $func);
+            debug_assert!(false);
             return;
         }
     )
@@ -97,6 +188,7 @@ macro_rules! verify_options {
         if $pbrt.current_api_state == APIState::WorldBlock {
             error!("Options cannot be set inside world block; \"{}\" not allowed.  Ignoring.",
             $func);
+            debug_assert!(false);
             return;
         }
     )
@@ -109,6 +201,7 @@ macro_rules! verify_world {
         if $pbrt.current_api_state == APIState::OptionsBlock {
             error!("Scene description must be inside world block; \"{}\" not allowed.  Ignoring.",
             $func);
+            debug_assert!(false);
             return;
         }
     )
@@ -122,9 +215,9 @@ pub struct Pbrt<'a> {
     current_transform: TransformSet,
     active_transform_bits: usize,
     named_coordinate_systems: collections::HashMap<String, TransformSet>,
+    render_options: RenderOptions,
+    graphics_state: GraphicsState,
     // TODO(wathiede):
-    // static std::unique_ptr<RenderOptions> renderOptions;
-    // static GraphicsState graphicsState;
     // static std::vector<GraphicsState> pushedGraphicsStates;
     // static std::vector<TransformSet> pushedTransforms;
     // static std::vector<uint32_t> pushedActiveTransformBits;
@@ -136,9 +229,11 @@ impl<'a> Pbrt<'a> {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
-            current_transform: Default::default(),
-            active_transform_bits: ALL_TRANSFORM_BITS,
+            current_transform: TransformSet::new(),
+            active_transform_bits: ALL_TRANSFORMS_BITS,
             named_coordinate_systems: collections::HashMap::new(),
+            render_options: RenderOptions::new(),
+            graphics_state: GraphicsState::new(),
         }
     }
 
@@ -157,6 +252,7 @@ impl<'a> Pbrt<'a> {
             error!("init() has already been called.");
         }
         self.current_api_state = APIState::OptionsBlock;
+        self.render_options = RenderOptions::new();
     }
 
     pub fn cleaup(&mut self) {
@@ -166,17 +262,7 @@ impl<'a> Pbrt<'a> {
             error!("cleanup() called while inside world block.");
         }
         self.current_api_state = APIState::Uninitialized;
-    }
-
-    fn for_active_transforms<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut Transform),
-    {
-        for i in 0..MAX_TRANSFORMS {
-            if self.active_transform_bits & (1 << i) > 0 {
-                f(&mut self.current_transform[i])
-            }
-        }
+        self.render_options = RenderOptions::new();
     }
 
     pub fn identity(&mut self) {
@@ -250,6 +336,100 @@ impl<'a> Pbrt<'a> {
             None => warn!("Couldn’t find named coordinate system \"{}\"", name),
         }
     }
+
+    pub fn active_transform_all(&mut self) {
+        self.active_transform_bits = ALL_TRANSFORMS_BITS;
+    }
+
+    pub fn active_transform_end_time(&mut self) {
+        self.active_transform_bits = END_TRANSFORM_BITS;
+    }
+
+    pub fn active_transform_start_time(&mut self) {
+        self.active_transform_bits = START_TRANSFORM_BITS;
+    }
+
+    pub fn transform_times(&mut self, start: Float, end: Float) {
+        verify_options!(self, "pbrt.tranform_times");
+        self.render_options.transform_start_time = start;
+        self.render_options.transform_end_time = end;
+    }
+
+    pub fn pixel_filter(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.pixel_filter");
+        self.render_options.filter_name = name;
+        self.render_options.filter_params = params;
+    }
+
+    pub fn film(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.film");
+        self.render_options.film_name = name;
+        self.render_options.film_params = params;
+    }
+
+    pub fn sampler(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.sampler");
+        self.render_options.sampler_name = name;
+        self.render_options.sampler_params = params;
+    }
+
+    pub fn accelerator(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.accelerator");
+        self.render_options.accelerator_name = name;
+        self.render_options.accelerator_params = params;
+    }
+
+    pub fn integrator(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.integrator");
+        self.render_options.integrator_name = name;
+        self.render_options.integrator_params = params;
+    }
+
+    pub fn camera(&mut self, name: String, params: ParamSet) {
+        verify_options!(self, "pbrt.camera");
+        self.render_options.camera_name = name;
+        self.render_options.camera_params = params;
+        self.render_options.camera_to_world = self.current_transform.inverse();
+        self.named_coordinate_systems
+            .insert("camera".to_owned(), self.render_options.camera_to_world);
+    }
+
+    pub fn make_named_medium(&mut self, name: String, params: &mut ParamSet) {
+        verify_initialized!(self, "pbrt.make_named_medium");
+        self.warn_if_animated_transform("pbrt.make_named_medium");
+        let kind = params.find_one_string("type", "");
+        let medium = make_medium(&kind, params, self.current_transform[0]);
+        self.render_options.named_media.insert(name, medium);
+    }
+
+    pub fn medium_interface(&mut self, inside_name: &str, outside_name: &str) {
+        verify_initialized!(self, "pbrt.medium_interface");
+        self.graphics_state.current_inside_medium = inside_name.into();
+        self.graphics_state.current_outside_medium = outside_name.into();
+        self.render_options.have_scattering_media = true;
+    }
+
+    fn for_active_transforms<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut Transform),
+    {
+        for i in 0..MAX_TRANSFORMS {
+            if self.active_transform_bits & (1 << i) > 0 {
+                f(&mut self.current_transform[i])
+            }
+        }
+    }
+
+    fn warn_if_animated_transform(&self, name: &str) {
+        if self.current_transform.is_animated() {
+            warn!(
+                "Animated transformations set; ignoring for \"{}\" and using the start transform only",                name);
+        }
+    }
+}
+
+fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) -> Medium {
+    unimplemented!("make_medium");
 }
 
 #[cfg(test)]
@@ -258,7 +438,7 @@ mod tests {
 
     #[test]
     fn test_transform_set() {
-        let ts: TransformSet = Default::default();
+        let ts: TransformSet = TransformSet::new();
         assert!(!ts.is_animated());
     }
 
