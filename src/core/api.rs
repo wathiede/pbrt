@@ -12,6 +12,7 @@ use core::light::Light;
 use core::medium::Medium;
 use core::paramset::ParamSet;
 use core::parser;
+use core::parser::{OptionsBlock, WorldBlock};
 use core::pbrt::{Float, Options};
 use core::transform::{Matrix4x4, Transform};
 
@@ -237,14 +238,58 @@ impl<'a> Pbrt<'a> {
         }
     }
 
-    pub fn parse_file<P: AsRef<Path>>(&self, path: P) -> Result<parser::Scene, Error> {
+    pub fn parse_world_objects(&mut self, world_objects: Vec<WorldBlock>) {
+        for wo in world_objects {
+            println!("wo: {:?}", &wo);
+            match wo {
+                WorldBlock::Attribute(wb) => {
+                    self.attribute_begin();
+                    self.parse_world_objects(wb);
+                    self.attribute_end();
+                }
+                WorldBlock::LightSource(_name, _ps) => (),
+                WorldBlock::Material(_name, _ps) => (),
+                WorldBlock::Shape(_name, _ps) => (),
+                WorldBlock::Translate(x, y, z) => self.translate(x, y, z),
+                WorldBlock::Texture(_name, _kind, _class, _ps) => (),
+            }
+        }
+    }
+
+    // TODO(wathiede): replace Ok() with something that prints stats about the scene render.
+    pub fn parse_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Error> {
         let mut f = File::open(path)?;
         let mut buffer = Vec::new();
 
         // read the whole file
         f.read_to_end(&mut buffer)?;
         let scene = parser::parse_scene(&buffer[..])?;
-        Ok(scene)
+        for o in scene.options {
+            println!("o: {:?}", &o);
+            match o {
+                OptionsBlock::LookAt(
+                    eye_x,
+                    eye_y,
+                    eye_z,
+                    look_x,
+                    look_y,
+                    look_z,
+                    up_x,
+                    up_y,
+                    up_z,
+                ) => self.look_at(
+                    [eye_x, eye_y, eye_z],    // eye xyz
+                    [look_x, look_y, look_z], // look xyz
+                    [up_x, up_y, up_z],       // up xyz
+                ),
+                OptionsBlock::Camera(name, ps) => self.camera(name, ps),
+                OptionsBlock::Sampler(name, ps) => self.sampler(name, ps),
+                OptionsBlock::Integrator(name, ps) => self.integrator(name, ps),
+                OptionsBlock::Film(name, ps) => self.film(name, ps),
+            }
+        }
+        self.parse_world_objects(scene.world_objects);
+        Ok(())
     }
 
     pub fn init(&mut self) {
@@ -263,6 +308,29 @@ impl<'a> Pbrt<'a> {
         }
         self.current_api_state = APIState::Uninitialized;
         self.render_options = RenderOptions::new();
+    }
+
+    pub fn attribute_begin(&mut self) {
+        verify_world!(self, "pbrt.attribute_begin");
+        //self.pushed_graphics_states.push_back(graphics_state);
+        //self.pushed_transforms.push_back(cur_transform);
+        //self.pushed_active_transform_bits.push_back(active_transform_bits);
+    }
+
+    pub fn attribute_end(&mut self) {
+        verify_world!(self, "pbrt.attribute_end");
+        // if (!pushedGraphicsStates.size()) {
+        //     Error(
+        //         "Unmatched pbrtAttributeEnd() encountered. "
+        //         "Ignoring it.");
+        //     return;
+        // }
+        // graphicsState = pushedGraphicsStates.back();
+        // pushedGraphicsStates.pop_back();
+        // curTransform = pushedTransforms.back();
+        // pushedTransforms.pop_back();
+        // activeTransformBits = pushedActiveTransformBits.back();
+        // pushedActiveTransformBits.pop_back();
     }
 
     pub fn identity(&mut self) {

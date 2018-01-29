@@ -28,7 +28,7 @@ pub enum Error {
 // }
 
 #[derive(Debug, Clone, PartialEq)]
-enum OptionsBlock {
+pub enum OptionsBlock {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     // TODO(wathiede): convert to 3 x Vector3f?
     LookAt(
@@ -43,12 +43,11 @@ enum OptionsBlock {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-enum WorldBlock {
+pub enum WorldBlock {
     Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
     LightSource(String, ParamSet),
     Material(String, ParamSet),
     Shape(String, ParamSet),
-    // TODO(wathiede): convert to Vector3f?
     Translate(Float, Float, Float),
     Texture(
         String, // name
@@ -60,8 +59,8 @@ enum WorldBlock {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scene {
-    options: Vec<OptionsBlock>,
-    world_objects: Vec<WorldBlock>,
+    pub options: Vec<OptionsBlock>,
+    pub world_objects: Vec<WorldBlock>,
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]

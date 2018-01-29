@@ -56,12 +56,13 @@ fn main() {
         verbose: flags.verbose,
         image_file: flags.image_file.unwrap_or("".to_owned()),
     };
-    let ref pbrt = api::Pbrt::new(&opts);
+    let ref mut pbrt = api::Pbrt::new(&opts);
+    pbrt.init();
     for f in &flags.scene_files {
         match pbrt.parse_file(&f) {
-            Ok(res) => {
+            Ok(_) => {
                 if opts.verbose {
-                    println!("Rendered {}\n{:#?}", f, res);
+                    println!("Rendered {}\n{:#?}", f, pbrt);
                 }
             }
             Err(err) => {
@@ -70,4 +71,5 @@ fn main() {
             }
         }
     }
+    pbrt.cleaup();
 }

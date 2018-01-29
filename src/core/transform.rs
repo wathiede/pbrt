@@ -1,9 +1,10 @@
+use std::fmt;
 use std::ops::Mul;
 
 use core::pbrt::{Float, EPSILON};
 use core::geometry::Vector3f;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
 /// the row number and j is the column number.
 pub struct Matrix4x4 {
@@ -115,6 +116,16 @@ impl Matrix4x4 {
             }
         }
         Matrix4x4 { m: minv }
+    }
+}
+
+impl fmt::Debug for Matrix4x4 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "[\n  {:?}\n  {:?}\n  {:?}\n  {:?}\n]",
+            self.m[0], self.m[1], self.m[2], self.m[3]
+        )
     }
 }
 
