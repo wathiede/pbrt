@@ -121,11 +121,21 @@ impl Matrix4x4 {
 
 impl fmt::Debug for Matrix4x4 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "[\n  {:?}\n  {:?}\n  {:?}\n  {:?}\n]",
-            self.m[0], self.m[1], self.m[2], self.m[3]
-        )
+        // TODO(wathiede): make this work with {:?} & {:#?} with f.alternate(), see:
+        // https://play.rust-lang.org/?gist=ce17803cf357a5563a463490db31515a&version=undefined
+        if f.alternate() {
+            write!(
+                f,
+                "{:?}\n  {:?}\n  {:?}\n  {:?}",
+                self.m[0], self.m[1], self.m[2], self.m[3]
+            )
+        } else {
+            write!(
+                f,
+                "[{:?} {:?} {:?} {:?}]",
+                self.m[0], self.m[1], self.m[2], self.m[3]
+            )
+        }
     }
 }
 
