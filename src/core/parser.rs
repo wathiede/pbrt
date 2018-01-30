@@ -27,8 +27,10 @@ pub enum Error {
 //     }
 // }
 
+// TODO(wathiede): Merge Directive & Directive?  Can't really make WorldEnd work with two
+// types, and something are valid in both, i.e. Translate, Scale, Rotate.
 #[derive(Debug, Clone, PartialEq)]
-pub enum OptionsBlock {
+pub enum Directive {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     // TODO(wathiede): convert to 3 x Vector3f?
     LookAt(
@@ -40,11 +42,10 @@ pub enum OptionsBlock {
     Sampler(String, ParamSet),
     Integrator(String, ParamSet),
     Film(String, ParamSet),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum WorldBlock {
-    Attribute(Vec<WorldBlock>), // Used for holding world block objects between AttributeBegin/End blocks.
+    WorldBegin,
+    WorldEnd,
+    AttributeBegin,
+    AttributeEnd,
     LightSource(String, ParamSet),
     Material(String, ParamSet),
     Shape(String, ParamSet),
@@ -59,8 +60,7 @@ pub enum WorldBlock {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scene {
-    pub options: Vec<OptionsBlock>,
-    pub world_objects: Vec<WorldBlock>,
+    pub directives: Vec<Directive>,
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -266,7 +266,7 @@ named!(param_set<Vec<ParamSetItem>>,
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    look_at<OptionsBlock>,
+    look_at<Directive>,
     ws!(
         do_parse!(
             tag!("LookAt") >>
@@ -279,147 +279,128 @@ named!(
             ux: number >>
             uy: number >>
             uz: number >>
-            (OptionsBlock::LookAt(ex, ey, ez, lx, ly, lz, ux, uy, uz))
+            (Directive::LookAt(ex, ey, ez, lx, ly, lz, ux, uy, uz))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    camera<OptionsBlock>,
+    camera<Directive>,
     ws!(
         do_parse!(
             tag!("Camera") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Camera(name.into(), ps.into()))
+            (Directive::Camera(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    sampler<OptionsBlock>,
+    sampler<Directive>,
     ws!(
         do_parse!(
             tag!("Sampler") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Sampler(name.into(), ps.into()))
+            (Directive::Sampler(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    integrator<OptionsBlock>,
+    integrator<Directive>,
     ws!(
         do_parse!(
             tag!("Integrator") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Integrator(name.into(), ps.into()))
+            (Directive::Integrator(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    film<OptionsBlock>,
+    film<Directive>,
     ws!(
         do_parse!(
             tag!("Film") >>
             name: quoted_name >>
             ps: param_set >>
-            (OptionsBlock::Film(name.into(), ps.into()))
+            (Directive::Film(name.into(), ps.into()))
         )
     )
 );
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    option_block<Vec<OptionsBlock>>,
-    dbg_dmp!(many1!(
-        alt!(
-            film
-            | look_at
-            | camera
-            | sampler
-            | integrator
-        )
-    )
-    )
+    world_begin<Directive>,
+    ws!(do_parse!(tag!("WorldBegin") >> (Directive::WorldBegin)))
+);
+named!(
+    world_end<Directive>,
+    ws!(do_parse!(tag!("WorldEnd") >> (Directive::WorldEnd)))
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    attribute<WorldBlock>,
-    ws!(
-        do_parse!(
-            tag!("AttributeBegin") >>
-            world_objects: world_objects >>
-            tag!("AttributeEnd") >>
-            (WorldBlock::Attribute(world_objects))
-        )
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    light_source<WorldBlock>,
+    light_source<Directive>,
     ws!(
         do_parse!(
             tag!("LightSource") >>
             name: quoted_name >>
             ps: param_set >>
-            (WorldBlock::LightSource(name.into(), ps.into()))
+            (Directive::LightSource(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    material<WorldBlock>,
+    material<Directive>,
     ws!(
         do_parse!(
             tag!("Material") >>
             name: quoted_name >>
             ps: param_set >>
-            (WorldBlock::Material(name.into(), ps.into()))
+            (Directive::Material(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    shape<WorldBlock>,
+    shape<Directive>,
     ws!(
         do_parse!(
             tag!("Shape") >>
             name: quoted_name >>
             ps: param_set >>
-            (WorldBlock::Shape(name.into(), ps.into()))
+            (Directive::Shape(name.into(), ps.into()))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    translate<WorldBlock>,
+    translate<Directive>,
     ws!(
         do_parse!(
             tag!("Translate") >>
             x: number >>
             y: number >>
             z: number >>
-            (WorldBlock::Translate(x, y, z))
+            (Directive::Translate(x, y, z))
         )
     )
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    texture<WorldBlock>,
+    texture<Directive>,
     ws!(
         do_parse!(
             tag!("Texture") >>
@@ -427,23 +408,44 @@ named!(
             typ: quoted_name >>
             class: quoted_name >>
             ps: param_set >>
-            (WorldBlock::Texture(name.into(), typ.into(), class.into(), ps.into()))
+            (Directive::Texture(name.into(), typ.into(), class.into(), ps.into()))
         )
     )
 );
 
+named!(
+    attribute_begin<Directive>,
+    ws!(do_parse!(
+        tag!("AttributeBegin") >> (Directive::AttributeBegin)
+    ))
+);
+
+named!(
+    attribute_end<Directive>,
+    ws!(do_parse!(tag!("AttributeEnd") >> (Directive::AttributeEnd)))
+);
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
-    world_objects<Vec<WorldBlock>>,
-    many1!(
+    directives<Vec<Directive>>,
+    dbg_dmp!(many1!(
         alt!(
-            shape
+            film
+            | shape
+            | camera
             | texture
+            | sampler
+            | look_at
             | material
-            | attribute
             | translate
+            | world_end
+            | integrator
+            | world_begin
             | light_source
+            | attribute_end
+            | attribute_begin
         )
+    )
     )
 );
 
@@ -465,11 +467,8 @@ named!(
     parse_scene_macro<Scene>,
     ws!(
         do_parse!(
-            options: option_block >>
-            tag!("WorldBegin") >>
-            world_objects: world_objects >>
-            tag!("WorldEnd") >>
-            (Scene{options, world_objects})
+            directives: directives >>
+            (Scene{directives})
         )
     )
 );
@@ -746,7 +745,7 @@ mod tests {
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)
+                    Directive::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.)
                 )
             );
         };
@@ -761,7 +760,7 @@ mod tests {
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::Camera(
+                    Directive::Camera(
                         "perspective".into(),
                         vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into()
                     ),
@@ -779,7 +778,7 @@ mod tests {
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::Sampler(
+                    Directive::Sampler(
                         "halton".into(),
                         vec![
                             ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
@@ -799,7 +798,7 @@ mod tests {
                 res,
                 &IResult::Done(
                     &b""[..],
-                    OptionsBlock::Integrator("path".into(), vec![].into())
+                    Directive::Integrator("path".into(), vec![].into())
                 )
             );
         };
@@ -814,7 +813,7 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                OptionsBlock::Film(
+                Directive::Film(
                     "image".into(),
                     vec![
                         ParamSetItem::new(
@@ -833,64 +832,70 @@ mod tests {
     fn test_attribute() {
         let input =
             &b"AttributeBegin\n  LightSource \"infinite\" \"rgb L\" [.4 .45 .5]\nAttributeEnd"[..];
-        let ref mut res = attribute(&input);
+        let ref mut res = directives(&input);
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Attribute(vec![
-                    WorldBlock::LightSource(
+                vec![
+                    Directive::AttributeBegin,
+                    Directive::LightSource(
                         "infinite".into(),
                         vec![
                             ParamSetItem::new("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5]))),
                         ].into(),
                     ),
-                ])
+                    Directive::AttributeEnd,
+                ]
             )
         );
 
         let input = &b"AttributeBegin\n  Material \"mirror\"\nAttributeEnd"[..];
-        let ref mut res = attribute(&input);
+        let ref mut res = directives(&input);
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Attribute(vec![WorldBlock::Material("mirror".into(), vec![].into())])
+                vec![
+                    Directive::AttributeBegin,
+                    Directive::Material("mirror".into(), vec![].into()),
+                    Directive::AttributeEnd,
+                ]
             )
         );
 
         let input = &b"AttributeBegin\n  Shape \"sphere\" \"float radius\" 1\nAttributeEnd"[..];
-        let ref mut res = attribute(&input);
+        let ref mut res = directives(&input);
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Attribute(
-                    vec![
-                        WorldBlock::Shape(
-                            "sphere".into(),
-                            vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
-                        ),
-                    ].into(),
-                ),
+                vec![
+                    Directive::AttributeBegin,
+                    Directive::Shape(
+                        "sphere".into(),
+                        vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                    ),
+                    Directive::AttributeEnd,
+                ].into(),
             )
         );
 
         let input = &b"AttributeBegin\n  Material \"mirror\"\n  Shape \"sphere\" \"float radius\" 1\nAttributeEnd"[..];
-        let ref mut res = attribute(&input);
+        let ref mut res = directives(&input);
         assert_eq!(
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Attribute(
-                    vec![
-                        WorldBlock::Material("mirror".into(), vec![].into()),
-                        WorldBlock::Shape(
-                            "sphere".into(),
-                            vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
-                        ),
-                    ].into(),
-                ),
+                vec![
+                    Directive::AttributeBegin,
+                    Directive::Material("mirror".into(), vec![].into()),
+                    Directive::Shape(
+                        "sphere".into(),
+                        vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                    ),
+                    Directive::AttributeEnd,
+                ].into(),
             )
         );
     }
@@ -903,7 +908,7 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::LightSource(
+                Directive::LightSource(
                     "infinite".into(),
                     vec![
                         ParamSetItem::new("L", Value::RGB(ParamList(vec![0.4, 0.45, 0.5]))),
@@ -921,7 +926,7 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Material("mirror".into(), vec![].into()),
+                Directive::Material("mirror".into(), vec![].into()),
             )
         );
     }
@@ -934,7 +939,7 @@ mod tests {
             res,
             &IResult::Done(
                 &b""[..],
-                WorldBlock::Shape(
+                Directive::Shape(
                     "sphere".into(),
                     vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
                 ),
@@ -948,7 +953,7 @@ mod tests {
         let ref mut res = translate(&input);
         assert_eq!(
             res,
-            &IResult::Done(&b""[..], WorldBlock::Translate(0., 0., -1.))
+            &IResult::Done(&b""[..], Directive::Translate(0., 0., -1.))
         );
     }
 
@@ -957,20 +962,20 @@ mod tests {
         let input = include_bytes!("testdata/scene1.pbrt");
         let res = parse_scene(&input[..]);
         let want = Scene {
-            options: vec![
-                OptionsBlock::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
-                OptionsBlock::Camera(
+            directives: vec![
+                Directive::LookAt(3., 4., 1.5, 0.5, 0.5, 0., 0., 0., 1.),
+                Directive::Camera(
                     "perspective".into(),
                     vec![ParamSetItem::new("fov", Value::Float(vec![45.].into()))].into(),
                 ),
-                OptionsBlock::Sampler(
+                Directive::Sampler(
                     "halton".into(),
                     vec![
                         ParamSetItem::new("pixelsamples", Value::Int(vec![128].into())),
                     ].into(),
                 ),
-                OptionsBlock::Integrator("path".into(), vec![].into()),
-                OptionsBlock::Film(
+                Directive::Integrator("path".into(), vec![].into()),
+                Directive::Film(
                     "image".into(),
                     vec![
                         ParamSetItem::new(
@@ -981,15 +986,13 @@ mod tests {
                         ParamSetItem::new("yresolution", Value::Int(vec![300].into())),
                     ].into(),
                 ),
-            ],
-            world_objects: vec![
-                WorldBlock::LightSource(
+                Directive::LightSource(
                     "infinite".into(),
                     vec![
                         ParamSetItem::new("L", Value::RGB(vec![0.4, 0.45, 0.5].into())),
                     ].into(),
                 ),
-                WorldBlock::LightSource(
+                Directive::LightSource(
                     "distant".into(),
                     vec![
                         ParamSetItem::new(
@@ -1007,70 +1010,70 @@ mod tests {
                         ParamSetItem::new("L", Value::Blackbody(vec![3000., 1.5].into())),
                     ].into(),
                 ),
-                WorldBlock::Attribute(vec![
-                    WorldBlock::Material("mirror".into(), vec![].into()),
-                    WorldBlock::Shape(
-                        "sphere".into(),
-                        vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
-                    ),
-                ]),
-                WorldBlock::Attribute(vec![
-                    WorldBlock::Texture(
-                        "checks".into(),
-                        "spectrum".into(),
-                        "checkerboard".into(),
-                        vec![
-                            ParamSetItem::new("uscale", Value::Float(vec![8.].into())),
-                            ParamSetItem::new("vscale", Value::Float(vec![8.].into())),
-                            ParamSetItem::new("tex1", Value::RGB(ParamList(vec![0.1, 0.1, 0.1]))),
-                            ParamSetItem::new("tex2", Value::RGB(ParamList(vec![0.8, 0.8, 0.8]))),
-                        ].into(),
-                    ),
-                    WorldBlock::Material(
-                        "matte".into(),
-                        vec![
-                            ParamSetItem::new("Kd", Value::Texture(vec!["checks".into()].into())),
-                        ].into(),
-                    ),
-                    WorldBlock::Translate(0., 0., -1.),
-                    WorldBlock::Shape(
-                        "trianglemesh".into(),
-                        vec![
-                            ParamSetItem::new("indices", Value::Int(vec![0, 1, 2, 0, 2, 3].into())),
-                            ParamSetItem::new(
-                                "P",
-                                Value::Point3f(
-                                    vec![
-                                        Point3f {
-                                            x: -20.,
-                                            y: -20.,
-                                            z: 0.,
-                                        },
-                                        Point3f {
-                                            x: 20.,
-                                            y: -20.,
-                                            z: 0.,
-                                        },
-                                        Point3f {
-                                            x: 20.,
-                                            y: 20.,
-                                            z: 0.,
-                                        },
-                                        Point3f {
-                                            x: -20.,
-                                            y: 20.,
-                                            z: 0.,
-                                        },
-                                    ].into(),
-                                ),
+                Directive::AttributeBegin,
+                Directive::Material("mirror".into(), vec![].into()),
+                Directive::Shape(
+                    "sphere".into(),
+                    vec![ParamSetItem::new("radius", Value::Float(vec![1.].into()))].into(),
+                ),
+                Directive::AttributeEnd,
+                Directive::AttributeBegin,
+                Directive::Texture(
+                    "checks".into(),
+                    "spectrum".into(),
+                    "checkerboard".into(),
+                    vec![
+                        ParamSetItem::new("uscale", Value::Float(vec![8.].into())),
+                        ParamSetItem::new("vscale", Value::Float(vec![8.].into())),
+                        ParamSetItem::new("tex1", Value::RGB(ParamList(vec![0.1, 0.1, 0.1]))),
+                        ParamSetItem::new("tex2", Value::RGB(ParamList(vec![0.8, 0.8, 0.8]))),
+                    ].into(),
+                ),
+                Directive::Material(
+                    "matte".into(),
+                    vec![
+                        ParamSetItem::new("Kd", Value::Texture(vec!["checks".into()].into())),
+                    ].into(),
+                ),
+                Directive::Translate(0., 0., -1.),
+                Directive::Shape(
+                    "trianglemesh".into(),
+                    vec![
+                        ParamSetItem::new("indices", Value::Int(vec![0, 1, 2, 0, 2, 3].into())),
+                        ParamSetItem::new(
+                            "P",
+                            Value::Point3f(
+                                vec![
+                                    Point3f {
+                                        x: -20.,
+                                        y: -20.,
+                                        z: 0.,
+                                    },
+                                    Point3f {
+                                        x: 20.,
+                                        y: -20.,
+                                        z: 0.,
+                                    },
+                                    Point3f {
+                                        x: 20.,
+                                        y: 20.,
+                                        z: 0.,
+                                    },
+                                    Point3f {
+                                        x: -20.,
+                                        y: 20.,
+                                        z: 0.,
+                                    },
+                                ].into(),
                             ),
-                            ParamSetItem::new(
-                                "st",
-                                Value::Float(vec![0., 0., 1., 0., 1., 1., 0., 1.].into()),
-                            ),
-                        ].into(),
-                    ),
-                ]),
+                        ),
+                        ParamSetItem::new(
+                            "st",
+                            Value::Float(vec![0., 0., 1., 0., 1., 1., 0., 1.].into()),
+                        ),
+                    ].into(),
+                ),
+                Directive::AttributeEnd,
             ],
         };
         assert_eq!(res, Ok(want));

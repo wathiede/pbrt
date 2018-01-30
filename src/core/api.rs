@@ -12,7 +12,7 @@ use core::light::Light;
 use core::medium::Medium;
 use core::paramset::ParamSet;
 use core::parser;
-use core::parser::{OptionsBlock, WorldBlock};
+use core::parser::Directive;
 use core::pbrt::{Float, Options};
 use core::transform::{Matrix4x4, Transform};
 
@@ -238,24 +238,6 @@ impl<'a> Pbrt<'a> {
         }
     }
 
-    pub fn parse_world_objects(&mut self, world_objects: Vec<WorldBlock>) {
-        for wo in world_objects {
-            println!("wo: {:?}", &wo);
-            match wo {
-                WorldBlock::Attribute(wb) => {
-                    self.attribute_begin();
-                    self.parse_world_objects(wb);
-                    self.attribute_end();
-                }
-                WorldBlock::LightSource(_name, _ps) => (),
-                WorldBlock::Material(_name, _ps) => (),
-                WorldBlock::Shape(_name, _ps) => (),
-                WorldBlock::Translate(x, y, z) => self.translate(x, y, z),
-                WorldBlock::Texture(_name, _kind, _class, _ps) => (),
-            }
-        }
-    }
-
     // TODO(wathiede): replace Ok() with something that prints stats about the scene render.
     pub fn parse_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Error> {
         let mut f = File::open(path)?;
@@ -264,10 +246,11 @@ impl<'a> Pbrt<'a> {
         // read the whole file
         f.read_to_end(&mut buffer)?;
         let scene = parser::parse_scene(&buffer[..])?;
-        for o in scene.options {
-            println!("o: {:?}", &o);
-            match o {
-                OptionsBlock::LookAt(
+        info!("Scene {:#?}", &scene);
+        for d in scene.directives {
+            println!("d: {:?}", &d);
+            match d {
+                Directive::LookAt(
                     eye_x,
                     eye_y,
                     eye_z,
@@ -282,13 +265,21 @@ impl<'a> Pbrt<'a> {
                     [look_x, look_y, look_z], // look xyz
                     [up_x, up_y, up_z],       // up xyz
                 ),
-                OptionsBlock::Camera(name, ps) => self.camera(name, ps),
-                OptionsBlock::Sampler(name, ps) => self.sampler(name, ps),
-                OptionsBlock::Integrator(name, ps) => self.integrator(name, ps),
-                OptionsBlock::Film(name, ps) => self.film(name, ps),
+                Directive::Camera(name, ps) => self.camera(name, ps),
+                Directive::Sampler(name, ps) => self.sampler(name, ps),
+                Directive::Integrator(name, ps) => self.integrator(name, ps),
+                Directive::Film(name, ps) => self.film(name, ps),
+                Directive::WorldBegin => self.world_begin(),
+                Directive::WorldEnd => self.world_end(),
+                Directive::AttributeBegin => self.attribute_begin(),
+                Directive::AttributeEnd => self.attribute_end(),
+                Directive::LightSource(_name, _ps) => (),
+                Directive::Material(_name, _ps) => (),
+                Directive::Shape(_name, _ps) => (),
+                Directive::Translate(x, y, z) => self.translate(x, y, z),
+                Directive::Texture(_name, _kind, _class, _ps) => (),
             }
         }
-        self.parse_world_objects(scene.world_objects);
         Ok(())
     }
 
@@ -308,6 +299,60 @@ impl<'a> Pbrt<'a> {
         }
         self.current_api_state = APIState::Uninitialized;
         self.render_options = RenderOptions::new();
+    }
+
+    pub fn world_begin(&mut self) {
+        verify_options!(self, "pbrt.world_begin");
+        self.current_api_state = APIState::WorldBlock;
+        for i in 0..MAX_TRANSFORMS {
+            self.current_transform[i] = Transform::new();
+        }
+        self.active_transform_bits = ALL_TRANSFORMS_BITS;
+        self.named_coordinate_systems
+            .insert("world".to_owned(), self.current_transform);
+    }
+
+    pub fn world_end(&mut self) {
+        verify_world!(self, "pbrt.world_end");
+        // TODO(wathiede): call everything
+        // // Ensure there are no pushed graphics states
+        // while (pushedGraphicsStates.size()) {
+        //     Warning("Missing end to pbrtAttributeBegin()");
+        //     pushedGraphicsStates.pop_back();
+        //     pushedTransforms.pop_back();
+        // }
+        // while (pushedTransforms.size()) {
+        //     Warning("Missing end to pbrtTransformBegin()");
+        //     pushedTransforms.pop_back();
+        // }
+
+        // // Create scene and render
+        // if (PbrtOptions.cat || PbrtOptions.toPly) {
+        //     printf("%*sWorldEnd\n", catIndentCount, "");
+        // } else {
+        //     std::unique_ptr<Integrator> integrator(renderOptions->MakeIntegrator());
+        //     std::unique_ptr<Scene> scene(renderOptions->MakeScene());
+        //     if (scene && integrator) integrator->Render(*scene);
+        // }
+
+        // // Clean up after rendering
+        // graphicsState = GraphicsState();
+        // transformCache.Clear();
+        self.current_api_state = APIState::OptionsBlock;
+
+        // MergeWorkerThreadStats();
+        // ReportThreadStats();
+        // if (!PbrtOptions.quiet && !PbrtOptions.cat && !PbrtOptions.toPly) {
+        //     PrintStats(stdout);
+        //     ReportProfilerResults(stdout);
+        // }
+
+        // for (int i = 0; i < MaxTransforms; ++i) curTransform[i] = Transform();
+        // activeTransformBits = AllTransformsBits;
+        // namedCoordinateSystems.erase(namedCoordinateSystems.begin(),
+        //                              namedCoordinateSystems.end());
+        // ImageTexture<Float, Float>::ClearCache();
+        // ImageTexture<RGBSpectrum, Spectrum>::ClearCache();
     }
 
     pub fn attribute_begin(&mut self) {
