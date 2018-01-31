@@ -50,6 +50,7 @@ pub enum Directive {
     Material(String, ParamSet),
     Shape(String, ParamSet),
     Translate(Float, Float, Float),
+    Scale(Float, Float, Float),
     Texture(
         String, // name
         String, // type
@@ -386,6 +387,20 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
+    scale<Directive>,
+    ws!(
+        do_parse!(
+            tag!("Scale") >>
+            x: number >>
+            y: number >>
+            z: number >>
+            (Directive::Scale(x, y, z))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
     translate<Directive>,
     ws!(
         do_parse!(
@@ -432,6 +447,7 @@ named!(
         alt!(
             film
             | shape
+            | scale
             | camera
             | texture
             | sampler
@@ -955,6 +971,13 @@ mod tests {
             res,
             &IResult::Done(&b""[..], Directive::Translate(0., 0., -1.))
         );
+    }
+
+    #[test]
+    fn test_scale() {
+        let input = &b"Scale 0 0 -1"[..];
+        let ref mut res = scale(&input);
+        assert_eq!(res, &IResult::Done(&b""[..], Directive::Scale(0., 0., -1.)));
     }
 
     #[test]
