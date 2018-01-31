@@ -121,8 +121,6 @@ impl Matrix4x4 {
 
 impl fmt::Debug for Matrix4x4 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO(wathiede): make this work with {:?} & {:#?} with f.alternate(), see:
-        // https://play.rust-lang.org/?gist=ce17803cf357a5563a463490db31515a&version=undefined
         if f.alternate() {
             write!(
                 f,
