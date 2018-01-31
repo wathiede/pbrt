@@ -1,15 +1,34 @@
 use std::collections;
+use std::fmt;
 use std::str::FromStr;
 
 use core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use core::pbrt::Float;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);
 
 impl<T> From<Vec<T>> for ParamList<T> {
     fn from(vs: Vec<T>) -> Self {
         ParamList(vs)
+    }
+}
+
+impl<T> fmt::Debug for ParamList<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let ref v = self.0;
+        if v.is_empty() {
+            write!(f, "<>")?;
+        }
+        let mut it = v.iter();
+        write!(f, "{:?}", it.next().unwrap())?;
+        while let Some(i) = it.next() {
+            write!(f, " {:?}", i)?;
+        }
+        Ok(())
     }
 }
 
