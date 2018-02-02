@@ -51,6 +51,7 @@ pub enum Directive {
     Shape(String, ParamSet),
     Translate(Float, Float, Float),
     Scale(Float, Float, Float),
+    Rotate(Float, Float, Float, Float),
     Texture(
         String, // name
         String, // type
@@ -336,6 +337,21 @@ named!(
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
+    rotate<Directive>,
+    ws!(
+        do_parse!(
+            tag!("Rotate") >>
+            angle: number >>
+            x: number >>
+            y: number >>
+            z: number >>
+            (Directive::Rotate(angle, x, y, z))
+        )
+    )
+);
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+named!(
     translate<Directive>,
     ws!(
         do_parse!(
@@ -383,6 +399,7 @@ named!(
             film
             | shape
             | scale
+            | rotate
             | camera
             | texture
             | sampler
@@ -913,6 +930,16 @@ mod tests {
         let input = &b"Scale 0 0 -1"[..];
         let ref mut res = scale(&input);
         assert_eq!(res, &IResult::Done(&b""[..], Directive::Scale(0., 0., -1.)));
+    }
+
+    #[test]
+    fn test_rotate() {
+        let input = &b"Rotate 30 0 0 -1"[..];
+        let ref mut res = rotate(&input);
+        assert_eq!(
+            res,
+            &IResult::Done(&b""[..], Directive::Rotate(30., 0., 0., -1.))
+        );
     }
 
     #[test]

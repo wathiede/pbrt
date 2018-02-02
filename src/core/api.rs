@@ -277,6 +277,7 @@ impl<'a> Pbrt<'a> {
                 Directive::Material(_name, _ps) => (),
                 Directive::Shape(_name, _ps) => (),
                 Directive::Scale(x, y, z) => self.scale(x, y, z),
+                Directive::Rotate(angle, x, y, z) => self.rotate(angle, x, y, z),
                 Directive::Translate(x, y, z) => self.translate(x, y, z),
                 Directive::Texture(_name, _kind, _class, _ps) => (),
             }
