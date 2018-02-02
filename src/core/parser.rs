@@ -285,58 +285,6 @@ named!(
     )
 );
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    camera<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Camera") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Camera(name.into(), ps.into()))
-        )
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    sampler<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Sampler") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Sampler(name.into(), ps.into()))
-        )
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    integrator<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Integrator") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Integrator(name.into(), ps.into()))
-        )
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    film<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Film") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Film(name.into(), ps.into()))
-        )
-    )
-);
-
 named!(
     world_begin<Directive>,
     ws!(do_parse!(tag!("WorldBegin") >> (Directive::WorldBegin)))
@@ -346,44 +294,31 @@ named!(
     ws!(do_parse!(tag!("WorldEnd") >> (Directive::WorldEnd)))
 );
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+/// $name is the nom parser created, and $tag is the tag to look for and the Directive type
+/// returned.
+macro_rules! directive_param_set {
+    ( $name:tt, $tag:tt ) => (
 named!(
-    light_source<Directive>,
+    $name<Directive>,
     ws!(
         do_parse!(
-            tag!("LightSource") >>
+            tag!(stringify!($tag)) >>
             name: quoted_name >>
             ps: param_set >>
-            (Directive::LightSource(name.into(), ps.into()))
+            (Directive::$tag(name.into(), ps.into()))
         )
     )
 );
+    )
+}
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    material<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Material") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Material(name.into(), ps.into()))
-        )
-    )
-);
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
-named!(
-    shape<Directive>,
-    ws!(
-        do_parse!(
-            tag!("Shape") >>
-            name: quoted_name >>
-            ps: param_set >>
-            (Directive::Shape(name.into(), ps.into()))
-        )
-    )
-);
+directive_param_set!(sampler, Sampler);
+directive_param_set!(integrator, Integrator);
+directive_param_set!(film, Film);
+directive_param_set!(light_source, LightSource);
+directive_param_set!(material, Material);
+directive_param_set!(shape, Shape);
+directive_param_set!(camera, Camera);
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
@@ -1009,6 +944,7 @@ mod tests {
                         ParamSetItem::new("yresolution", Value::Int(vec![300].into())),
                     ].into(),
                 ),
+                Directive::WorldBegin,
                 Directive::LightSource(
                     "infinite".into(),
                     vec![
@@ -1097,9 +1033,10 @@ mod tests {
                     ].into(),
                 ),
                 Directive::AttributeEnd,
+                Directive::WorldEnd,
             ],
         };
-        assert_eq!(res, Ok(want));
+        assert_eq!(res.unwrap(), want);
     }
 }
 /*
