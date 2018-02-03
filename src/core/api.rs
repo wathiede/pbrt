@@ -143,7 +143,7 @@ impl RenderOptions {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct GraphicsState {
     current_inside_medium: String,
     current_outside_medium: String,
@@ -218,10 +218,10 @@ pub struct Pbrt<'a> {
     named_coordinate_systems: collections::HashMap<String, TransformSet>,
     render_options: RenderOptions,
     graphics_state: GraphicsState,
+    pushed_graphics_states: Vec<GraphicsState>,
+    pushed_transforms: Vec<TransformSet>,
+    pushed_active_transform_bits: Vec<usize>,
     // TODO(wathiede):
-    // static std::vector<GraphicsState> pushedGraphicsStates;
-    // static std::vector<TransformSet> pushedTransforms;
-    // static std::vector<uint32_t> pushedActiveTransformBits;
     // static TransformCache transformCache;
 }
 
@@ -235,6 +235,9 @@ impl<'a> Pbrt<'a> {
             named_coordinate_systems: collections::HashMap::new(),
             render_options: RenderOptions::new(),
             graphics_state: GraphicsState::new(),
+            pushed_graphics_states: Vec::new(),
+            pushed_transforms: Vec::new(),
+            pushed_active_transform_bits: Vec::new(),
         }
     }
 
@@ -359,25 +362,41 @@ impl<'a> Pbrt<'a> {
 
     pub fn attribute_begin(&mut self) {
         verify_world!(self, "pbrt.attribute_begin");
-        //self.pushed_graphics_states.push_back(graphics_state);
-        //self.pushed_transforms.push_back(cur_transform);
-        //self.pushed_active_transform_bits.push_back(active_transform_bits);
+        self.pushed_graphics_states
+            .push(self.graphics_state.clone());
+        self.pushed_transforms.push(self.current_transform.clone());
+        self.pushed_active_transform_bits
+            .push(self.active_transform_bits.clone());
     }
 
     pub fn attribute_end(&mut self) {
         verify_world!(self, "pbrt.attribute_end");
-        // if (!pushedGraphicsStates.size()) {
-        //     Error(
-        //         "Unmatched pbrtAttributeEnd() encountered. "
-        //         "Ignoring it.");
-        //     return;
-        // }
-        // graphicsState = pushedGraphicsStates.back();
-        // pushedGraphicsStates.pop_back();
-        // curTransform = pushedTransforms.back();
-        // pushedTransforms.pop_back();
-        // activeTransformBits = pushedActiveTransformBits.back();
-        // pushedActiveTransformBits.pop_back();
+        if self.pushed_graphics_states.is_empty() || self.pushed_transforms.is_empty()
+            || self.pushed_active_transform_bits.is_empty()
+        {
+            error!("Unmatched pbrt.attribute_end() encountered. Ignoring it.");
+            return;
+        }
+        self.graphics_state = self.pushed_graphics_states.pop().unwrap();
+        self.current_transform = self.pushed_transforms.pop().unwrap();
+        self.active_transform_bits = self.pushed_active_transform_bits.pop().unwrap();
+    }
+
+    pub fn transform_begin(&mut self) {
+        verify_world!(self, "pbrt.transform_begin");
+        self.pushed_transforms.push(self.current_transform.clone());
+        self.pushed_active_transform_bits
+            .push(self.active_transform_bits.clone());
+    }
+
+    pub fn transform_end(&mut self) {
+        verify_world!(self, "pbrt.transform_end");
+        if self.pushed_transforms.is_empty() || self.pushed_active_transform_bits.is_empty() {
+            error!("Unmatched pbrt.tranform_end() encountered. Ignoring it.");
+            return;
+        }
+        self.current_transform = self.pushed_transforms.pop().unwrap();
+        self.active_transform_bits = self.pushed_active_transform_bits.pop().unwrap();
     }
 
     pub fn identity(&mut self) {
@@ -579,5 +598,47 @@ mod tests {
 
         pbrt.coordinate_system_transform("two".into());
         assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
+    }
+
+    #[test]
+    fn test_attribute_begin_end() {
+        let opts = Options {
+            num_threads: 1,
+            quick_render: false,
+            quiet: false,
+            verbose: true,
+            image_file: "".to_owned(),
+        };
+        let mut pbrt = Pbrt::new(&opts);
+        pbrt.init();
+        pbrt.world_begin();
+        assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        pbrt.attribute_begin();
+        pbrt.active_transform_start_time();
+        assert_eq!(pbrt.active_transform_bits, START_TRANSFORM_BITS);
+        pbrt.attribute_end();
+        assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        pbrt.world_end();
+    }
+
+    #[test]
+    fn test_transform_begin_end() {
+        let opts = Options {
+            num_threads: 1,
+            quick_render: false,
+            quiet: false,
+            verbose: true,
+            image_file: "".to_owned(),
+        };
+        let mut pbrt = Pbrt::new(&opts);
+        pbrt.init();
+        pbrt.world_begin();
+        assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        pbrt.transform_begin();
+        pbrt.active_transform_start_time();
+        assert_eq!(pbrt.active_transform_bits, START_TRANSFORM_BITS);
+        pbrt.transform_end();
+        assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        pbrt.world_end();
     }
 }
