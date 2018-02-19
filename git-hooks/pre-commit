@@ -1,0 +1,4 @@
+#!/bin/sh
+echo $PWD
+FILES_AFFECTED=$(git diff --cached --name-only --diff-filter=A|xargs)
+scripts/insert.py --presubmit ${FILES_AFFECTED:?}
