@@ -22,4 +22,3 @@ extern crate pretty_assertions;
 
 pub mod core;
 pub mod textures;
-

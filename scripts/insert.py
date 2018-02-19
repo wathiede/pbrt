@@ -91,7 +91,7 @@ def check_source(presubmit, paths):
                     insert_copyright(path)
     if presubmit and missing_copyright:
         print('The following files need a copyright header, run '
-                './scripts/insert.py to '
+                'scripts/insert.py to '
                 'fix:\n{}'.format('\n'.join(missing_copyright)))
         sys.exit(1)
 
