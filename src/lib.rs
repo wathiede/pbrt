@@ -4,8 +4,10 @@ extern crate log;
 #[macro_use]
 extern crate nom;
 
-pub mod core;
-
 #[cfg(test)]
 #[macro_use]
 extern crate pretty_assertions;
+
+pub mod core;
+pub mod textures;
+

@@ -4,6 +4,8 @@ use std::str::FromStr;
 
 use core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use core::pbrt::Float;
+use core::spectrum::Spectrum;
+use core::texture::Texture;
 
 #[derive(Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);
@@ -30,13 +32,6 @@ where
         }
         Ok(())
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Spectrum {
-    pub x: Float,
-    pub y: Float,
-    pub z: Float,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -136,6 +131,26 @@ impl From<Vec<ParamSetItem>> for ParamSet {
             ps.add(&psi.name, psi.values.clone())
         }
         ps
+    }
+}
+
+pub struct TextureParams {
+    // TODO(wathiede): is this right?
+    // TODO(wathiede): remove pub after testing complete.
+    pub float_textures: collections::HashMap<String, Box<Texture<Output = Float>>>,
+    specturm_textures: collections::HashMap<String, Box<Texture<Output = Spectrum>>>,
+    geom_params: ParamSet,
+    material_params: ParamSet,
+}
+
+impl TextureParams {
+    pub fn new() -> TextureParams {
+        TextureParams {
+            float_textures: collections::HashMap::new(),
+            specturm_textures: collections::HashMap::new(),
+            geom_params: ParamSet::new(),
+            material_params: ParamSet::new(),
+        }
     }
 }
 
