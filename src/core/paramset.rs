@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use std::cell::RefCell;
 use std::collections;
 use std::fmt;
 use std::str::FromStr;
@@ -69,7 +70,7 @@ pub enum Value {
 pub struct ParamSetItem {
     pub name: String,
     pub values: Value,
-    looked_up: bool,
+    looked_up: RefCell<bool>,
 }
 
 impl ParamSetItem {
@@ -77,7 +78,7 @@ impl ParamSetItem {
         ParamSetItem {
             name: String::from(name),
             values: values.clone(),
-            looked_up: false,
+            looked_up: RefCell::new(false),
         }
     }
 }
@@ -95,20 +96,20 @@ impl ParamSet {
             ParamSetItem {
                 name: name.clone(),
                 values: values,
-                looked_up: false,
+                looked_up: RefCell::new(false),
             },
         );
     }
 
-    pub fn find(&mut self, name: &str) -> Option<Value> {
+    pub fn find(&self, name: &str) -> Option<Value> {
         // Defer unwrapping to call site or consider to use a macro.
-        self.values.get_mut(name).map(|psi| {
-            psi.looked_up = true;
+        self.values.get(name).map(|psi| {
+            *psi.looked_up.borrow_mut() = true;
             psi.values.clone()
         })
     }
 
-    pub fn find_one_string(&mut self, name: &str, default: &str) -> String {
+    pub fn find_one_string(&self, name: &str, default: &str) -> String {
         match self.find(name) {
             Some(Value::String(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
             None => default.into(),
@@ -121,7 +122,7 @@ impl ParamSet {
         info!("report_unused");
 
         for (key, val) in self.values.iter() {
-            if !val.looked_up {
+            if !(*val.looked_up.borrow()) {
                 info!("* '{}' not used", key);
                 unused = true
             }
@@ -159,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_param_set() {
-        let mut ps: ParamSet = vec![ParamSetItem::new(
+        let ps: ParamSet = vec![ParamSetItem::new(
             "test0",
             Value::Float(vec![1., 2.].into()),
         )].into();
@@ -204,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_param_set_find() {
-        let mut ps: ParamSet = vec![
+        let ps: ParamSet = vec![
             ParamSetItem::new("test1", Value::Float(ParamList(vec![1., 2.]))),
             ParamSetItem::new(
                 "test2",
