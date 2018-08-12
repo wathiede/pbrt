@@ -82,18 +82,12 @@ impl ParamSetItem {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct ParamSet {
     values: collections::HashMap<String, ParamSetItem>,
 }
 
 impl ParamSet {
-    pub fn new() -> ParamSet {
-        ParamSet {
-            values: collections::HashMap::new(),
-        }
-    }
-
     pub fn add(&mut self, name: &str, values: Value) {
         let name = String::from_str(name).unwrap();
         self.values.insert(
@@ -139,7 +133,7 @@ impl ParamSet {
 
 impl From<Vec<ParamSetItem>> for ParamSet {
     fn from(psis: Vec<ParamSetItem>) -> Self {
-        let mut ps = ParamSet::new();
+        let mut ps: ParamSet = Default::default();
         for ref psi in psis.iter() {
             ps.add(&psi.name, psi.values.clone())
         }
@@ -147,6 +141,7 @@ impl From<Vec<ParamSetItem>> for ParamSet {
     }
 }
 
+#[derive(Default)]
 pub struct TextureParams {
     // TODO(wathiede): is this right?
     // TODO(wathiede): remove pub after testing complete.
@@ -156,16 +151,7 @@ pub struct TextureParams {
     material_params: ParamSet,
 }
 
-impl TextureParams {
-    pub fn new() -> TextureParams {
-        TextureParams {
-            float_textures: collections::HashMap::new(),
-            specturm_textures: collections::HashMap::new(),
-            geom_params: ParamSet::new(),
-            material_params: ParamSet::new(),
-        }
-    }
-}
+impl TextureParams {}
 
 #[cfg(test)]
 mod tests {
@@ -173,17 +159,19 @@ mod tests {
 
     #[test]
     fn test_param_set() {
-        let mut ps: ParamSet = vec![
-            ParamSetItem::new("test0", Value::Float(vec![1., 2.].into())),
-        ].into();
+        let mut ps: ParamSet = vec![ParamSetItem::new(
+            "test0",
+            Value::Float(vec![1., 2.].into()),
+        )].into();
         assert_eq!(
             ps.find("test0").unwrap(),
             Value::Float(ParamList(vec![1., 2.]))
         );
 
-        let mut ps: ParamSet = vec![
-            ParamSetItem::new("test1", Value::Float(ParamList(vec![1., 2.]))),
-        ].into();
+        let mut ps: ParamSet = vec![ParamSetItem::new(
+            "test1",
+            Value::Float(ParamList(vec![1., 2.])),
+        )].into();
         assert_eq!(
             ps.find("test1").unwrap(),
             Value::Float(ParamList(vec![1., 2.]))

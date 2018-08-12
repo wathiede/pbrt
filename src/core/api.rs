@@ -13,8 +13,8 @@
 // limitations under the License.
 use std::collections;
 use std::fs::File;
-use std::io::Read;
 use std::io;
+use std::io::Read;
 use std::ops::{Index, IndexMut};
 use std::path::Path;
 
@@ -60,19 +60,12 @@ const START_TRANSFORM_BITS: usize = 1 << 0;
 const END_TRANSFORM_BITS: usize = 1 << 1;
 const ALL_TRANSFORMS_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 struct TransformSet {
     t: [Transform; MAX_TRANSFORMS],
 }
 
 impl TransformSet {
-    fn new() -> TransformSet {
-        let mut t: [Transform; MAX_TRANSFORMS] = Default::default();
-        for i in 0..MAX_TRANSFORMS {
-            t[i] = Transform::new();
-        }
-        TransformSet { t }
-    }
     fn is_animated(&self) -> bool {
         for i in 0..(MAX_TRANSFORMS - 1) {
             if self.t[i] != self.t[i + 1] {
@@ -82,7 +75,7 @@ impl TransformSet {
         false
     }
     fn inverse(&self) -> TransformSet {
-        let mut t_inv: TransformSet = TransformSet::new();
+        let mut t_inv: TransformSet = Default::default();
         for i in 0..MAX_TRANSFORMS {
             t_inv.t[i] = self.t[i].inverse();
         }
@@ -137,18 +130,18 @@ impl RenderOptions {
             transform_start_time: 0.,
             transform_end_time: 0.,
             filter_name: "box".to_owned(),
-            filter_params: ParamSet::new(),
+            filter_params: Default::default(),
             film_name: "image".to_owned(),
-            film_params: ParamSet::new(),
+            film_params: Default::default(),
             sampler_name: "halton".to_owned(),
-            sampler_params: ParamSet::new(),
+            sampler_params: Default::default(),
             accelerator_name: "bvh".to_owned(),
-            accelerator_params: ParamSet::new(),
+            accelerator_params: Default::default(),
             integrator_name: "path".to_owned(),
-            integrator_params: ParamSet::new(),
+            integrator_params: Default::default(),
             camera_name: "perspective".to_owned(),
-            camera_params: ParamSet::new(),
-            camera_to_world: TransformSet::new(),
+            camera_params: Default::default(),
+            camera_to_world: Default::default(),
             named_media: collections::HashMap::new(),
             lights: Vec::new(),
             have_scattering_media: false,
@@ -156,7 +149,7 @@ impl RenderOptions {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct GraphicsState {
     current_inside_medium: String,
     current_outside_medium: String,
@@ -177,48 +170,44 @@ struct GraphicsState {
     // bool reverseOrientation = false;
 }
 
-impl GraphicsState {
-    fn new() -> GraphicsState {
-        GraphicsState {
-            current_inside_medium: "".to_owned(),
-            current_outside_medium: "".to_owned(),
-        }
-    }
-}
 macro_rules! verify_initialized {
-    ($pbrt:expr, $func:expr) => (
+    ($pbrt:expr, $func:expr) => {
         if $pbrt.current_api_state == APIState::Uninitialized {
             error!("init() must be before calling \"{}()\".  Ignoring.", $func);
             debug_assert!(false);
             return;
         }
-    )
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! verify_options {
-    ($pbrt:expr, $func:expr) => (
+    ($pbrt:expr, $func:expr) => {
         verify_initialized!($pbrt, $func);
         if $pbrt.current_api_state == APIState::WorldBlock {
-            error!("Options cannot be set inside world block; \"{}\" not allowed.  Ignoring.",
-            $func);
+            error!(
+                "Options cannot be set inside world block; \"{}\" not allowed.  Ignoring.",
+                $func
+            );
             debug_assert!(false);
             return;
         }
-    )
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! verify_world {
-    ($pbrt:expr, $func:expr) => (
+    ($pbrt:expr, $func:expr) => {
         verify_initialized!($pbrt, $func);
         if $pbrt.current_api_state == APIState::OptionsBlock {
-            error!("Scene description must be inside world block; \"{}\" not allowed.  Ignoring.",
-            $func);
+            error!(
+                "Scene description must be inside world block; \"{}\" not allowed.  Ignoring.",
+                $func
+            );
             debug_assert!(false);
             return;
         }
-    )
+    };
 }
 
 // Pbrt is the top-level global container for all rendering functionality.
@@ -243,11 +232,11 @@ impl<'a> Pbrt<'a> {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
-            current_transform: TransformSet::new(),
+            current_transform: Default::default(),
             active_transform_bits: ALL_TRANSFORMS_BITS,
             named_coordinate_systems: collections::HashMap::new(),
             render_options: RenderOptions::new(),
-            graphics_state: GraphicsState::new(),
+            graphics_state: Default::default(),
             pushed_graphics_states: Vec::new(),
             pushed_transforms: Vec::new(),
             pushed_active_transform_bits: Vec::new(),
@@ -323,7 +312,7 @@ impl<'a> Pbrt<'a> {
         verify_options!(self, "pbrt.world_begin");
         self.current_api_state = APIState::WorldBlock;
         for i in 0..MAX_TRANSFORMS {
-            self.current_transform[i] = Transform::new();
+            self.current_transform[i] = Default::default();
         }
         self.active_transform_bits = ALL_TRANSFORMS_BITS;
         self.named_coordinate_systems
@@ -384,7 +373,8 @@ impl<'a> Pbrt<'a> {
 
     pub fn attribute_end(&mut self) {
         verify_world!(self, "pbrt.attribute_end");
-        if self.pushed_graphics_states.is_empty() || self.pushed_transforms.is_empty()
+        if self.pushed_graphics_states.is_empty()
+            || self.pushed_transforms.is_empty()
             || self.pushed_active_transform_bits.is_empty()
         {
             error!("Unmatched pbrt.attribute_end() encountered. Ignoring it.");
@@ -414,7 +404,7 @@ impl<'a> Pbrt<'a> {
 
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
-        self.for_active_transforms(|ct| *ct = Transform::new());
+        self.for_active_transforms(|ct| *ct = Transform::identity());
     }
 
     pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
@@ -448,7 +438,7 @@ impl<'a> Pbrt<'a> {
         self.for_active_transforms(|ct| {
             let t = transform;
             *ct = ct.clone()
-                * Transform::new_with_matrix(Matrix4x4::new_with_values(
+                * Transform::from(Matrix4x4::new(
                     [t[0], t[1], t[2], t[3]],
                     [t[4], t[5], t[6], t[7]],
                     [t[8], t[9], t[10], t[11]],
@@ -461,7 +451,7 @@ impl<'a> Pbrt<'a> {
         verify_initialized!(self, "pbrt.transform");
         self.for_active_transforms(|ct| {
             let t = transform;
-            *ct = Transform::new_with_matrix(Matrix4x4::new_with_values(
+            *ct = Transform::from(Matrix4x4::new(
                 [t[0], t[1], t[2], t[3]],
                 [t[4], t[5], t[6], t[7]],
                 [t[8], t[9], t[10], t[11]],
@@ -585,7 +575,7 @@ mod tests {
 
     #[test]
     fn test_transform_set() {
-        let ts: TransformSet = TransformSet::new();
+        let ts: TransformSet = Default::default();
         assert!(!ts.is_animated());
     }
 

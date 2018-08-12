@@ -14,8 +14,8 @@
 use std::fmt;
 use std::ops::Mul;
 
-use core::pbrt::{Float, EPSILON};
 use core::geometry::Vector3f;
+use core::pbrt::{Float, EPSILON};
 
 #[derive(Default, Clone, Copy)]
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
@@ -25,8 +25,8 @@ pub struct Matrix4x4 {
 }
 
 impl Matrix4x4 {
-    pub fn new() -> Matrix4x4 {
-        Matrix4x4::new_with_values(
+    pub fn identity() -> Matrix4x4 {
+        Matrix4x4::new(
             [1., 0., 0., 0.],
             [0., 1., 0., 0.],
             [0., 0., 1., 0.],
@@ -34,12 +34,7 @@ impl Matrix4x4 {
         )
     }
 
-    pub fn new_with_values(
-        r0: [Float; 4],
-        r1: [Float; 4],
-        r2: [Float; 4],
-        r3: [Float; 4],
-    ) -> Matrix4x4 {
+    pub fn new(r0: [Float; 4], r1: [Float; 4], r2: [Float; 4], r3: [Float; 4]) -> Matrix4x4 {
         Matrix4x4 {
             m: [r0, r1, r2, r3],
         }
@@ -157,8 +152,10 @@ impl Mul<Matrix4x4> for Matrix4x4 {
         let mut r: Matrix4x4 = Default::default();
         for i in 0..4 {
             for j in 0..4 {
-                r.m[i][j] = m1.m[i][0] * m2.m[0][j] + m1.m[i][1] * m2.m[1][j]
-                    + m1.m[i][2] * m2.m[2][j] + m1.m[i][3] * m2.m[3][j];
+                r.m[i][j] = m1.m[i][0] * m2.m[0][j]
+                    + m1.m[i][1] * m2.m[1][j]
+                    + m1.m[i][2] * m2.m[2][j]
+                    + m1.m[i][3] * m2.m[3][j];
             }
         }
         r
@@ -189,16 +186,10 @@ pub struct Transform {
 
 impl Transform {
     /// Returns a new transform with m and m_inv set to identity.
-    pub fn new() -> Transform {
+    pub fn identity() -> Transform {
         Transform {
-            m: Matrix4x4::new(),
-            m_inv: Matrix4x4::new(),
-        }
-    }
-    pub fn new_with_matrix(m: Matrix4x4) -> Transform {
-        Transform {
-            m,
-            m_inv: m.inverse(),
+            m: Matrix4x4::identity(),
+            m_inv: Matrix4x4::identity(),
         }
     }
 
@@ -210,13 +201,13 @@ impl Transform {
     }
 
     pub fn translate(delta: Vector3f) -> Transform {
-        let m = Matrix4x4::new_with_values(
+        let m = Matrix4x4::new(
             [1., 0., 0., delta.x],
             [0., 1., 0., delta.y],
             [0., 0., 1., delta.z],
             [0., 0., 0., 1.],
         );
-        let m_inv = Matrix4x4::new_with_values(
+        let m_inv = Matrix4x4::new(
             [1., 0., 0., -delta.x],
             [0., 1., 0., -delta.y],
             [0., 0., 1., -delta.z],
@@ -291,6 +282,15 @@ impl Transform {
     }
 }
 
+impl From<Matrix4x4> for Transform {
+    fn from(m: Matrix4x4) -> Transform {
+        Transform {
+            m,
+            m_inv: m.inverse(),
+        }
+    }
+}
+
 impl Mul<Transform> for Transform {
     type Output = Transform;
     fn mul(self, rhs: Transform) -> Transform {
@@ -317,10 +317,10 @@ mod tests {
     #[test]
     fn test_4x4_inverse() {
         // Identity
-        let i = Matrix4x4::new();
+        let i = Matrix4x4::identity();
         assert_eq!(i.inverse() * i, i);
 
-        let m = Matrix4x4::new_with_values(
+        let m = Matrix4x4::new(
             [2., 0., 0., 0.],
             [0., 3., 0., 0.],
             [0., 0., 4., 0.],
@@ -333,18 +333,18 @@ mod tests {
     #[test]
     fn test_transform_mul() {
         // Test that std::ops::Mul compiles.
-        let i = Matrix4x4::new();
-        let m1 = Matrix4x4::new();
-        let m2 = Matrix4x4::new();
+        let i: Matrix4x4 = Default::default();
+        let m1: Matrix4x4 = Default::default();
+        let m2: Matrix4x4 = Default::default();
         assert_eq!(m1 * m2, i);
     }
 
     #[test]
     fn test_scale() {
         // Test that std::ops::Mul compiles.
-        let m1 = Matrix4x4::new();
+        let m1 = Matrix4x4::identity();
         let t = Transform::scale(2., 3., 4.);
-        let m2 = Matrix4x4::new_with_values(
+        let m2 = Matrix4x4::new(
             [2., 0., 0., 0.],
             [0., 3., 0., 0.],
             [0., 0., 4., 0.],

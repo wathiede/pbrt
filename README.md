@@ -15,3 +15,8 @@ This is a rust implementation of the physics based ray tracer documented in
    enums, see parser::{WorldBlock,OptionsBlock} into a parser::Scene object.
    The second phase then walks the Scene object calling api::Pbrt methods as
    appropriate.
+ * Constructors: no parameter constructors should implement
+   [`Default`](https://doc.rust-lang.org/std/default/trait.Default.html), or
+   helpfully named constructors like `identity`.  Type changing constructors
+   should implement
+   [`From`](https://doc.rust-lang.org/std/convert/trait.From.html).

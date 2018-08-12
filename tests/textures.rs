@@ -13,13 +13,13 @@
 // limitations under the License.
 extern crate pbrt;
 
-use pbrt::core::pbrt::Float;
 use pbrt::core::paramset::TextureParams;
+use pbrt::core::pbrt::Float;
 use pbrt::textures::constant::ConstantTexture;
 
 #[test]
 fn test_texture_params() {
-    let mut tp = TextureParams::new();
+    let mut tp: TextureParams = Default::default();
     tp.float_textures.insert(
         "constant".to_owned(),
         Box::new(ConstantTexture::new(0.25 as Float)),
