@@ -165,8 +165,8 @@ mod tests {
             &Value::Float(vec![1., 2.].into()),
         )].into();
         assert_eq!(
-            &ps.find("test0").unwrap(),
-            &Value::Float(ParamList(vec![1., 2.]))
+            ps.find("test0").unwrap(),
+            Value::Float(ParamList(vec![1., 2.]))
         );
 
         let mut ps: ParamSet = vec![ParamSetItem::new(
@@ -174,26 +174,26 @@ mod tests {
             &Value::Float(ParamList(vec![1., 2.])),
         )].into();
         assert_eq!(
-            &ps.find("test1").unwrap(),
-            &Value::Float(ParamList(vec![1., 2.]))
+            ps.find("test1").unwrap(),
+            Value::Float(ParamList(vec![1., 2.]))
         );
 
         assert_eq!(
-            &ps.find("notfound")
+            ps.find("notfound")
                 .unwrap_or(Value::Float(ParamList(vec![1., 2.]))),
-            &Value::Float(ParamList(vec![1., 2.]))
+            Value::Float(ParamList(vec![1., 2.]))
         );
 
         ps.add("test2", Value::Float(ParamList(vec![3., 4.])));
         assert_eq!(
-            &ps.find("test2").unwrap(),
-            &Value::Float(ParamList(vec![3., 4.]))
+            ps.find("test2").unwrap(),
+            Value::Float(ParamList(vec![3., 4.]))
         );
         assert_eq!(ps.find("test3"), None);
         ps.add("bools", Value::Bool(ParamList(vec![true, true, false])));
         assert_eq!(
-            &ps.find("bools").unwrap(),
-            &Value::Bool(ParamList(vec![true, true, false]))
+            ps.find("bools").unwrap(),
+            Value::Bool(ParamList(vec![true, true, false]))
         );
         assert_eq!(ps.find("test3"), None);
 
