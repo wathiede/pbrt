@@ -56,8 +56,8 @@ enum APIState {
 
 // API Local Classes
 const MAX_TRANSFORMS: usize = 2;
-const START_TRANSFORM_BITS: usize = 1 << 0;
-const END_TRANSFORM_BITS: usize = 1 << 1;
+const START_TRANSFORM_BITS: usize = 1;
+const END_TRANSFORM_BITS: usize = 2;
 const ALL_TRANSFORMS_BITS: usize = (1 << MAX_TRANSFORMS) - 1;
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -366,9 +366,9 @@ impl<'a> Pbrt<'a> {
         verify_world!(self, "pbrt.attribute_begin");
         self.pushed_graphics_states
             .push(self.graphics_state.clone());
-        self.pushed_transforms.push(self.current_transform.clone());
+        self.pushed_transforms.push(self.current_transform);
         self.pushed_active_transform_bits
-            .push(self.active_transform_bits.clone());
+            .push(self.active_transform_bits);
     }
 
     pub fn attribute_end(&mut self) {
@@ -387,9 +387,9 @@ impl<'a> Pbrt<'a> {
 
     pub fn transform_begin(&mut self) {
         verify_world!(self, "pbrt.transform_begin");
-        self.pushed_transforms.push(self.current_transform.clone());
+        self.pushed_transforms.push(self.current_transform);
         self.pushed_active_transform_bits
-            .push(self.active_transform_bits.clone());
+            .push(self.active_transform_bits);
     }
 
     pub fn transform_end(&mut self) {
@@ -412,14 +412,14 @@ impl<'a> Pbrt<'a> {
         self.for_active_transforms(|ct| {
             // TODO(wathiede): is it wrong to clone ct? I needed to convert a &mut to a non-mutable
             // type.
-            *ct = ct.clone() * Transform::translate(Vector3f::new(dx, dy, dz))
+            *ct = *ct * Transform::translate(&Vector3f::new(dx, dy, dz))
         });
     }
 
     pub fn rotate(&mut self, angle: Float, ax: Float, ay: Float, az: Float) {
         verify_initialized!(self, "pbrt.rotate");
         self.for_active_transforms(|ct| {
-            *ct = ct.clone() * Transform::rotate(angle, Vector3f::new(ax, ay, az))
+            *ct = *ct * Transform::rotate(angle, &Vector3f::new(ax, ay, az))
         });
     }
 
@@ -430,20 +430,19 @@ impl<'a> Pbrt<'a> {
 
     pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
         verify_initialized!(self, "pbrt.scale");
-        self.for_active_transforms(|ct| *ct = ct.clone() * Transform::scale(sx, sy, sz));
+        self.for_active_transforms(|ct| *ct = *ct * Transform::scale(sx, sy, sz));
     }
 
     pub fn concat_transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.concat_transform");
         self.for_active_transforms(|ct| {
             let t = transform;
-            *ct = ct.clone()
-                * Transform::from(Matrix4x4::new(
-                    [t[0], t[1], t[2], t[3]],
-                    [t[4], t[5], t[6], t[7]],
-                    [t[8], t[9], t[10], t[11]],
-                    [t[12], t[13], t[14], t[15]],
-                ))
+            *ct = *ct * Transform::from(Matrix4x4::new(
+                [t[0], t[1], t[2], t[3]],
+                [t[4], t[5], t[6], t[7]],
+                [t[8], t[9], t[10], t[11]],
+                [t[12], t[13], t[14], t[15]],
+            ))
         });
     }
 
@@ -460,15 +459,15 @@ impl<'a> Pbrt<'a> {
         });
     }
 
-    pub fn coordinate_system(&mut self, name: String) {
+    pub fn coordinate_system(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system");
         self.named_coordinate_systems
-            .insert(name, self.current_transform);
+            .insert(name.to_string(), self.current_transform);
     }
 
-    pub fn coordinate_system_transform(&mut self, name: String) {
+    pub fn coordinate_system_transform(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system_transform");
-        match self.named_coordinate_systems.get(&name) {
+        match self.named_coordinate_systems.get(name) {
             Some(t) => self.current_transform = *t,
             None => warn!("Couldn’t find named coordinate system \"{}\"", name),
         }

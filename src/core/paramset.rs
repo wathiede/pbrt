@@ -35,16 +35,16 @@ where
     T: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let ref v = self.0;
+        let v = &self.0;
         if v.is_empty() {
             write!(f, "<>")?;
         }
         let mut it = v.iter();
-        write!(f, "{:?}", it.next().unwrap())?;
-        while let Some(i) = it.next() {
+        write!(f, "<{:?}", it.next().unwrap())?;
+        for i in it {
             write!(f, " {:?}", i)?;
         }
-        Ok(())
+        write!(f, ">")
     }
 }
 
@@ -74,7 +74,7 @@ pub struct ParamSetItem {
 }
 
 impl ParamSetItem {
-    pub fn new(name: &str, values: Value) -> ParamSetItem {
+    pub fn new(name: &str, values: &Value) -> ParamSetItem {
         ParamSetItem {
             name: String::from(name),
             values: values.clone(),
@@ -95,7 +95,7 @@ impl ParamSet {
             name.clone(),
             ParamSetItem {
                 name: name.clone(),
-                values: values,
+                values,
                 looked_up: RefCell::new(false),
             },
         );
@@ -121,7 +121,7 @@ impl ParamSet {
         let mut unused = false;
         info!("report_unused");
 
-        for (key, val) in self.values.iter() {
+        for (key, val) in &self.values {
             if !(*val.looked_up.borrow()) {
                 info!("* '{}' not used", key);
                 unused = true
@@ -135,7 +135,7 @@ impl ParamSet {
 impl From<Vec<ParamSetItem>> for ParamSet {
     fn from(psis: Vec<ParamSetItem>) -> Self {
         let mut ps: ParamSet = Default::default();
-        for ref psi in psis.iter() {
+        for psi in &psis {
             ps.add(&psi.name, psi.values.clone())
         }
         ps
@@ -147,9 +147,9 @@ pub struct TextureParams {
     // TODO(wathiede): is this right?
     // TODO(wathiede): remove pub after testing complete.
     pub float_textures: collections::HashMap<String, Box<Texture<Output = Float>>>,
-    specturm_textures: collections::HashMap<String, Box<Texture<Output = Spectrum>>>,
-    geom_params: ParamSet,
-    material_params: ParamSet,
+    //specturm_textures: collections::HashMap<String, Box<Texture<Output = Spectrum>>>,
+    //geom_params: ParamSet,
+    //material_params: ParamSet,
 }
 
 impl TextureParams {}
@@ -162,38 +162,38 @@ mod tests {
     fn test_param_set() {
         let ps: ParamSet = vec![ParamSetItem::new(
             "test0",
-            Value::Float(vec![1., 2.].into()),
+            &Value::Float(vec![1., 2.].into()),
         )].into();
         assert_eq!(
-            ps.find("test0").unwrap(),
-            Value::Float(ParamList(vec![1., 2.]))
+            &ps.find("test0").unwrap(),
+            &Value::Float(ParamList(vec![1., 2.]))
         );
 
         let mut ps: ParamSet = vec![ParamSetItem::new(
             "test1",
-            Value::Float(ParamList(vec![1., 2.])),
+            &Value::Float(ParamList(vec![1., 2.])),
         )].into();
         assert_eq!(
-            ps.find("test1").unwrap(),
-            Value::Float(ParamList(vec![1., 2.]))
+            &ps.find("test1").unwrap(),
+            &Value::Float(ParamList(vec![1., 2.]))
         );
 
         assert_eq!(
-            ps.find("notfound")
+            &ps.find("notfound")
                 .unwrap_or(Value::Float(ParamList(vec![1., 2.]))),
-            Value::Float(ParamList(vec![1., 2.]))
+            &Value::Float(ParamList(vec![1., 2.]))
         );
 
         ps.add("test2", Value::Float(ParamList(vec![3., 4.])));
         assert_eq!(
-            ps.find("test2").unwrap(),
-            Value::Float(ParamList(vec![3., 4.]))
+            &ps.find("test2").unwrap(),
+            &Value::Float(ParamList(vec![3., 4.]))
         );
         assert_eq!(ps.find("test3"), None);
         ps.add("bools", Value::Bool(ParamList(vec![true, true, false])));
         assert_eq!(
-            ps.find("bools").unwrap(),
-            Value::Bool(ParamList(vec![true, true, false]))
+            &ps.find("bools").unwrap(),
+            &Value::Bool(ParamList(vec![true, true, false]))
         );
         assert_eq!(ps.find("test3"), None);
 
@@ -206,12 +206,12 @@ mod tests {
     #[test]
     fn test_param_set_find() {
         let ps: ParamSet = vec![
-            ParamSetItem::new("test1", Value::Float(ParamList(vec![1., 2.]))),
+            ParamSetItem::new("test1", &Value::Float(ParamList(vec![1., 2.]))),
             ParamSetItem::new(
                 "test2",
-                Value::String(ParamList(vec!["one".to_owned(), "two".to_owned()])),
+                &Value::String(ParamList(vec!["one".to_owned(), "two".to_owned()])),
             ),
-            ParamSetItem::new("test3", Value::String(ParamList(vec![]))),
+            ParamSetItem::new("test3", &Value::String(ParamList(vec![]))),
         ].into();
 
         let test2: String = "one".to_owned();

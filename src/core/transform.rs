@@ -58,7 +58,7 @@ impl Matrix4x4 {
         let mut indxc: [usize; 4] = Default::default();
         let mut indxr: [usize; 4] = Default::default();
         let mut ipiv: [usize; 4] = Default::default();
-        let mut minv = self.m.clone();
+        let mut minv = self.m;
 
         for i in 0..4 {
             let mut irow: usize = 0;
@@ -67,14 +67,14 @@ impl Matrix4x4 {
             // Choose pivot
             for j in 0..4 {
                 if ipiv[j] != 1 {
-                    for k in 0..4 {
-                        if ipiv[k] == 0 {
+                    for (k, ipivk) in ipiv.iter().enumerate() {
+                        if *ipivk == 0 {
                             if minv[j][k].abs() >= big {
                                 big = minv[j][k].abs();
                                 irow = j;
                                 icol = k;
                             }
-                        } else if ipiv[k] > 1 {
+                        } else if *ipivk > 1 {
                             error!("Singular matrix in MatrixInvert");
                         }
                     }
@@ -83,6 +83,8 @@ impl Matrix4x4 {
             ipiv[icol] += 1;
             // Swap rows _irow_ and _icol_ for pivot
             if irow != icol {
+                // Can't figure out how to make swap work here.
+                #[cfg_attr(feature = "cargo-clippy", allow(manual_swap))]
                 for k in 0..4 {
                     let tmp = minv[irow][k];
                     minv[irow][k] = minv[icol][k];
@@ -116,10 +118,8 @@ impl Matrix4x4 {
         // Swap columns to reflect permutation
         for j in (0..4).rev() {
             if indxr[j] != indxc[j] {
-                for k in 0..4 {
-                    let tmp = minv[k][indxr[j]];
-                    minv[k][indxr[j]] = minv[k][indxc[j]];
-                    minv[k][indxc[j]] = tmp;
+                for mi in &mut minv {
+                    mi.swap(indxr[j], indxc[j])
                 }
             }
         }
@@ -195,12 +195,12 @@ impl Transform {
 
     pub fn inverse(&self) -> Transform {
         Transform {
-            m: self.m_inv.clone(),
-            m_inv: self.m.clone(),
+            m: self.m_inv,
+            m_inv: self.m,
         }
     }
 
-    pub fn translate(delta: Vector3f) -> Transform {
+    pub fn translate(delta: &Vector3f) -> Transform {
         let m = Matrix4x4::new(
             [1., 0., 0., delta.x],
             [0., 1., 0., delta.y],
@@ -217,7 +217,7 @@ impl Transform {
     }
 
     /// rotate generates a Tranform for the rotation of theta (in degrees) about axis.
-    pub fn rotate(theta: Float, axis: Vector3f) -> Transform {
+    pub fn rotate(theta: Float, axis: &Vector3f) -> Transform {
         let a = axis.normalize();
         let sin_theta = theta.to_radians().sin();
         let cos_theta = theta.to_radians().cos();
