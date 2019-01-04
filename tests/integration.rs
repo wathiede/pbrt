@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,16 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-pub mod api;
-pub mod error;
-pub mod geometry;
-pub mod interaction;
-pub mod light;
-pub mod medium;
-pub mod paramset;
-pub mod pbrt;
-pub mod spectrum;
-pub mod texture;
-pub mod transform;
+#[macro_use]
+extern crate pbrt;
+#[macro_use]
+extern crate log;
 
-mod parser;
+mod core;
