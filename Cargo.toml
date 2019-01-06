@@ -1,11 +1,12 @@
 [package]
 name = "pbrt"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Bill Thiede <rust@xinu.tv>"]
 license = "Apache-2.0"
 license-file = "LICENSE"
 readme = "README.md"
 description = "Rust implementation of https://pbrt.org/"
+repository = "https://github.com/wathiede/pbrt"
 
 [dependencies]
 nom = "3.2.1"
