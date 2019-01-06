@@ -2,7 +2,9 @@
 name = "pbrt"
 version = "0.1.0"
 authors = ["Bill Thiede <rust@xinu.tv>"]
+license = "Apache-2.0"
 license-file = "LICENSE"
+readme = "README.md"
 description = "Rust implementation of https://pbrt.org/"
 
 [dependencies]
