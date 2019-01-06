@@ -7,6 +7,9 @@ you may like this project.
 This is a rust implementation of the physics based ray tracer documented in
 'Physically Based Rendering, Third Edition' http://www.pbrt.org/
 
+If you're looking for a more fully-formed implementation, check out
+  https://github.com/wahn/rs_pbrt
+
 # Differences from C++ version
  * Output parameters rewritten as multiple return values.
  * Functions that use bool return type with out parameter are rewritten to use

@@ -2,6 +2,8 @@
 name = "pbrt"
 version = "0.1.0"
 authors = ["Bill Thiede <rust@xinu.tv>"]
+license-file = "LICENSE"
+description = "Rust implementation of https://pbrt.org/"
 
 [dependencies]
 nom = "3.2.1"
