@@ -8,5 +8,13 @@ nom = "3.2.1"
 regex = "0.2.5"
 log = "0.4.1"
 
+# For the binary.
+simplelog = "0.4.4"
+structopt = "0.1.7"
+structopt-derive = "0.1.6"
+
 [dev-dependencies]
 pretty_assertions = "0.5.0"
+
+[features]
+sampled-spectrum = []
