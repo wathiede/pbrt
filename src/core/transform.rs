@@ -84,7 +84,7 @@ impl Matrix4x4 {
             // Swap rows _irow_ and _icol_ for pivot
             if irow != icol {
                 // Can't figure out how to make swap work here.
-                #[cfg_attr(feature = "cargo-clippy", allow(manual_swap))]
+                #[allow(clippy::manual_swap)]
                 for k in 0..4 {
                     let tmp = minv[irow][k];
                     minv[irow][k] = minv[icol][k];

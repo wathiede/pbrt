@@ -20,5 +20,6 @@ extern crate nom;
 #[macro_use]
 extern crate pretty_assertions;
 
+#[macro_use]
 pub mod core;
 pub mod textures;

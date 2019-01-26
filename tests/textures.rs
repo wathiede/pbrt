@@ -13,15 +13,25 @@
 // limitations under the License.
 extern crate pbrt;
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use pbrt::core::api;
+use pbrt::core::paramset::ParamSet;
 use pbrt::core::paramset::TextureParams;
 use pbrt::core::pbrt::Float;
+use pbrt::core::pbrt::Options;
+use pbrt::core::texture::Texture;
+use pbrt::core::transform::Transform;
 use pbrt::textures::constant::ConstantTexture;
 
 #[test]
-fn test_texture_params() {
-    let mut tp: TextureParams = Default::default();
-    tp.float_textures.insert(
-        "constant".to_owned(),
-        Box::new(ConstantTexture::new(0.25 as Float)),
-    );
+fn test_constant_float_texture_default() {
+    let p = Default::default();
+    let opts = Default::default();
+    let ref mut pbrt = api::Pbrt::new(&opts);
+    pbrt.init();
+    pbrt.world_begin();
+    pbrt.texture("tex1", "float", "constant", p);
+    // TODO(wathiede): assert things against pbrt.graphics_state.float_textures
 }

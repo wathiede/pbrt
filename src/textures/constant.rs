@@ -11,26 +11,66 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use core::interaction::SurfaceInteraction;
-use core::texture::Texture;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result;
 
-pub struct ConstantTexture<T> {
+use core::interaction::SurfaceInteraction;
+use core::paramset::TextureParams;
+use core::pbrt::Float;
+use core::spectrum::Spectrum;
+use core::texture::Texture;
+use core::transform::Transform;
+
+#[derive(Clone)]
+pub struct ConstantTexture<T>
+where
+    T: Debug,
+{
     value: T,
 }
 
-impl<T> ConstantTexture<T> {
+pub fn create_constant_float_texture(
+    _tex2world: &Transform,
+    tp: &TextureParams,
+) -> ConstantTexture<Float> {
+    ConstantTexture {
+        value: tp.find_float("value", 1.),
+    }
+}
+
+pub fn create_constant_spectrum_texture(
+    _tex2world: &Transform,
+    tp: &TextureParams,
+) -> ConstantTexture<Spectrum> {
+    ConstantTexture {
+        value: tp.find_spectrum("value", Spectrum::from(1.)),
+    }
+}
+
+impl<T> ConstantTexture<T>
+where
+    T: Debug,
+{
     pub fn new(value: T) -> ConstantTexture<T> {
         ConstantTexture { value }
     }
 }
 
-impl<T> Texture for ConstantTexture<T>
+impl<T> Texture<T> for ConstantTexture<T>
 where
-    T: Clone,
+    T: Clone + Debug,
 {
-    type Output = T;
-
-    fn evaluate(&self, _si: &SurfaceInteraction) -> Self::Output {
+    fn evaluate(&self, _si: &SurfaceInteraction) -> T {
         self.value.clone()
+    }
+}
+
+impl<T> Debug for ConstantTexture<T>
+where
+    T: Debug,
+{
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "ConstantTexture{{{:?}}}", &self.value)
     }
 }

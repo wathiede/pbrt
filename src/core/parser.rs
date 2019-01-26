@@ -66,9 +66,10 @@ pub enum Directive {
     Texture(
         String, // name
         String, // type
-        String, // class
+        String, // texname
         ParamSet,
     ),
+    Unhandled(String),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -84,6 +85,13 @@ named!(quoted_name<&str>,
    )
 );
 
+named!(alphanumeric_str<&str>,
+   map_res!(
+       alphanumeric,
+       str::from_utf8
+   )
+);
+
 fn bool(input: &[u8]) -> IResult<&[u8], bool> {
     flat_map!(
         input,
@@ -93,7 +101,7 @@ fn bool(input: &[u8]) -> IResult<&[u8], bool> {
 }
 
 // number is a superset of nom::double! that includes '1' and '1.'
-#[cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
+#[allow(clippy::cyclomatic_complexity)]
 fn number(input: &[u8]) -> IResult<&[u8], Float> {
     flat_map!(
         input,
@@ -402,6 +410,16 @@ named!(
     ws!(do_parse!(tag!("AttributeEnd") >> (Directive::AttributeEnd)))
 );
 
+named!(
+    unhandled<Directive>,
+    ws!(
+      do_parse!(
+          statement: alphanumeric_str >>
+          (Directive::Unhandled(statement.into()))
+      )
+    )
+);
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 named!(
     directives<Vec<Directive>>,
@@ -423,6 +441,7 @@ named!(
             | light_source
             | attribute_end
             | attribute_begin
+            | unhandled
         )
     )
     )
@@ -532,7 +551,8 @@ mod tests {
                             y: 0.5,
                             z: 0.6,
                         },
-                    ].into()
+                    ]
+                    .into()
                 )
             )
         );
@@ -762,7 +782,8 @@ mod tests {
                         vec![ParamSetItem::new(
                             "pixelsamples",
                             &Value::Int(vec![128].into()),
-                        )].into()
+                        )]
+                        .into()
                     )
                 )
             );
@@ -802,7 +823,8 @@ mod tests {
                         ),
                         ParamSetItem::new("xresolution", &Value::Int(vec![400].into())),
                         ParamSetItem::new("yresolution", &Value::Int(vec![200].into())),
-                    ].into()
+                    ]
+                    .into()
                 )
             )
         );
@@ -824,7 +846,8 @@ mod tests {
                         vec![ParamSetItem::new(
                             "L",
                             &Value::RGB(ParamList(vec![0.4, 0.45, 0.5])),
-                        )].into(),
+                        )]
+                        .into(),
                     ),
                     Directive::AttributeEnd,
                 ]
@@ -858,7 +881,8 @@ mod tests {
                         vec![ParamSetItem::new("radius", &Value::Float(vec![1.].into()))].into(),
                     ),
                     Directive::AttributeEnd,
-                ].into(),
+                ]
+                .into(),
             )
         );
 
@@ -876,7 +900,8 @@ mod tests {
                         vec![ParamSetItem::new("radius", &Value::Float(vec![1.].into()))].into(),
                     ),
                     Directive::AttributeEnd,
-                ].into(),
+                ]
+                .into(),
             )
         );
     }
@@ -894,7 +919,8 @@ mod tests {
                     vec![ParamSetItem::new(
                         "L",
                         &Value::RGB(ParamList(vec![0.4, 0.45, 0.5])),
-                    )].into()
+                    )]
+                    .into()
                 )
             )
         );
@@ -972,7 +998,8 @@ mod tests {
                     vec![ParamSetItem::new(
                         "pixelsamples",
                         &Value::Int(vec![128].into()),
-                    )].into(),
+                    )]
+                    .into(),
                 ),
                 Directive::Integrator("path".into(), vec![].into()),
                 Directive::Film(
@@ -984,7 +1011,8 @@ mod tests {
                         ),
                         ParamSetItem::new("xresolution", &Value::Int(vec![400].into())),
                         ParamSetItem::new("yresolution", &Value::Int(vec![300].into())),
-                    ].into(),
+                    ]
+                    .into(),
                 ),
                 Directive::WorldBegin,
                 Directive::LightSource(
@@ -992,7 +1020,8 @@ mod tests {
                     vec![ParamSetItem::new(
                         "L",
                         &Value::RGB(vec![0.4, 0.45, 0.5].into()),
-                    )].into(),
+                    )]
+                    .into(),
                 ),
                 Directive::LightSource(
                     "distant".into(),
@@ -1004,11 +1033,13 @@ mod tests {
                                     x: -30.,
                                     y: 40.,
                                     z: 100.,
-                                }].into(),
+                                }]
+                                .into(),
                             ),
                         ),
                         ParamSetItem::new("L", &Value::Blackbody(vec![3000., 1.5].into())),
-                    ].into(),
+                    ]
+                    .into(),
                 ),
                 Directive::AttributeBegin,
                 Directive::Material("mirror".into(), vec![].into()),
@@ -1027,14 +1058,16 @@ mod tests {
                         ParamSetItem::new("vscale", &Value::Float(vec![8.].into())),
                         ParamSetItem::new("tex1", &Value::RGB(ParamList(vec![0.1, 0.1, 0.1]))),
                         ParamSetItem::new("tex2", &Value::RGB(ParamList(vec![0.8, 0.8, 0.8]))),
-                    ].into(),
+                    ]
+                    .into(),
                 ),
                 Directive::Material(
                     "matte".into(),
                     vec![ParamSetItem::new(
                         "Kd",
                         &Value::Texture(vec!["checks".into()].into()),
-                    )].into(),
+                    )]
+                    .into(),
                 ),
                 Directive::Translate(0., 0., -1.),
                 Directive::Shape(
@@ -1065,14 +1098,16 @@ mod tests {
                                         y: 20.,
                                         z: 0.,
                                     },
-                                ].into(),
+                                ]
+                                .into(),
                             ),
                         ),
                         ParamSetItem::new(
                             "st",
                             &Value::Float(vec![0., 0., 1., 0., 1., 1., 0., 1.].into()),
                         ),
-                    ].into(),
+                    ]
+                    .into(),
                 ),
                 Directive::AttributeEnd,
                 Directive::WorldEnd,

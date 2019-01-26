@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use std::collections;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::ops::{Index, IndexMut};
 use std::path::Path;
+use std::sync::Arc;
 
 extern crate nom;
 
@@ -24,15 +25,22 @@ use core::geometry::Vector3f;
 use core::light::Light;
 use core::medium::Medium;
 use core::paramset::ParamSet;
+use core::paramset::TextureParams;
 use core::parser;
 use core::parser::Directive;
-use core::pbrt::{Float, Options};
-use core::transform::{Matrix4x4, Transform};
+use core::pbrt::Float;
+use core::pbrt::Options;
+use core::spectrum::Spectrum;
+use core::texture::Texture;
+use core::transform::Matrix4x4;
+use core::transform::Transform;
+use textures::constant;
 
 #[derive(Debug)]
 pub enum Error {
     Io(io::Error),
     Parser(parser::Error),
+    Unhandled(String),
 }
 
 impl From<io::Error> for Error {
@@ -115,7 +123,7 @@ struct RenderOptions {
     camera_name: String,
     camera_params: ParamSet,
     camera_to_world: TransformSet,
-    named_media: collections::HashMap<String, Medium>,
+    named_media: HashMap<String, Medium>,
     lights: Vec<Light>,
     have_scattering_media: bool,
     // TODO(wathiede):
@@ -142,7 +150,7 @@ impl RenderOptions {
             camera_name: "perspective".to_owned(),
             camera_params: Default::default(),
             camera_to_world: Default::default(),
-            named_media: collections::HashMap::new(),
+            named_media: HashMap::new(),
             lights: Vec::new(),
             have_scattering_media: false,
         }
@@ -159,8 +167,8 @@ struct GraphicsState {
     // MediumInterface CreateMediumInterface();
 
     // // Graphics State
-    // std::map<std::string, std::shared_ptr<Texture<Float>>> floatTextures;
-    // std::map<std::string, std::shared_ptr<Texture<Spectrum>>> spectrumTextures;
+    float_textures: HashMap<String, Arc<Texture<Float>>>,
+    specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
     // ParamSet materialParams;
     // std::string material = "matte";
     // std::map<std::string, std::shared_ptr<Material>> namedMaterials;
@@ -173,8 +181,9 @@ struct GraphicsState {
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => {
         if $pbrt.current_api_state == APIState::Uninitialized {
-            error!("init() must be before calling \"{}()\".  Ignoring.", $func);
-            debug_assert!(false);
+            let msg = format!("init() must be before calling \"{}()\".", $func);
+            error!("{}. Ignoring.", msg);
+            debug_assert!(false, msg);
             return;
         }
     };
@@ -185,11 +194,12 @@ macro_rules! verify_options {
     ($pbrt:expr, $func:expr) => {
         verify_initialized!($pbrt, $func);
         if $pbrt.current_api_state == APIState::WorldBlock {
-            error!(
-                "Options cannot be set inside world block; \"{}\" not allowed.  Ignoring.",
+            let msg = format!(
+                "Options cannot be set inside world block; \"{}\" not allowed.",
                 $func
             );
-            debug_assert!(false);
+            error!("{}. Ignoring.", msg);
+            debug_assert!(false, msg);
             return;
         }
     };
@@ -200,11 +210,12 @@ macro_rules! verify_world {
     ($pbrt:expr, $func:expr) => {
         verify_initialized!($pbrt, $func);
         if $pbrt.current_api_state == APIState::OptionsBlock {
-            error!(
-                "Scene description must be inside world block; \"{}\" not allowed.  Ignoring.",
+            let msg = format!(
+                "Scene description must be inside world block; \"{}\" not allowed.",
                 $func
             );
-            debug_assert!(false);
+            error!("{}. Ignoring.", msg);
+            debug_assert!(false, msg);
             return;
         }
     };
@@ -217,7 +228,7 @@ pub struct Pbrt<'a> {
     current_api_state: APIState,
     current_transform: TransformSet,
     active_transform_bits: usize,
-    named_coordinate_systems: collections::HashMap<String, TransformSet>,
+    named_coordinate_systems: HashMap<String, TransformSet>,
     render_options: RenderOptions,
     graphics_state: GraphicsState,
     pushed_graphics_states: Vec<GraphicsState>,
@@ -234,7 +245,7 @@ impl<'a> Pbrt<'a> {
             current_api_state: APIState::Uninitialized,
             current_transform: Default::default(),
             active_transform_bits: ALL_TRANSFORMS_BITS,
-            named_coordinate_systems: collections::HashMap::new(),
+            named_coordinate_systems: HashMap::new(),
             render_options: RenderOptions::new(),
             graphics_state: Default::default(),
             pushed_graphics_states: Vec::new(),
@@ -270,21 +281,24 @@ impl<'a> Pbrt<'a> {
                     [look_x, look_y, look_z], // look xyz
                     [up_x, up_y, up_z],       // up xyz
                 ),
-                Directive::Camera(name, ps) => self.camera(name, ps),
-                Directive::Sampler(name, ps) => self.sampler(name, ps),
-                Directive::Integrator(name, ps) => self.integrator(name, ps),
-                Directive::Film(name, ps) => self.film(name, ps),
+                Directive::Camera(name, params) => self.camera(name, params),
+                Directive::Sampler(name, params) => self.sampler(name, params),
+                Directive::Integrator(name, params) => self.integrator(name, params),
+                Directive::Film(name, params) => self.film(name, params),
                 Directive::WorldBegin => self.world_begin(),
                 Directive::WorldEnd => self.world_end(),
                 Directive::AttributeBegin => self.attribute_begin(),
                 Directive::AttributeEnd => self.attribute_end(),
-                Directive::LightSource(_name, _ps) => (),
-                Directive::Material(_name, _ps) => (),
-                Directive::Shape(_name, _ps) => (),
+                Directive::LightSource(_name, _params) => (),
+                Directive::Material(_name, _params) => (),
+                Directive::Shape(_name, _params) => (),
                 Directive::Scale(x, y, z) => self.scale(x, y, z),
                 Directive::Rotate(angle, x, y, z) => self.rotate(angle, x, y, z),
                 Directive::Translate(x, y, z) => self.translate(x, y, z),
-                Directive::Texture(_name, _kind, _class, _ps) => (),
+                Directive::Texture(name, kind, texname, params) => {
+                    self.texture(&name, &kind, &texname, params)
+                }
+                Directive::Unhandled(statement) => return Err(Error::Unhandled(statement)),
             }
         }
         Ok(())
@@ -402,6 +416,51 @@ impl<'a> Pbrt<'a> {
         self.active_transform_bits = self.pushed_active_transform_bits.pop().unwrap();
     }
 
+    pub fn texture(&mut self, name: &str, kind: &str, texname: &str, params: ParamSet) {
+        verify_world!(self, "pbrt.texture");
+        info!(
+            "Creating texture name {} kind {} texname {} paramset {:?}",
+            name, kind, texname, params
+        );
+
+        // TODO(wathiede): consider removing clone by using references in TextureParams?
+        let tp = TextureParams::new(
+            params.clone(),
+            params.clone(),
+            self.graphics_state.float_textures.clone(),
+            self.graphics_state.specturm_textures.clone(),
+        );
+
+        match kind {
+            "float" => {
+                if self.graphics_state.float_textures.contains_key(name) {
+                    info!("Float texture '{}' is being redefined", name);
+                }
+                self.warn_if_animated_transform("pbrt.texture");
+                if let Some(ft) = make_float_texture(&texname, &self.current_transform[0], &tp) {
+                    self.graphics_state
+                        .float_textures
+                        .insert(name.to_owned(), Arc::new(ft));
+                }
+            }
+            "color" | "spectrum" => {
+                if self.graphics_state.specturm_textures.contains_key(name) {
+                    info!("Spectrum texture '{}' is being redefined", name);
+                }
+                self.warn_if_animated_transform("pbrt.texture");
+                if let Some(st) = make_spectrum_texture(&texname, &self.current_transform[0], &tp) {
+                    self.graphics_state
+                        .specturm_textures
+                        .insert(name.to_owned(), Arc::new(st));
+                }
+            }
+            _ => {
+                error!("Texture type '{}' is unknown", &kind);
+                return;
+            }
+        }
+    }
+
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
         self.for_active_transforms(|ct| *ct = Transform::identity());
@@ -437,12 +496,13 @@ impl<'a> Pbrt<'a> {
         verify_initialized!(self, "pbrt.concat_transform");
         self.for_active_transforms(|ct| {
             let t = transform;
-            *ct = *ct * Transform::from(Matrix4x4::new(
-                [t[0], t[1], t[2], t[3]],
-                [t[4], t[5], t[6], t[7]],
-                [t[8], t[9], t[10], t[11]],
-                [t[12], t[13], t[14], t[15]],
-            ))
+            *ct = *ct
+                * Transform::from(Matrix4x4::new(
+                    [t[0], t[1], t[2], t[3]],
+                    [t[4], t[5], t[6], t[7]],
+                    [t[8], t[9], t[10], t[11]],
+                    [t[12], t[13], t[14], t[15]],
+                ))
         });
     }
 
@@ -564,6 +624,46 @@ impl<'a> Pbrt<'a> {
     }
 }
 
+fn make_float_texture(
+    name: &str,
+    tex2world: &Transform,
+    tp: &TextureParams,
+) -> Option<Box<Texture<Float>>> {
+    match name {
+        "constant" => Some(Box::new(constant::create_constant_float_texture(
+            tex2world, tp,
+        ))),
+        "scale" | "mix" | "bilerp" | "imagemap" | "uv" | "checkerboard" | "dots" | "fbm"
+        | "wrinkled" | "marble" | "windy" => {
+            unimplemented!("Float texture type '{}' not implemented", name);
+        }
+        _ => {
+            warn!("Float texture '{}' is unknown", name);
+            None
+        }
+    }
+}
+
+fn make_spectrum_texture(
+    name: &str,
+    tex2world: &Transform,
+    tp: &TextureParams,
+) -> Option<Box<Texture<Spectrum>>> {
+    match name {
+        "constant" => Some(Box::new(constant::create_constant_spectrum_texture(
+            tex2world, tp,
+        ))),
+        "scale" | "mix" | "bilerp" | "imagemap" | "uv" | "checkerboard" | "dots" | "fbm"
+        | "wrinkled" | "marble" | "windy" => {
+            unimplemented!("Spectrum texture type '{}' not implemented", name);
+        }
+        _ => {
+            warn!("Spectrum texture '{}' is unknown", name);
+            None
+        }
+    }
+}
+
 fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) -> Medium {
     unimplemented!("make_medium");
 }
@@ -571,6 +671,15 @@ fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn new_options() -> Options {
+        Options {
+            num_threads: 1,
+            quick_render: false,
+            quiet: false,
+            verbose: true,
+            image_file: "".to_owned(),
+        }
+    }
 
     #[test]
     fn test_transform_set() {
@@ -580,13 +689,7 @@ mod tests {
 
     #[test]
     fn test_named_coordinate_systems() {
-        let opts = Options {
-            num_threads: 1,
-            quick_render: false,
-            quiet: false,
-            verbose: true,
-            image_file: "".to_owned(),
-        };
+        let opts = new_options();
         let mut pbrt = Pbrt::new(&opts);
         pbrt.init();
         pbrt.identity();
@@ -604,13 +707,7 @@ mod tests {
 
     #[test]
     fn test_attribute_begin_end() {
-        let opts = Options {
-            num_threads: 1,
-            quick_render: false,
-            quiet: false,
-            verbose: true,
-            image_file: "".to_owned(),
-        };
+        let opts = new_options();
         let mut pbrt = Pbrt::new(&opts);
         pbrt.init();
         pbrt.world_begin();
@@ -625,13 +722,7 @@ mod tests {
 
     #[test]
     fn test_transform_begin_end() {
-        let opts = Options {
-            num_threads: 1,
-            quick_render: false,
-            quiet: false,
-            verbose: true,
-            image_file: "".to_owned(),
-        };
+        let opts = new_options();
         let mut pbrt = Pbrt::new(&opts);
         pbrt.init();
         pbrt.world_begin();
@@ -641,6 +732,18 @@ mod tests {
         assert_eq!(pbrt.active_transform_bits, START_TRANSFORM_BITS);
         pbrt.transform_end();
         assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        pbrt.world_end();
+    }
+
+    #[test]
+    fn test_texture() {
+        let opts = new_options();
+        let mut pbrt = Pbrt::new(&opts);
+        pbrt.init();
+        pbrt.world_begin();
+        assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
+        let params = Default::default();
+        pbrt.texture("", "", "", params);
         pbrt.world_end();
     }
 }

@@ -11,10 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use std::fmt::Debug;
+
 use core::interaction::SurfaceInteraction;
 
-pub trait Texture {
-    type Output;
+pub trait Texture<T>: Debug
+where
+    T: Debug,
+{
+    fn evaluate(&self, _si: &SurfaceInteraction) -> T;
+}
 
-    fn evaluate(&self, _si: &SurfaceInteraction) -> Self::Output;
+impl<T> Texture<T> for Box<Texture<T>>
+where
+    T: Debug,
+{
+    fn evaluate(&self, si: &SurfaceInteraction) -> T {
+        (**self).evaluate(si)
+    }
 }

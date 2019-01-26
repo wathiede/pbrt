@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use std::cell::RefCell;
-use std::collections;
-use std::fmt;
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use core::pbrt::Float;
@@ -30,11 +33,11 @@ impl<T> From<Vec<T>> for ParamList<T> {
     }
 }
 
-impl<T> fmt::Debug for ParamList<T>
+impl<T> Debug for ParamList<T>
 where
-    T: fmt::Debug,
+    T: Debug,
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         let v = &self.0;
         if v.is_empty() {
             write!(f, "<>")?;
@@ -85,7 +88,7 @@ impl ParamSetItem {
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ParamSet {
-    values: collections::HashMap<String, ParamSetItem>,
+    values: HashMap<String, ParamSetItem>,
 }
 
 impl ParamSet {
@@ -109,11 +112,27 @@ impl ParamSet {
         })
     }
 
+    pub fn find_one_float(&self, name: &str, default: Float) -> Float {
+        match self.find(name) {
+            Some(Value::Float(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
+            None => default.into(),
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
     pub fn find_one_string(&self, name: &str, default: &str) -> String {
         match self.find(name) {
             Some(Value::String(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
             None => default.into(),
-            _ => panic!("still working on it"),
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    pub fn find_one_spectrum(&self, name: &str, default: Spectrum) -> Spectrum {
+        match self.find(name) {
+            Some(Value::Spectrum(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
+            None => default.into(),
+            _ => panic!("Unexpected type returned from find"),
         }
     }
 
@@ -144,15 +163,37 @@ impl From<Vec<ParamSetItem>> for ParamSet {
 
 #[derive(Default)]
 pub struct TextureParams {
-    // TODO(wathiede): is this right?
-    // TODO(wathiede): remove pub after testing complete.
-    pub float_textures: collections::HashMap<String, Box<Texture<Output = Float>>>,
-    //specturm_textures: collections::HashMap<String, Box<Texture<Output = Spectrum>>>,
-    //geom_params: ParamSet,
-    //material_params: ParamSet,
+    float_textures: HashMap<String, Arc<Texture<Float>>>,
+    specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
+    geom_params: ParamSet,
+    material_params: ParamSet,
 }
 
-impl TextureParams {}
+impl TextureParams {
+    pub fn new(
+        geom_params: ParamSet,
+        material_params: ParamSet,
+        float_textures: HashMap<String, Arc<Texture<Float>>>,
+        specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
+    ) -> TextureParams {
+        TextureParams {
+            float_textures,
+            specturm_textures,
+            geom_params,
+            material_params,
+        }
+    }
+
+    pub fn find_float(&self, name: &str, default: Float) -> Float {
+        self.geom_params
+            .find_one_float(name, self.material_params.find_one_float(name, default))
+    }
+
+    pub fn find_spectrum(&self, name: &str, default: Spectrum) -> Spectrum {
+        self.geom_params
+            .find_one_spectrum(name, self.material_params.find_one_spectrum(name, default))
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -163,7 +204,8 @@ mod tests {
         let ps: ParamSet = vec![ParamSetItem::new(
             "test0",
             &Value::Float(vec![1., 2.].into()),
-        )].into();
+        )]
+        .into();
         assert_eq!(
             ps.find("test0").unwrap(),
             Value::Float(ParamList(vec![1., 2.]))
@@ -172,7 +214,8 @@ mod tests {
         let mut ps: ParamSet = vec![ParamSetItem::new(
             "test1",
             &Value::Float(ParamList(vec![1., 2.])),
-        )].into();
+        )]
+        .into();
         assert_eq!(
             ps.find("test1").unwrap(),
             Value::Float(ParamList(vec![1., 2.]))
@@ -212,7 +255,8 @@ mod tests {
                 &Value::String(ParamList(vec!["one".to_owned(), "two".to_owned()])),
             ),
             ParamSetItem::new("test3", &Value::String(ParamList(vec![]))),
-        ].into();
+        ]
+        .into();
 
         let test2: String = "one".to_owned();
         assert_eq!(ps.find_one_string("test2", "one"), test2);
