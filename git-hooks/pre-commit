@@ -1,5 +1,4 @@
 #!/bin/sh
-echo $PWD
 FILES_AFFECTED=$(git diff --cached --name-only --diff-filter=AMR|xargs)
 if [ ! -z ${FILES_AFFECTED} ]; then
   scripts/insert.py --presubmit ${FILES_AFFECTED:?}
