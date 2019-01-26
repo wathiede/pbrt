@@ -1,0 +1,2 @@
+Material "matte" "color Kd" [ 1 0 0 ]
+Shape "sphere" "color Kd" [ 0 1 0 ]
