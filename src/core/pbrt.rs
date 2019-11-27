@@ -34,3 +34,17 @@ pub struct Options {
 //const PI_OVER2: Float = 1.57079632679489661923;
 //const PI_OVER4: Float = 0.78539816339744830961;
 //const SQRT2: Float = 1.41421356237309504880;
+
+/// Linear interpolate `t` between `v1` and `v2`.
+///
+/// # Examples
+/// ```
+/// # use pbrt::core::pbrt::lerp;
+/// assert_eq!(lerp(0., 0., 1.), 0.);
+/// assert_eq!(lerp(0.5, 0., 1.), 0.5);
+/// assert_eq!(lerp(1., 0., 1.), 1.);
+/// assert_eq!(lerp(0.75, 0., 2.), 1.5);
+/// ```
+pub fn lerp(t: Float, v1: Float, v2: Float) -> Float {
+    (1. - t) * v1 + t * v2
+}
