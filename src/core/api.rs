@@ -134,8 +134,8 @@ struct RenderOptions {
     // std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
 }
 
-impl RenderOptions {
-    fn new() -> RenderOptions {
+impl Default for RenderOptions {
+    fn default() -> RenderOptions {
         RenderOptions {
             transform_start_time: 0.,
             transform_end_time: 0.,
@@ -225,8 +225,8 @@ macro_rules! verify_world {
 
 // Pbrt is the top-level global container for all rendering functionality.
 #[derive(Debug)]
-pub struct Pbrt<'a> {
-    opt: &'a Options,
+pub struct Pbrt {
+    opt: Options,
     current_api_state: APIState,
     current_transform: TransformSet,
     active_transform_bits: usize,
@@ -240,15 +240,15 @@ pub struct Pbrt<'a> {
     // static TransformCache transformCache;
 }
 
-impl<'a> Pbrt<'a> {
-    pub fn new(opt: &'a Options) -> Pbrt<'a> {
+impl Pbrt {
+    pub fn new(opt: Options) -> Pbrt {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
             current_transform: Default::default(),
             active_transform_bits: ALL_TRANSFORMS_BITS,
             named_coordinate_systems: HashMap::new(),
-            render_options: RenderOptions::new(),
+            render_options: Default::default(),
             graphics_state: Default::default(),
             pushed_graphics_states: Vec::new(),
             pushed_transforms: Vec::new(),
@@ -306,12 +306,37 @@ impl<'a> Pbrt<'a> {
         Ok(())
     }
 
+    /// Verifies all the active transforms are equivalent to `t`.
+    ///
+    /// # Note
+    /// This method isn't part of the API described by pbrt, it exists to make rustdoc
+    /// implementations easier.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::Pbrt;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt: Pbrt= Default::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// pbrt.assert_transforms(Matrix4x4::identity());
+    /// ```
+    pub fn assert_transforms<T>(&self, t: T)
+    where
+        T: Into<Transform>,
+    {
+        let t = t.into();
+        self.for_active_transforms(|ct| assert_eq!(ct, &t));
+    }
+
     pub fn init(&mut self) {
         if self.current_api_state != APIState::Uninitialized {
             error!("init() has already been called.");
         }
         self.current_api_state = APIState::OptionsBlock;
-        self.render_options = RenderOptions::new();
+        self.render_options = Default::default();
     }
 
     pub fn cleaup(&mut self) {
@@ -321,7 +346,7 @@ impl<'a> Pbrt<'a> {
             error!("cleanup() called while inside world block.");
         }
         self.current_api_state = APIState::Uninitialized;
-        self.render_options = RenderOptions::new();
+        self.render_options = Default::default();
     }
 
     pub fn world_begin(&mut self) {
@@ -465,12 +490,12 @@ impl<'a> Pbrt<'a> {
 
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
-        self.for_active_transforms(|ct| *ct = Transform::identity());
+        self.for_active_transforms_mut(|ct| *ct = Transform::identity());
     }
 
     pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
         verify_initialized!(self, "translate");
-        self.for_active_transforms(|ct| {
+        self.for_active_transforms_mut(|ct| {
             // TODO(wathiede): is it wrong to clone ct? I needed to convert a &mut to a non-mutable
             // type.
             *ct = *ct * Transform::translate(&Vector3f::new(dx, dy, dz))
@@ -479,7 +504,7 @@ impl<'a> Pbrt<'a> {
 
     pub fn rotate(&mut self, angle: Float, ax: Float, ay: Float, az: Float) {
         verify_initialized!(self, "pbrt.rotate");
-        self.for_active_transforms(|ct| {
+        self.for_active_transforms_mut(|ct| {
             *ct = *ct * Transform::rotate(angle, &Vector3f::new(ax, ay, az))
         });
     }
@@ -487,16 +512,36 @@ impl<'a> Pbrt<'a> {
     pub fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
         verify_initialized!(self, "pbrt.look_at");
         info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
+        unimplemented!();
     }
 
+    /// Scales the currently active transform matrix by the given values.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::Pbrt;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt = Pbrt::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// pbrt.scale(2., 2., 2.);
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [2., 0., 0., 0.],
+    ///         [0., 2., 0., 0.],
+    ///         [0., 0., 2., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
     pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
         verify_initialized!(self, "pbrt.scale");
-        self.for_active_transforms(|ct| *ct = *ct * Transform::scale(sx, sy, sz));
+        self.for_active_transforms_mut(|ct| *ct = *ct * Transform::scale(sx, sy, sz));
     }
 
     pub fn concat_transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.concat_transform");
-        self.for_active_transforms(|ct| {
+        self.for_active_transforms_mut(|ct| {
             let t = transform;
             *ct = *ct
                 * Transform::from(Matrix4x4::new(
@@ -510,7 +555,7 @@ impl<'a> Pbrt<'a> {
 
     pub fn transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.transform");
-        self.for_active_transforms(|ct| {
+        self.for_active_transforms_mut(|ct| {
             let t = transform;
             *ct = Transform::from(Matrix4x4::new(
                 [t[0], t[1], t[2], t[3]],
@@ -607,7 +652,17 @@ impl<'a> Pbrt<'a> {
         self.render_options.have_scattering_media = true;
     }
 
-    fn for_active_transforms<F>(&mut self, mut f: F)
+    fn for_active_transforms<F>(&self, f: F)
+    where
+        F: Fn(&Transform),
+    {
+        for i in 0..MAX_TRANSFORMS {
+            if self.active_transform_bits & (1 << i) > 0 {
+                f(&self.current_transform[i])
+            }
+        }
+    }
+    fn for_active_transforms_mut<F>(&mut self, mut f: F)
     where
         F: FnMut(&mut Transform),
     {
@@ -623,6 +678,12 @@ impl<'a> Pbrt<'a> {
             warn!(
                 "Animated transformations set; ignoring for \"{}\" and using the start transform only",                name);
         }
+    }
+}
+
+impl Default for Pbrt {
+    fn default() -> Pbrt {
+        Pbrt::new(Default::default())
     }
 }
 
@@ -673,15 +734,6 @@ fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn new_options() -> Options {
-        Options {
-            num_threads: 1,
-            quick_render: false,
-            quiet: false,
-            verbose: true,
-            image_file: "".to_owned(),
-        }
-    }
 
     #[test]
     fn test_transform_set() {
@@ -691,8 +743,7 @@ mod tests {
 
     #[test]
     fn test_named_coordinate_systems() {
-        let opts = new_options();
-        let mut pbrt = Pbrt::new(&opts);
+        let mut pbrt: Pbrt = Default::default();
         pbrt.init();
         pbrt.identity();
         pbrt.scale(2., 2., 2.);
@@ -733,8 +784,7 @@ mod tests {
 
     #[test]
     fn test_attribute_begin_end() {
-        let opts = new_options();
-        let mut pbrt = Pbrt::new(&opts);
+        let mut pbrt: Pbrt = Default::default();
         pbrt.init();
         pbrt.world_begin();
         assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
@@ -748,8 +798,7 @@ mod tests {
 
     #[test]
     fn test_transform_begin_end() {
-        let opts = new_options();
-        let mut pbrt = Pbrt::new(&opts);
+        let mut pbrt: Pbrt = Default::default();
         pbrt.init();
         pbrt.world_begin();
         assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);
@@ -763,8 +812,7 @@ mod tests {
 
     #[test]
     fn test_texture() {
-        let opts = new_options();
-        let mut pbrt = Pbrt::new(&opts);
+        let mut pbrt: Pbrt = Default::default();
         pbrt.init();
         pbrt.world_begin();
         assert_eq!(pbrt.active_transform_bits, ALL_TRANSFORMS_BITS);

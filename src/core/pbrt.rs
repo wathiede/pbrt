@@ -18,13 +18,25 @@ pub const EPSILON: Float = f32::EPSILON;
 // Set this type alias to modify all ints in pbrt to be 32 or 64-bit.
 pub type Int = i32;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Options {
     pub num_threads: u32,
     pub quick_render: bool,
     pub quiet: bool,
     pub verbose: bool,
     pub image_file: String,
+}
+
+impl Default for Options {
+    fn default() -> Options {
+        Options {
+            num_threads: 1,
+            quick_render: false,
+            quiet: false,
+            verbose: true,
+            image_file: "".to_owned(),
+        }
+    }
 }
 
 //const PI: Float = 3.14159265358979323846;
