@@ -128,7 +128,7 @@ impl Matrix4x4 {
 }
 
 impl fmt::Debug for Matrix4x4 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(
                 f,

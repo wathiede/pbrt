@@ -45,7 +45,7 @@ pub struct SampledSpectrum {
 common_implementation!(SampledSpectrum, N_SPECTRAL_SAMPLES);
 
 impl fmt::Debug for SampledSpectrum {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "SampledSpectrum({:?})", &self.c[..])
     }
 }

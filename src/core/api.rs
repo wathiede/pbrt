@@ -19,7 +19,7 @@ use std::ops::{Index, IndexMut};
 use std::path::Path;
 use std::sync::Arc;
 
-extern crate nom;
+
 
 use crate::core::geometry::Vector3f;
 use crate::core::light::Light;

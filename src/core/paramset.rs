@@ -37,7 +37,7 @@ impl<T> Debug for ParamList<T>
 where
     T: Debug,
 {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let v = &self.0;
         if v.is_empty() {
             write!(f, "<>")?;

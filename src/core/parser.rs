@@ -14,10 +14,10 @@
 use std::str;
 use std::str::FromStr;
 
-extern crate nom;
+use nom;
 use self::nom::{alphanumeric, digit, space, IResult};
 
-extern crate regex;
+use regex;
 
 use crate::core::geometry::Point3f;
 use crate::core::paramset::{ParamList, ParamSet, ParamSetItem, Value};

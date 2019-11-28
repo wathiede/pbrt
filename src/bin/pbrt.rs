@@ -15,15 +15,15 @@ use std::process;
 
 #[macro_use]
 extern crate log;
-extern crate simplelog;
+
 use simplelog::{Config, LogLevelFilter, TermLogger};
 
-extern crate structopt;
+use structopt;
 #[macro_use]
 extern crate structopt_derive;
 use structopt::StructOpt;
 
-extern crate pbrt;
+use pbrt;
 use pbrt::core::api;
 
 #[derive(Clone, Debug, Default, StructOpt)]

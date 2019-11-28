@@ -70,7 +70,7 @@ impl<T> Debug for ConstantTexture<T>
 where
     T: Debug,
 {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "ConstantTexture{{{:?}}}", &self.value)
     }
 }
