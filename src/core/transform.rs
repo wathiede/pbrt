@@ -55,6 +55,7 @@ pub struct Matrix4x4 {
 }
 
 impl Matrix4x4 {
+    /// Create a `Matrix4x4` containing the identity, all zeros with ones along the diagonal.
     pub fn identity() -> Matrix4x4 {
         Matrix4x4::new(
             [1., 0., 0., 0.],
@@ -64,12 +65,14 @@ impl Matrix4x4 {
         )
     }
 
+    /// Create a `Matrix4x4` with each of the given rows.
     pub fn new(r0: [Float; 4], r1: [Float; 4], r2: [Float; 4], r3: [Float; 4]) -> Matrix4x4 {
         Matrix4x4 {
             m: [r0, r1, r2, r3],
         }
     }
 
+    /// Transpose self, returning a new matrix that has been reflected across the diagonal.
     pub fn transpose(&self) -> Matrix4x4 {
         let m = self.m;
         Matrix4x4 {
@@ -82,6 +85,9 @@ impl Matrix4x4 {
         }
     }
 
+    /// Returns a new matrix that is the inverse of self. If self is A, inverse returns A^-1, where
+    /// AA^-1 = I.
+    /// Uses a numerically stable Gauss–Jordan elimination routine to compute the inverse.
     pub fn inverse(&self) -> Matrix4x4 {
         // TODO(wathiede): how come the C++ version doesn't need to deal with non-invertable
         // matrix.
