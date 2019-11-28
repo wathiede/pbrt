@@ -696,15 +696,39 @@ mod tests {
         pbrt.init();
         pbrt.identity();
         pbrt.scale(2., 2., 2.);
-        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
+        assert_eq!(
+            pbrt.current_transform.t[0].matrix(),
+            Matrix4x4::new(
+                [2., 0., 0., 0.],
+                [0., 2., 0., 0.],
+                [0., 0., 2., 0.],
+                [0., 0., 0., 1.]
+            )
+        );
 
         pbrt.coordinate_system("two".into());
         pbrt.identity();
         pbrt.scale(3., 3., 3.);
-        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 3.);
+        assert_eq!(
+            pbrt.current_transform.t[0].matrix(),
+            Matrix4x4::new(
+                [3., 0., 0., 0.],
+                [0., 3., 0., 0.],
+                [0., 0., 3., 0.],
+                [0., 0., 0., 1.]
+            )
+        );
 
         pbrt.coordinate_system_transform("two".into());
-        assert_eq!(pbrt.current_transform.t[0].matrix().m[0][0], 2.);
+        assert_eq!(
+            pbrt.current_transform.t[0].matrix(),
+            Matrix4x4::new(
+                [2., 0., 0., 0.],
+                [0., 2., 0., 0.],
+                [0., 0., 2., 0.],
+                [0., 0., 0., 1.]
+            )
+        );
     }
 
     #[test]

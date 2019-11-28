@@ -51,7 +51,7 @@ pub fn solve_linear_system_2x2(a: [[Float; 2]; 2], b: [Float; 2]) -> Option<[Flo
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
 /// the row number and j is the column number.
 pub struct Matrix4x4 {
-    pub m: [[Float; 4]; 4],
+    m: [[Float; 4]; 4],
 }
 
 impl Matrix4x4 {
