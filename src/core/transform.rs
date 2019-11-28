@@ -19,6 +19,34 @@ use log::error;
 use crate::core::geometry::Vector3f;
 use crate::core::pbrt::{Float, EPSILON};
 
+/// Solve a 2x2 linear system in the form Ax = B.  For parameters `a` and `b`, the solution to `x`
+/// will be returned if any exist.  None will be returned of the answer is numerically unstable or
+/// doesn't exist.
+///
+/// # Examples
+/// From http://www-users.math.umn.edu/~weim0024/pdf/37%20-%20Solve2x2.pdf
+/// ```
+/// # use pbrt::core::transform::solve_linear_system_2x2;
+///
+/// assert_eq!(solve_linear_system_2x2([[3., -5.],[1., -4.]], [4., -1.]), Some([3., 1.]));
+/// assert_eq!(solve_linear_system_2x2([[2., -3.],[0., 4.]], [-8. ,8.]), Some([-1., 2.]));
+/// assert_eq!(solve_linear_system_2x2([[5., -1.],[3., 2.]], [3., 20.]), Some([2., 7.]));
+/// assert_eq!(solve_linear_system_2x2([[2., -1.],[-4., 2.]], [7., 6.]), None);
+/// assert_eq!(solve_linear_system_2x2([[2., -1.],[-2., 1.]], [7., 3.]), None);
+/// ```
+pub fn solve_linear_system_2x2(a: [[Float; 2]; 2], b: [Float; 2]) -> Option<[Float; 2]> {
+    let det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    if det.abs() < 1e-10 {
+        return None;
+    }
+    let x0 = (a[1][1] * b[0] - a[0][1] * b[1]) / det;
+    let x1 = (a[0][0] * b[1] - a[1][0] * b[0]) / det;
+    if x0.is_nan() || x1.is_nan() {
+        return None;
+    }
+    Some([x0, x1])
+}
+
 #[derive(Default, Clone, Copy)]
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
 /// the row number and j is the column number.
