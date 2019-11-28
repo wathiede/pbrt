@@ -17,7 +17,7 @@ use std::ops::Mul;
 use log::error;
 
 use crate::core::geometry::Vector3f;
-use crate::core::pbrt::{Float, EPSILON};
+use crate::core::pbrt::{Degree, Float, EPSILON};
 
 /// Solve a 2x2 linear system in the form Ax = B.  For parameters `a` and `b`, the solution to `x`
 /// will be returned if any exist.  None will be returned of the answer is numerically unstable or
@@ -48,8 +48,8 @@ pub fn solve_linear_system_2x2(a: [[Float; 2]; 2], b: [Float; 2]) -> Option<[Flo
 }
 
 #[derive(Default, Clone, Copy)]
-/// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is
-/// the row number and j is the column number.
+/// Matrix4x4 represents a 4x4 matrix in row-major form. So, element m[i][j] corresponds to m<sub>i,j</sub>
+/// where `i` is the row number and `j` is the column number.
 pub struct Matrix4x4 {
     m: [[Float; 4]; 4],
 }
@@ -85,9 +85,27 @@ impl Matrix4x4 {
         }
     }
 
-    /// Returns a new matrix that is the inverse of self. If self is A, inverse returns A^-1, where
-    /// AA^-1 = I.
-    /// Uses a numerically stable Gauss–Jordan elimination routine to compute the inverse.
+    /// Returns a new matrix that is the inverse of self. If self is A, inverse returns A<sup>-1</sup>, where
+    /// AA<sup>-1</sup> = I.
+    /// This implementation uses a numerically stable Gauss–Jordan elimination routine to compute the inverse.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let i = Matrix4x4::identity();
+    /// assert_eq!(i.inverse() * i, i);
+    ///
+    /// let m = Matrix4x4::new(
+    ///     [2., 0., 0., 0.],
+    ///     [0., 3., 0., 0.],
+    ///     [0., 0., 4., 0.],
+    ///     [0., 0., 0., 1.],
+    /// );
+    /// assert_eq!(m.inverse() * m, i);
+    /// assert_eq!(m * m.inverse(), i);
+    /// ```
     pub fn inverse(&self) -> Matrix4x4 {
         // TODO(wathiede): how come the C++ version doesn't need to deal with non-invertable
         // matrix.
@@ -183,6 +201,19 @@ impl fmt::Debug for Matrix4x4 {
 
 impl Mul<Matrix4x4> for Matrix4x4 {
     type Output = Matrix4x4;
+
+    /// Implement matrix multiplication for `Matrix4x4`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let i = Matrix4x4::identity();
+    /// let m1 = Matrix4x4::identity();
+    /// let m2 = Matrix4x4::identity();
+    ///
+    /// assert_eq!(m1 * m2, i);
+    /// ```
     fn mul(self, m2: Matrix4x4) -> Matrix4x4 {
         let m1 = self;
         let mut r: Matrix4x4 = Default::default();
@@ -214,6 +245,7 @@ impl PartialEq for Matrix4x4 {
     }
 }
 
+/// `Transform` represents a `Matrix4x4` and its inverse.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Transform {
     m: Matrix4x4,
@@ -221,7 +253,22 @@ pub struct Transform {
 }
 
 impl Transform {
-    /// Returns a new transform with m and m_inv set to identity.
+    /// Returns a new `Transform` set to the identity matrix.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// assert_eq!(
+    ///     Transform::identity(),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., 1., 0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    /// ```
     pub fn identity() -> Transform {
         Transform {
             m: Matrix4x4::identity(),
@@ -229,6 +276,23 @@ impl Transform {
         }
     }
 
+    /// Returns the inverse `Transform` of `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// let t = Transform::identity();
+    /// assert_eq!(
+    ///     t.inverse(),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., 1., 0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    /// ```
     pub fn inverse(&self) -> Transform {
         Transform {
             m: self.m_inv,
@@ -236,7 +300,27 @@ impl Transform {
         }
     }
 
-    pub fn translate(delta: &Vector3f) -> Transform {
+    /// Creates a `Transform` representing the given translate factors.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// assert_eq!(
+    ///     Transform::translate([2., 4., 6.]),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 2.],
+    ///         [0., 1., 0., 4.],
+    ///         [0., 0., 1., 6.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    /// ```
+    pub fn translate<V>(delta: V) -> Transform
+    where
+        V: Into<Vector3f>,
+    {
+        let delta = delta.into();
         let m = Matrix4x4::new(
             [1., 0., 0., delta.x],
             [0., 1., 0., delta.y],
@@ -252,11 +336,57 @@ impl Transform {
         Transform { m, m_inv }
     }
 
-    /// rotate generates a Tranform for the rotation of theta (in degrees) about axis.
-    pub fn rotate(theta: Float, axis: &Vector3f) -> Transform {
+    /// Creates a `Transform` representing a rotation of `theta` about `axis`.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::pbrt::Degree;
+    /// use pbrt::core::pbrt::Float;
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// let t_deg: Float = 180.;
+    /// let t_rad = t_deg.to_radians();
+    /// let s = t_rad.sin();
+    /// let c = t_rad.cos();
+    ///
+    /// // Rotate about the x-axis.
+    /// assert_eq!(
+    ///     Transform::rotate(t_deg.into(), [1., 0., 0.]),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., c, -s,  0.],
+    ///         [0., s,  c,  0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    ///
+    /// // Rotate about the y-axis.
+    /// assert_eq!(
+    ///     Transform::rotate(t_deg.into(), [0., 1., 0.]),
+    ///     Matrix4x4::new(
+    ///         [c,  0., s,  0.],
+    ///         [0., 1., 0., 0.],
+    ///         [-s, 0., c,  0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    ///
+    /// // Rotate about the z-axis.
+    /// assert_eq!(
+    ///     Transform::rotate(t_deg.into(), [0., 0., 1.]),
+    ///     Matrix4x4::new(
+    ///         [c, -s,  0., 0.],
+    ///         [s,  c,  0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    /// ```
+    pub fn rotate<V>(theta: Degree, axis: V) -> Transform
+    where
+        V: Into<Vector3f>,
+    {
+        let axis = axis.into();
         let a = axis.normalize();
-        let sin_theta = theta.to_radians().sin();
-        let cos_theta = theta.to_radians().cos();
+        let sin_theta = theta.0.to_radians().sin();
+        let cos_theta = theta.0.to_radians().cos();
         let m = Matrix4x4 {
             // Compute rotation of first basis vector
             m: [
@@ -288,6 +418,22 @@ impl Transform {
         }
     }
 
+    /// Creates a `Transform` representing the given scale factors.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// assert_eq!(
+    ///     Transform::scale(2., 4., 6.),
+    ///     Matrix4x4::new(
+    ///         [2., 0., 0., 0.],
+    ///         [0., 4., 0., 0.],
+    ///         [0., 0., 6., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ).into());
+    /// ```
     pub fn scale(sx: Float, sy: Float, sz: Float) -> Transform {
         Transform {
             m: Matrix4x4 {
@@ -309,10 +455,44 @@ impl Transform {
         }
     }
 
+    /// Returns the internal `Matrix4x4` of `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// let t = Transform::identity();
+    /// assert_eq!(
+    ///     t.matrix(),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., 1., 0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
     pub fn matrix(self) -> Matrix4x4 {
         self.m
     }
 
+    /// Returns the internal inverse `Matrix4x4` of `self`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::transform::Transform;
+    ///
+    /// let t = Transform::identity();
+    /// assert_eq!(
+    ///     t.matrix_inverse(),
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., 1., 0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
     pub fn matrix_inverse(self) -> Matrix4x4 {
         self.m_inv
     }
@@ -343,49 +523,5 @@ impl<'a, 'b> Mul<&'b mut Transform> for &'a mut Transform {
             m: self.m * rhs.m,
             m_inv: self.m_inv * rhs.m_inv,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_4x4_inverse() {
-        // Identity
-        let i = Matrix4x4::identity();
-        assert_eq!(i.inverse() * i, i);
-
-        let m = Matrix4x4::new(
-            [2., 0., 0., 0.],
-            [0., 3., 0., 0.],
-            [0., 0., 4., 0.],
-            [0., 0., 0., 1.],
-        );
-        assert_eq!(m.inverse() * m, i);
-        assert_eq!(m * m.inverse(), i);
-    }
-
-    #[test]
-    fn test_transform_mul() {
-        // Test that std::ops::Mul compiles.
-        let i: Matrix4x4 = Default::default();
-        let m1: Matrix4x4 = Default::default();
-        let m2: Matrix4x4 = Default::default();
-        assert_eq!(m1 * m2, i);
-    }
-
-    #[test]
-    fn test_scale() {
-        // Test that std::ops::Mul compiles.
-        let m1 = Matrix4x4::identity();
-        let t = Transform::scale(2., 3., 4.);
-        let m2 = Matrix4x4::new(
-            [2., 0., 0., 0.],
-            [0., 3., 0., 0.],
-            [0., 0., 4., 0.],
-            [0., 0., 0., 1.],
-        );
-        assert_eq!(t.m * m1, m2);
     }
 }

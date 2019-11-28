@@ -23,13 +23,13 @@ use log::error;
 use log::info;
 use log::warn;
 
-use crate::core::geometry::Vector3f;
 use crate::core::light::Light;
 use crate::core::medium::Medium;
 use crate::core::paramset::ParamSet;
 use crate::core::paramset::TextureParams;
 use crate::core::parser;
 use crate::core::parser::Directive;
+use crate::core::pbrt::Degree;
 use crate::core::pbrt::Float;
 use crate::core::pbrt::Options;
 use crate::core::spectrum::Spectrum;
@@ -295,7 +295,7 @@ impl Pbrt {
                 Directive::Material(_name, _params) => (),
                 Directive::Shape(_name, _params) => (),
                 Directive::Scale(x, y, z) => self.scale(x, y, z),
-                Directive::Rotate(angle, x, y, z) => self.rotate(angle, x, y, z),
+                Directive::Rotate(angle, x, y, z) => self.rotate(Degree(angle), x, y, z),
                 Directive::Translate(x, y, z) => self.translate(x, y, z),
                 Directive::Texture(name, kind, texname, params) => {
                     self.texture(&name, &kind, &texname, params)
@@ -309,7 +309,7 @@ impl Pbrt {
     /// Verifies all the active transforms are equivalent to `t`.
     ///
     /// # Note
-    /// This method isn't part of the API described by pbrt, it exists to make rustdoc
+    /// This method isn't part of the API described by pbrt. It exists to make rustdoc
     /// implementations easier.
     ///
     /// # Examples
@@ -331,6 +331,8 @@ impl Pbrt {
         self.for_active_transforms(|ct| assert_eq!(ct, &t));
     }
 
+    /// Moves the internal statemachine from `APIState::Uninitialized` to `APIState::OptionsBlock`.
+    /// This function must be called before most of the API will work.
     pub fn init(&mut self) {
         if self.current_api_state != APIState::Uninitialized {
             error!("init() has already been called.");
@@ -488,25 +490,108 @@ impl Pbrt {
         }
     }
 
+    /// Sets the currently active transform matrix by the given values.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::Pbrt;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt = Pbrt::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., 1., 0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
         self.for_active_transforms_mut(|ct| *ct = Transform::identity());
     }
 
+    /// Translates the currently active transform matrix by the given values.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::Pbrt;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt = Pbrt::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// pbrt.translate(2., 4., 6.);
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 2.],
+    ///         [0., 1., 0., 4.],
+    ///         [0., 0., 1., 6.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
     pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
         verify_initialized!(self, "translate");
         self.for_active_transforms_mut(|ct| {
             // TODO(wathiede): is it wrong to clone ct? I needed to convert a &mut to a non-mutable
             // type.
-            *ct = *ct * Transform::translate(&Vector3f::new(dx, dy, dz))
+            *ct = *ct * Transform::translate([dx, dy, dz])
         });
     }
 
-    pub fn rotate(&mut self, angle: Float, ax: Float, ay: Float, az: Float) {
+    /// Rotates the currently active transform matrix by the given values.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::Pbrt;
+    /// use pbrt::core::pbrt::Degree;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt = Pbrt::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// let t_deg = 180.;
+    /// pbrt.rotate(t_deg.into(), 1., 0., 0.);
+    /// let t_rad = t_deg.to_radians();
+    /// let s = t_rad.sin();
+    /// let c = t_rad.cos();
+    ///
+    /// // Rotate about the x-axis.
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [1., 0., 0., 0.],
+    ///         [0., c, -s,  0.],
+    ///         [0., s,  c,  0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    ///
+    /// // Rotate about the y-axis.
+    /// pbrt.identity();
+    /// pbrt.rotate(t_deg.into(), 0., 1., 0.);
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [c,  0., s,  0.],
+    ///         [0., 1., 0., 0.],
+    ///         [-s, 0., c,  0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    ///
+    /// // Rotate about the z-axis.
+    /// pbrt.identity();
+    /// pbrt.rotate(t_deg.into(), 0., 0., 1.);
+    /// pbrt.assert_transforms(
+    ///     Matrix4x4::new(
+    ///         [c, -s,  0., 0.],
+    ///         [s,  c,  0., 0.],
+    ///         [0., 0., 1., 0.],
+    ///         [0., 0., 0., 1.]
+    ///     ));
+    /// ```
+    pub fn rotate(&mut self, angle: Degree, ax: Float, ay: Float, az: Float) {
         verify_initialized!(self, "pbrt.rotate");
-        self.for_active_transforms_mut(|ct| {
-            *ct = *ct * Transform::rotate(angle, &Vector3f::new(ax, ay, az))
-        });
+        self.for_active_transforms_mut(|ct| *ct = *ct * Transform::rotate(angle, [ax, ay, az]));
     }
 
     pub fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
@@ -525,12 +610,12 @@ impl Pbrt {
     ///
     /// pbrt.init();
     /// pbrt.identity();
-    /// pbrt.scale(2., 2., 2.);
+    /// pbrt.scale(2., 4., 6.);
     /// pbrt.assert_transforms(
     ///     Matrix4x4::new(
     ///         [2., 0., 0., 0.],
-    ///         [0., 2., 0., 0.],
-    ///         [0., 0., 2., 0.],
+    ///         [0., 4., 0., 0.],
+    ///         [0., 0., 6., 0.],
     ///         [0., 0., 0., 1.]
     ///     ));
     /// ```

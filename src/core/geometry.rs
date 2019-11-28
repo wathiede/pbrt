@@ -59,6 +59,16 @@ impl Vector3f {
     }
 }
 
+impl From<[Float; 3]> for Vector3f {
+    fn from(v: [f32; 3]) -> Self {
+        Vector3f {
+            x: v[0],
+            y: v[1],
+            z: v[2],
+        }
+    }
+}
+
 // TODO(wathiede): Make this generic over float vs int.
 impl<'a> Div<Float> for &'a Vector3f {
     type Output = Vector3f;

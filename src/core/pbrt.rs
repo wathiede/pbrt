@@ -18,6 +18,15 @@ pub const EPSILON: Float = f32::EPSILON;
 // Set this type alias to modify all ints in pbrt to be 32 or 64-bit.
 pub type Int = i32;
 
+#[derive(Copy, Clone)]
+pub struct Degree(pub(crate) Float);
+
+impl From<Float> for Degree {
+    fn from(f: Float) -> Degree {
+        Degree(f)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Options {
     pub num_threads: u32,
