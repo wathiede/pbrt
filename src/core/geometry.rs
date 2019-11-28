@@ -13,7 +13,7 @@
 // limitations under the License.
 use std::ops::Div;
 
-use crate::core::pbrt::{Float, Int};
+use crate::core::pbrt::Float;
 
 pub trait Sqrt<RHS = Self> {
     type Output;
@@ -27,7 +27,7 @@ pub struct Vector2<T> {
 }
 
 pub type Vector2f = Vector2<Float>;
-pub type Vector2i = Vector2<Int>;
+pub type Vector2i = Vector2<isize>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector3<T> {
@@ -82,7 +82,7 @@ impl<'a> Div<Float> for &'a Vector3f {
     }
 }
 
-pub type Vector3i = Vector3<Int>;
+pub type Vector3i = Vector3<isize>;
 
 impl Vector3i {
     pub fn normalize(&self) -> Vector3i {
@@ -104,9 +104,9 @@ impl<'a> Div<Float> for &'a Vector3i {
 
     fn div(self, rhs: Float) -> Vector3i {
         Vector3 {
-            x: (self.x as Float / rhs) as Int,
-            y: (self.y as Float / rhs) as Int,
-            z: (self.z as Float / rhs) as Int,
+            x: (self.x as Float / rhs) as isize,
+            y: (self.y as Float / rhs) as isize,
+            z: (self.z as Float / rhs) as isize,
         }
     }
 }
@@ -118,7 +118,7 @@ pub struct Point2<T> {
 }
 
 pub type Point2f = Point2<Float>;
-pub type Point2i = Point2<Int>;
+pub type Point2i = Point2<isize>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point3<T> {
@@ -128,7 +128,7 @@ pub struct Point3<T> {
 }
 
 pub type Point3f = Point3<Float>;
-pub type Point3i = Point3<Int>;
+pub type Point3i = Point3<isize>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Normal3<T> {
