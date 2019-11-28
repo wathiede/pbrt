@@ -48,3 +48,41 @@ pub struct Options {
 pub fn lerp(t: Float, v1: Float, v2: Float) -> Float {
     (1. - t) * v1 + t * v2
 }
+
+/// Find roots of quadratic equation, if they exist.
+///
+/// # Examples
+/// From
+/// https://www.cliffsnotes.com/study-guides/algebra/algebra-i/quadratic-equations/solving-quadratic-equations
+/// ```
+/// # use pbrt::core::pbrt::quadratic;
+///
+/// assert_eq!(quadratic(1., -6., -16.), Some((-2., 8.)));
+/// assert_eq!(quadratic(1., 6., 5.), Some((-5., -1.)));
+/// assert_eq!(quadratic(1., 0., -16.), Some((-4. ,4.)));
+/// assert_eq!(quadratic(1., 6., 0.), Some((-6. ,0.)));
+/// assert_eq!(quadratic(1., 2., -2.), Some((-1.-3_f32.sqrt(), -1.+3_f32.sqrt())));
+pub fn quadratic(a: Float, b: Float, c: Float) -> Option<(Float, Float)> {
+    // TODO(wathiede): After getting assert_approx_eq! to work, uncomment these.
+    //     let a = a as f64;
+    //     let b = b as f64;
+    //     let c = c as f64;
+    // Find quadratic discriminant
+    let discrim = b * b - 4. * a * c;
+    if discrim < 0. {
+        return None;
+    }
+    let root_discrim = discrim.sqrt();
+    let q = if b < 0. {
+        -0.5 * (b - root_discrim)
+    } else {
+        -0.5 * (b + root_discrim)
+    };
+    let t0 = (q / a) as Float;
+    let t1 = (c / q) as Float;
+    if t0 > t1 {
+        Some((t1, t0))
+    } else {
+        Some((t0, t1))
+    }
+}
