@@ -15,12 +15,12 @@ use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::fmt::Result;
 
-use core::interaction::SurfaceInteraction;
-use core::paramset::TextureParams;
-use core::pbrt::Float;
-use core::spectrum::Spectrum;
-use core::texture::Texture;
-use core::transform::Transform;
+use crate::core::interaction::SurfaceInteraction;
+use crate::core::paramset::TextureParams;
+use crate::core::pbrt::Float;
+use crate::core::spectrum::Spectrum;
+use crate::core::texture::Texture;
+use crate::core::transform::Transform;
 
 #[derive(Clone)]
 pub struct ConstantTexture<T>

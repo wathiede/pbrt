@@ -19,10 +19,10 @@ use std::fmt::Result;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
-use core::pbrt::Float;
-use core::spectrum::Spectrum;
-use core::texture::Texture;
+use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
+use crate::core::pbrt::Float;
+use crate::core::spectrum::Spectrum;
+use crate::core::texture::Texture;
 
 #[derive(Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);
@@ -163,8 +163,8 @@ impl From<Vec<ParamSetItem>> for ParamSet {
 
 #[derive(Default)]
 pub struct TextureParams {
-    float_textures: HashMap<String, Arc<Texture<Float>>>,
-    specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
+    _float_textures: HashMap<String, Arc<dyn Texture<Float>>>,
+    _specturm_textures: HashMap<String, Arc<dyn Texture<Spectrum>>>,
     geom_params: ParamSet,
     material_params: ParamSet,
 }
@@ -173,12 +173,12 @@ impl TextureParams {
     pub fn new(
         geom_params: ParamSet,
         material_params: ParamSet,
-        float_textures: HashMap<String, Arc<Texture<Float>>>,
-        specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
+        float_textures: HashMap<String, Arc<dyn Texture<Float>>>,
+        specturm_textures: HashMap<String, Arc<dyn Texture<Spectrum>>>,
     ) -> TextureParams {
         TextureParams {
-            float_textures,
-            specturm_textures,
+            _float_textures: float_textures,
+            _specturm_textures: specturm_textures,
             geom_params,
             material_params,
         }

@@ -19,9 +19,9 @@ use self::nom::{alphanumeric, digit, space, IResult};
 
 extern crate regex;
 
-use core::geometry::Point3f;
-use core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
-use core::pbrt::Float;
+use crate::core::geometry::Point3f;
+use crate::core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
+use crate::core::pbrt::Float;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {

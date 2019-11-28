@@ -14,8 +14,8 @@
 use std::fmt;
 use std::ops::Mul;
 
-use core::geometry::Vector3f;
-use core::pbrt::{Float, EPSILON};
+use crate::core::geometry::Vector3f;
+use crate::core::pbrt::{Float, EPSILON};
 
 #[derive(Default, Clone, Copy)]
 /// The matrix m is stored in row-major form, so element m[i][j] corresponds to mi , j , where i is

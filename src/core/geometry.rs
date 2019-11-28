@@ -13,7 +13,7 @@
 // limitations under the License.
 use std::ops::Div;
 
-use core::pbrt::{Float, Int};
+use crate::core::pbrt::{Float, Int};
 
 pub trait Sqrt<RHS = Self> {
     type Output;

@@ -14,7 +14,7 @@
 use std::cmp;
 use std::fmt;
 
-use core::pbrt::Float;
+use crate::core::pbrt::Float;
 
 macro_rules! common_implementation {
     ($($t:ty, $n:expr)*) => ($(

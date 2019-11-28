@@ -21,20 +21,20 @@ use std::sync::Arc;
 
 extern crate nom;
 
-use core::geometry::Vector3f;
-use core::light::Light;
-use core::medium::Medium;
-use core::paramset::ParamSet;
-use core::paramset::TextureParams;
-use core::parser;
-use core::parser::Directive;
-use core::pbrt::Float;
-use core::pbrt::Options;
-use core::spectrum::Spectrum;
-use core::texture::Texture;
-use core::transform::Matrix4x4;
-use core::transform::Transform;
-use textures::constant;
+use crate::core::geometry::Vector3f;
+use crate::core::light::Light;
+use crate::core::medium::Medium;
+use crate::core::paramset::ParamSet;
+use crate::core::paramset::TextureParams;
+use crate::core::parser;
+use crate::core::parser::Directive;
+use crate::core::pbrt::Float;
+use crate::core::pbrt::Options;
+use crate::core::spectrum::Spectrum;
+use crate::core::texture::Texture;
+use crate::core::transform::Matrix4x4;
+use crate::core::transform::Transform;
+use crate::textures::constant;
 
 #[derive(Debug)]
 pub enum Error {
@@ -167,8 +167,8 @@ struct GraphicsState {
     // MediumInterface CreateMediumInterface();
 
     // // Graphics State
-    float_textures: HashMap<String, Arc<Texture<Float>>>,
-    specturm_textures: HashMap<String, Arc<Texture<Spectrum>>>,
+    float_textures: HashMap<String, Arc<dyn Texture<Float>>>,
+    specturm_textures: HashMap<String, Arc<dyn Texture<Spectrum>>>,
     // ParamSet materialParams;
     // std::string material = "matte";
     // std::map<std::string, std::shared_ptr<Material>> namedMaterials;
@@ -628,7 +628,7 @@ fn make_float_texture(
     name: &str,
     tex2world: &Transform,
     tp: &TextureParams,
-) -> Option<Box<Texture<Float>>> {
+) -> Option<Box<dyn Texture<Float>>> {
     match name {
         "constant" => Some(Box::new(constant::create_constant_float_texture(
             tex2world, tp,
@@ -648,7 +648,7 @@ fn make_spectrum_texture(
     name: &str,
     tex2world: &Transform,
     tp: &TextureParams,
-) -> Option<Box<Texture<Spectrum>>> {
+) -> Option<Box<dyn Texture<Spectrum>>> {
     match name {
         "constant" => Some(Box::new(constant::create_constant_spectrum_texture(
             tex2world, tp,

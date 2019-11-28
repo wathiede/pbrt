@@ -13,7 +13,7 @@
 // limitations under the License.
 use std::fmt::Debug;
 
-use core::interaction::SurfaceInteraction;
+use crate::core::interaction::SurfaceInteraction;
 
 pub trait Texture<T>: Debug
 where
@@ -22,7 +22,7 @@ where
     fn evaluate(&self, _si: &SurfaceInteraction) -> T;
 }
 
-impl<T> Texture<T> for Box<Texture<T>>
+impl<T> Texture<T> for Box<dyn Texture<T>>
 where
     T: Debug,
 {
