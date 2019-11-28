@@ -61,12 +61,13 @@ pub fn lerp(t: Float, v1: Float, v2: Float) -> Float {
 /// assert_eq!(quadratic(1., 6., 5.), Some((-5., -1.)));
 /// assert_eq!(quadratic(1., 0., -16.), Some((-4. ,4.)));
 /// assert_eq!(quadratic(1., 6., 0.), Some((-6. ,0.)));
-/// assert_eq!(quadratic(1., 2., -2.), Some((-1.-3_f32.sqrt(), -1.+3_f32.sqrt())));
+/// // Extra precision nescessary to match the output of quadratic which computes its answer with
+/// // higher precision.
+/// assert_eq!(quadratic(1., 2., -2.), Some(((-1.-3_f64.sqrt()) as f32, (-1.+3_f64.sqrt()) as f32)));
 pub fn quadratic(a: Float, b: Float, c: Float) -> Option<(Float, Float)> {
-    // TODO(wathiede): After getting assert_approx_eq! to work, uncomment these.
-    //     let a = a as f64;
-    //     let b = b as f64;
-    //     let c = c as f64;
+    let a = a as f64;
+    let b = b as f64;
+    let c = c as f64;
     // Find quadratic discriminant
     let discrim = b * b - 4. * a * c;
     if discrim < 0. {
