@@ -73,6 +73,24 @@ impl Matrix4x4 {
     }
 
     /// Transpose self, returning a new matrix that has been reflected across the diagonal.
+    /// # Examples
+    ///
+    /// ```
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let m = Matrix4x4::new(
+    ///     [2., 0., 0., 0.],
+    ///     [3., 1., 0., 0.],
+    ///     [4., 0., 1., 0.],
+    ///     [5., 6., 7., 1.],
+    /// );
+    /// let m_t = Matrix4x4::new(
+    ///     [2., 3., 4., 5.],
+    ///     [0., 1., 0., 6.],
+    ///     [0., 0., 1., 7.],
+    ///     [0., 0., 0., 1.],
+    /// );
+    /// assert_eq!(m.transpose(), m_t);
     pub fn transpose(&self) -> Matrix4x4 {
         let m = self.m;
         Matrix4x4 {
