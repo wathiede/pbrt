@@ -13,14 +13,11 @@
 // limitations under the License.
 use std::process;
 
-#[macro_use]
-extern crate log;
-
+use log::error;
+use log::info;
 use simplelog::{Config, LogLevelFilter, TermLogger};
 
 use structopt;
-#[macro_use]
-extern crate structopt_derive;
 use structopt::StructOpt;
 
 use pbrt;

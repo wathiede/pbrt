@@ -14,6 +14,8 @@
 use std::fmt;
 use std::ops::Mul;
 
+use log::error;
+
 use crate::core::geometry::Vector3f;
 use crate::core::pbrt::{Float, EPSILON};
 

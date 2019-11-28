@@ -19,7 +19,9 @@ use std::ops::{Index, IndexMut};
 use std::path::Path;
 use std::sync::Arc;
 
-
+use log::error;
+use log::info;
+use log::warn;
 
 use crate::core::geometry::Vector3f;
 use crate::core::light::Light;

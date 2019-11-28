@@ -19,6 +19,8 @@ use std::fmt::Result;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use log::info;
+
 use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use crate::core::pbrt::Float;
 use crate::core::spectrum::Spectrum;

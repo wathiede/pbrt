@@ -11,15 +11,5 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate nom;
-
-#[cfg(test)]
-#[macro_use]
-extern crate pretty_assertions;
-
-#[macro_use]
 pub mod core;
 pub mod textures;

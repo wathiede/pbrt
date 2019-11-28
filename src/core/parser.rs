@@ -14,8 +14,9 @@
 use std::str;
 use std::str::FromStr;
 
-use nom;
-use self::nom::{alphanumeric, digit, space, IResult};
+// We normally don't do wildcard imports, all the nom macros use other macros, and this is just
+// easier.
+use nom::*;
 
 use regex;
 
@@ -85,11 +86,9 @@ named!(quoted_name<&str>,
    )
 );
 
-named!(alphanumeric_str<&str>,
-   map_res!(
-       alphanumeric,
-       str::from_utf8
-   )
+named!(
+    alphanumeric_str<&str>,
+    map_res!(alphanumeric, str::from_utf8)
 );
 
 fn bool(input: &[u8]) -> IResult<&[u8], bool> {
@@ -412,12 +411,9 @@ named!(
 
 named!(
     unhandled<Directive>,
-    ws!(
-      do_parse!(
-          statement: alphanumeric_str >>
-          (Directive::Unhandled(statement.into()))
-      )
-    )
+    ws!(do_parse!(
+        statement: alphanumeric_str >> (Directive::Unhandled(statement.into()))
+    ))
 );
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
