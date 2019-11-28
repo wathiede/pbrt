@@ -11,13 +11,33 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// Set this type alias to modify all floats in pbrt to be 32 or 64-bit.
+
+//! Misc. functions and types for pbrt.
+
+#[cfg(feature = "float-as-double")]
+use std::f64;
+/// Alias of the `f64` type, to be used through out the codebase anywhere a default sized float is
+/// necessary.
+#[cfg(feature = "float-as-double")]
+pub type Float = f64;
+/// Alias of `f64::EPSILON` for the `Float` type.
+#[cfg(feature = "float-as-double")]
+pub const EPSILON: Float = f64::EPSILON;
+
+#[cfg(not(feature = "float-as-double"))]
 use std::f32;
+/// Alias of the `f32` type, to be used through out the codebase anywhere a default sized float is
+/// necessary.
+#[cfg(not(feature = "float-as-double"))]
 pub type Float = f32;
+/// Alias of `f32::EPSILON` for the `Float` type.
+#[cfg(not(feature = "float-as-double"))]
 pub const EPSILON: Float = f32::EPSILON;
+
 // Set this type alias to modify all ints in pbrt to be 32 or 64-bit.
 pub type Int = i32;
 
+/// Wrapper type for `Float` to ensure degree vs radian is clear.
 #[derive(Copy, Clone)]
 pub struct Degree(pub(crate) Float);
 
@@ -27,6 +47,8 @@ impl From<Float> for Degree {
     }
 }
 
+/// Options for the renderer.  These are mostly passed through from commandline flags or from the
+/// configuration file parsed.
 #[derive(Clone, Debug)]
 pub struct Options {
     pub num_threads: u32,
@@ -60,7 +82,8 @@ impl Default for Options {
 ///
 /// # Examples
 /// ```
-/// # use pbrt::core::pbrt::lerp;
+/// use pbrt::core::pbrt::lerp;
+///
 /// assert_eq!(lerp(0., 0., 1.), 0.);
 /// assert_eq!(lerp(0.5, 0., 1.), 0.5);
 /// assert_eq!(lerp(1., 0., 1.), 1.);
@@ -70,21 +93,44 @@ pub fn lerp(t: Float, v1: Float, v2: Float) -> Float {
     (1. - t) * v1 + t * v2
 }
 
+/// Note: assert_almost_equal_options exists only for doc tests, it is not part of the pbrt API.
+pub fn assert_almost_equal_options(l: Option<(Float, Float)>, r: Option<(Float, Float)>) {
+    if l.is_none() && r.is_none() {
+        return;
+    }
+    assert!(l.is_some());
+    assert!(r.is_some());
+    let l = l.unwrap();
+    let r = r.unwrap();
+    assert_almost_equal(l.0, r.0);
+    assert_almost_equal(l.1, r.1);
+}
+
+fn assert_almost_equal(f1: Float, f2: Float) {
+    let diff = (f1 - f2).abs();
+    assert!(diff < EPSILON, "{} != {}, diff of {}", f1, f2, diff);
+}
+
 /// Find roots of quadratic equation, if they exist.
 ///
 /// # Examples
 /// From
 /// https://www.cliffsnotes.com/study-guides/algebra/algebra-i/quadratic-equations/solving-quadratic-equations
 /// ```
-/// # use pbrt::core::pbrt::quadratic;
+/// use pbrt::core::pbrt::Float;
+/// use pbrt::core::pbrt::quadratic;
+/// use pbrt::core::pbrt::assert_almost_equal_options;
 ///
+/// assert_eq!(quadratic(1., 1., 1.), None);
 /// assert_eq!(quadratic(1., -6., -16.), Some((-2., 8.)));
 /// assert_eq!(quadratic(1., 6., 5.), Some((-5., -1.)));
 /// assert_eq!(quadratic(1., 0., -16.), Some((-4. ,4.)));
 /// assert_eq!(quadratic(1., 6., 0.), Some((-6. ,0.)));
-/// // Extra precision nescessary to match the output of quadratic which computes its answer with
-/// // higher precision.
-/// assert_eq!(quadratic(1., 2., -2.), Some(((-1.-3_f64.sqrt()) as f32, (-1.+3_f64.sqrt()) as f32)));
+/// // This quadratic returns irrational numbers, so some care is taken to ensure the equality
+/// // tests work out.
+/// let three: Float = 3.;
+/// assert_almost_equal_options(quadratic(1., 2., -2.),
+///     Some(((-1.-three.sqrt()), (-1.+three.sqrt()))));
 pub fn quadratic(a: Float, b: Float, c: Float) -> Option<(Float, Float)> {
     let a = a as f64;
     let b = b as f64;

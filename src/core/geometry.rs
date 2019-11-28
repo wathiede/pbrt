@@ -60,7 +60,7 @@ impl Vector3f {
 }
 
 impl From<[Float; 3]> for Vector3f {
-    fn from(v: [f32; 3]) -> Self {
+    fn from(v: [Float; 3]) -> Self {
         Vector3f {
             x: v[0],
             y: v[1],

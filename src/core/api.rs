@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Top-level control of the pbrt state machine.  The parser will construct a `Pbrt` and call
+//! member functions as it interprets a scene file.
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::io;
@@ -223,7 +227,7 @@ macro_rules! verify_world {
     };
 }
 
-// Pbrt is the top-level global container for all rendering functionality.
+/// Pbrt is the top-level global container for all rendering functionality.
 #[derive(Debug)]
 pub struct Pbrt {
     opt: Options,
