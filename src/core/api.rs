@@ -132,10 +132,10 @@ struct RenderOptions {
     named_media: HashMap<String, Medium>,
     lights: Vec<Light>,
     have_scattering_media: bool,
-    // TODO(wathiede):
-    // std::vector<std::shared_ptr<Primitive>> primitives;
-    // std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
-    // std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr;
+    /* TODO(wathiede):
+     * std::vector<std::shared_ptr<Primitive>> primitives;
+     * std::map<std::string, std::vector<std::shared_ptr<Primitive>>> instances;
+     * std::vector<std::shared_ptr<Primitive>> *currentInstance = nullptr; */
 }
 
 impl Default for RenderOptions {
@@ -175,13 +175,13 @@ struct GraphicsState {
     // // Graphics State
     float_textures: HashMap<String, Arc<dyn Texture<Float>>>,
     specturm_textures: HashMap<String, Arc<dyn Texture<Spectrum>>>,
-    // ParamSet materialParams;
-    // std::string material = "matte";
-    // std::map<std::string, std::shared_ptr<Material>> namedMaterials;
-    // std::string currentNamedMaterial;
-    // ParamSet areaLightParams;
-    // std::string areaLight;
-    // bool reverseOrientation = false;
+    /* ParamSet materialParams;
+     * std::string material = "matte";
+     * std::map<std::string, std::shared_ptr<Material>> namedMaterials;
+     * std::string currentNamedMaterial;
+     * ParamSet areaLightParams;
+     * std::string areaLight;
+     * bool reverseOrientation = false; */
 }
 
 macro_rules! verify_initialized {
@@ -240,8 +240,8 @@ pub struct Pbrt {
     pushed_graphics_states: Vec<GraphicsState>,
     pushed_transforms: Vec<TransformSet>,
     pushed_active_transform_bits: Vec<usize>,
-    // TODO(wathiede):
-    // static TransformCache transformCache;
+    /* TODO(wathiede):
+     * static TransformCache transformCache; */
 }
 
 impl Pbrt {
@@ -321,7 +321,7 @@ impl Pbrt {
     /// use pbrt::core::api::Pbrt;
     /// use pbrt::core::transform::Matrix4x4;
     ///
-    /// let mut pbrt: Pbrt= Default::default();
+    /// let mut pbrt: Pbrt = Default::default();
     ///
     /// pbrt.init();
     /// pbrt.identity();
@@ -504,13 +504,12 @@ impl Pbrt {
     ///
     /// pbrt.init();
     /// pbrt.identity();
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [1., 0., 0., 0.],
-    ///         [0., 1., 0., 0.],
-    ///         [0., 0., 1., 0.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [1., 0., 0., 0.],
+    ///     [0., 1., 0., 0.],
+    ///     [0., 0., 1., 0.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     /// ```
     pub fn identity(&mut self) {
         verify_initialized!(self, "identity");
@@ -528,13 +527,12 @@ impl Pbrt {
     /// pbrt.init();
     /// pbrt.identity();
     /// pbrt.translate(2., 4., 6.);
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [1., 0., 0., 2.],
-    ///         [0., 1., 0., 4.],
-    ///         [0., 0., 1., 6.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [1., 0., 0., 2.],
+    ///     [0., 1., 0., 4.],
+    ///     [0., 0., 1., 6.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     /// ```
     pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
         verify_initialized!(self, "translate");
@@ -563,35 +561,32 @@ impl Pbrt {
     /// let c = t_rad.cos();
     ///
     /// // Rotate about the x-axis.
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [1., 0., 0., 0.],
-    ///         [0., c, -s,  0.],
-    ///         [0., s,  c,  0.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [1., 0., 0., 0.],
+    ///     [0., c, -s, 0.],
+    ///     [0., s, c, 0.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     ///
     /// // Rotate about the y-axis.
     /// pbrt.identity();
     /// pbrt.rotate(t_deg.into(), 0., 1., 0.);
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [c,  0., s,  0.],
-    ///         [0., 1., 0., 0.],
-    ///         [-s, 0., c,  0.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [c, 0., s, 0.],
+    ///     [0., 1., 0., 0.],
+    ///     [-s, 0., c, 0.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     ///
     /// // Rotate about the z-axis.
     /// pbrt.identity();
     /// pbrt.rotate(t_deg.into(), 0., 0., 1.);
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [c, -s,  0., 0.],
-    ///         [s,  c,  0., 0.],
-    ///         [0., 0., 1., 0.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [c, -s, 0., 0.],
+    ///     [s, c, 0., 0.],
+    ///     [0., 0., 1., 0.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     /// ```
     pub fn rotate(&mut self, angle: Degree, ax: Float, ay: Float, az: Float) {
         verify_initialized!(self, "pbrt.rotate");
@@ -615,13 +610,12 @@ impl Pbrt {
     /// pbrt.init();
     /// pbrt.identity();
     /// pbrt.scale(2., 4., 6.);
-    /// pbrt.assert_transforms(
-    ///     Matrix4x4::new(
-    ///         [2., 0., 0., 0.],
-    ///         [0., 4., 0., 0.],
-    ///         [0., 0., 6., 0.],
-    ///         [0., 0., 0., 1.]
-    ///     ));
+    /// pbrt.assert_transforms(Matrix4x4::new(
+    ///     [2., 0., 0., 0.],
+    ///     [0., 4., 0., 0.],
+    ///     [0., 0., 6., 0.],
+    ///     [0., 0., 0., 1.],
+    /// ));
     /// ```
     pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
         verify_initialized!(self, "pbrt.scale");

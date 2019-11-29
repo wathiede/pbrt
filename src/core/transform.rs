@@ -28,11 +28,26 @@ use crate::core::pbrt::{Degree, Float, EPSILON};
 /// ```
 /// # use pbrt::core::transform::solve_linear_system_2x2;
 ///
-/// assert_eq!(solve_linear_system_2x2([[3., -5.],[1., -4.]], [4., -1.]), Some([3., 1.]));
-/// assert_eq!(solve_linear_system_2x2([[2., -3.],[0., 4.]], [-8. ,8.]), Some([-1., 2.]));
-/// assert_eq!(solve_linear_system_2x2([[5., -1.],[3., 2.]], [3., 20.]), Some([2., 7.]));
-/// assert_eq!(solve_linear_system_2x2([[2., -1.],[-4., 2.]], [7., 6.]), None);
-/// assert_eq!(solve_linear_system_2x2([[2., -1.],[-2., 1.]], [7., 3.]), None);
+/// assert_eq!(
+///     solve_linear_system_2x2([[3., -5.], [1., -4.]], [4., -1.]),
+///     Some([3., 1.])
+/// );
+/// assert_eq!(
+///     solve_linear_system_2x2([[2., -3.], [0., 4.]], [-8., 8.]),
+///     Some([-1., 2.])
+/// );
+/// assert_eq!(
+///     solve_linear_system_2x2([[5., -1.], [3., 2.]], [3., 20.]),
+///     Some([2., 7.])
+/// );
+/// assert_eq!(
+///     solve_linear_system_2x2([[2., -1.], [-4., 2.]], [7., 6.]),
+///     None
+/// );
+/// assert_eq!(
+///     solve_linear_system_2x2([[2., -1.], [-2., 1.]], [7., 3.]),
+///     None
+/// );
 /// ```
 pub fn solve_linear_system_2x2(a: [[Float; 2]; 2], b: [Float; 2]) -> Option<[Float; 2]> {
     let det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
@@ -285,7 +300,9 @@ impl Transform {
     ///         [0., 1., 0., 0.],
     ///         [0., 0., 1., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     /// ```
     pub fn identity() -> Transform {
         Transform {
@@ -309,7 +326,9 @@ impl Transform {
     ///         [0., 1., 0., 0.],
     ///         [0., 0., 1., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     /// ```
     pub fn inverse(&self) -> Transform {
         Transform {
@@ -332,7 +351,9 @@ impl Transform {
     ///         [0., 1., 0., 4.],
     ///         [0., 0., 1., 6.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     /// ```
     pub fn translate<V>(delta: V) -> Transform
     where
@@ -372,30 +393,36 @@ impl Transform {
     ///     Transform::rotate(t_deg.into(), [1., 0., 0.]),
     ///     Matrix4x4::new(
     ///         [1., 0., 0., 0.],
-    ///         [0., c, -s,  0.],
-    ///         [0., s,  c,  0.],
+    ///         [0., c, -s, 0.],
+    ///         [0., s, c, 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     ///
     /// // Rotate about the y-axis.
     /// assert_eq!(
     ///     Transform::rotate(t_deg.into(), [0., 1., 0.]),
     ///     Matrix4x4::new(
-    ///         [c,  0., s,  0.],
+    ///         [c, 0., s, 0.],
     ///         [0., 1., 0., 0.],
-    ///         [-s, 0., c,  0.],
+    ///         [-s, 0., c, 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     ///
     /// // Rotate about the z-axis.
     /// assert_eq!(
     ///     Transform::rotate(t_deg.into(), [0., 0., 1.]),
     ///     Matrix4x4::new(
-    ///         [c, -s,  0., 0.],
-    ///         [s,  c,  0., 0.],
+    ///         [c, -s, 0., 0.],
+    ///         [s, c, 0., 0.],
     ///         [0., 0., 1., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     /// ```
     pub fn rotate<V>(theta: Degree, axis: V) -> Transform
     where
@@ -450,7 +477,9 @@ impl Transform {
     ///         [0., 4., 0., 0.],
     ///         [0., 0., 6., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ).into());
+    ///     )
+    ///     .into()
+    /// );
     /// ```
     pub fn scale(sx: Float, sy: Float, sz: Float) -> Transform {
         Transform {
@@ -488,7 +517,8 @@ impl Transform {
     ///         [0., 1., 0., 0.],
     ///         [0., 0., 1., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ));
+    ///     )
+    /// );
     /// ```
     pub fn matrix(self) -> Matrix4x4 {
         self.m
@@ -509,7 +539,8 @@ impl Transform {
     ///         [0., 1., 0., 0.],
     ///         [0., 0., 1., 0.],
     ///         [0., 0., 0., 1.]
-    ///     ));
+    ///     )
+    /// );
     /// ```
     pub fn matrix_inverse(self) -> Matrix4x4 {
         self.m_inv
