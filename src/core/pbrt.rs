@@ -22,11 +22,6 @@ mod float {
     pub type Float = f64;
     /// Alias of `f64::EPSILON` for the `Float` type.
     pub const EPSILON: Float = f64::EPSILON;
-    /// UsizeFloat is an integer type with the same number of bits as Float
-    pub type UsizeFloat = u64;
-    /// AtomicUsizeFloat is an alias to the integer atomic type with enough bits to hold the currently
-    /// configured `Float` type.
-    pub type AtomicUsizeFloat = std::sync::atomic::AtomicU64;
 }
 
 #[cfg(not(feature = "float-as-double"))]
@@ -35,16 +30,9 @@ mod float {
     pub type Float = f32;
     /// Alias of `f32::EPSILON` for the `Float` type.
     pub const EPSILON: Float = f32::EPSILON;
-    /// UsizeFloat is an integer type with the same number of bits as Float
-    pub type UsizeFloat = u32;
-    /// AtomicUsizeFloat is an alias to the integer atomic type with enough bits to hold the currently
-    /// configured `Float` type.
-    pub type AtomicUsizeFloat = std::sync::atomic::AtomicU32;
 }
 
-pub use float::AtomicUsizeFloat;
 pub use float::Float;
-pub use float::UsizeFloat;
 pub use float::EPSILON;
 
 /// Wrapper type for `Float` to ensure degree vs radian is clear.

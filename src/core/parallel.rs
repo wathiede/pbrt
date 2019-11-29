@@ -12,13 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //! Utilities for dealing with parallel programming in pbrt.
-//!
 
 use std::sync::atomic::Ordering;
 
-use crate::core::pbrt::AtomicUsizeFloat;
 use crate::core::pbrt::Float;
-use crate::core::pbrt::UsizeFloat;
+
+#[cfg(feature = "float-as-double")]
+mod float {
+    /// UsizeFloat is an integer type with the same number of bits as Float
+    pub(super) type UsizeFloat = u64;
+    /// AtomicUsizeFloat is an alias to the integer atomic type with enough bits to hold the currently
+    /// configured `Float` type.
+    pub(super) type AtomicUsizeFloat = std::sync::atomic::AtomicU64;
+}
+
+#[cfg(not(feature = "float-as-double"))]
+mod float {
+    /// UsizeFloat is an integer type with the same number of bits as Float
+    pub(super) type UsizeFloat = u32;
+    /// AtomicUsizeFloat is an alias to the integer atomic type with enough bits to hold the currently
+    /// configured `Float` type.
+    pub(super) type AtomicUsizeFloat = std::sync::atomic::AtomicU32;
+}
+
+use float::AtomicUsizeFloat;
+use float::UsizeFloat;
 
 /// AtomicFloat allows atomic addition of a `Float` by treating its bits as an unsigned integer of
 /// the same bit width.
@@ -33,6 +51,16 @@ impl AtomicFloat {
         }
     }
 
+    /// Get the current value stored in the atomic.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::parallel::AtomicFloat;
+    ///
+    /// let af = AtomicFloat::new(8.);
+    /// af.add(4.);
+    /// assert_eq!(12., af.get());
+    /// ```
     pub fn get(&self) -> Float {
         Float::from_bits(self.bits.load(Ordering::Relaxed))
     }
@@ -42,8 +70,9 @@ impl AtomicFloat {
     ///
     /// # Examples
     /// ```
-    /// use rayon::prelude::*;
     /// use pbrt::core::parallel::AtomicFloat;
+    /// use pbrt::core::pbrt::Float;
+    /// use rayon::prelude::*;
     ///
     /// let af = AtomicFloat::new(8.);
     /// (0..10000).into_par_iter().for_each(|_| {
@@ -65,5 +94,11 @@ impl AtomicFloat {
                 Err(x) => old_bits = x,
             }
         }
+    }
+}
+
+impl Into<Float> for AtomicFloat {
+    fn into(self) -> Float {
+        Float::from_bits(self.bits.load(Ordering::Relaxed))
     }
 }
