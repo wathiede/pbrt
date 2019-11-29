@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#[macro_use]
-pub mod error;
+
+//! The main parts of the PBRT renderer are located in sub crates of `core`.  This top-level crate
+//! has no public functionality.
 
 pub mod api;
+pub mod error;
 pub mod geometry;
 pub mod interaction;
 pub mod light;

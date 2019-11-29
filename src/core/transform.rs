@@ -11,6 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Linear equation helpers.  Contains a [Matrix4x4] type, [Transform] type (which stores a
+//! [Matrix4x4] and its inverse), and helper for solving 2x2 linear systems.
+//!
+//! [Matrix4x4]: struct.Matrix4x4.html
+//! [Transform]: struct.Transform.html
 use std::fmt;
 use std::ops::Mul;
 

@@ -11,6 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! PBRT logging methods without a parallel in [log]
+//!
+//! [log]: https://docs.rs/log/*/log/
+
+/// Calls [log::error] then `panic!`.
+///
+/// [log::error]: https://docs.rs/log/0.4.8/log/macro.error.html
 #[macro_export]
 macro_rules! severe {
     ($($arg:tt)*) => (

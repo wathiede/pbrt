@@ -22,6 +22,8 @@ mod float {
     pub type Float = f64;
     /// Alias of `f64::EPSILON` for the `Float` type.
     pub const EPSILON: Float = f64::EPSILON;
+    /// Alias of `f64::NAN` for the `Float` type.
+    pub const NAN: Float = f64::NAN;
 }
 
 #[cfg(not(feature = "float-as-double"))]
@@ -30,10 +32,13 @@ mod float {
     pub type Float = f32;
     /// Alias of `f32::EPSILON` for the `Float` type.
     pub const EPSILON: Float = f32::EPSILON;
+    /// Alias of `f32::NAN` for the `Float` type.
+    pub const NAN: Float = f32::NAN;
 }
 
 pub use float::Float;
 pub use float::EPSILON;
+pub use float::NAN;
 
 /// Wrapper type for `Float` to ensure degree vs radian is clear.
 #[derive(Copy, Clone)]
