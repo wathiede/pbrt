@@ -15,7 +15,7 @@
 
 use std::sync::atomic::Ordering;
 
-use crate::core::pbrt::Float;
+use crate::Float;
 
 #[cfg(feature = "float-as-double")]
 mod float {
@@ -71,7 +71,7 @@ impl AtomicFloat {
     /// # Examples
     /// ```
     /// use pbrt::core::parallel::AtomicFloat;
-    /// use pbrt::core::pbrt::Float;
+    /// use pbrt::Float;
     /// use rayon::prelude::*;
     ///
     /// let af = AtomicFloat::new(8.);

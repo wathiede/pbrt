@@ -23,7 +23,6 @@ pub mod light;
 pub mod medium;
 pub mod parallel;
 pub mod paramset;
-pub mod pbrt;
 pub mod spectrum;
 pub mod texture;
 pub mod transform;

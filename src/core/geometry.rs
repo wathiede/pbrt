@@ -15,7 +15,8 @@
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 use std::ops::Div;
 
-use crate::core::pbrt::Float;
+use crate::float;
+use crate::Float;
 
 /// Trait for ensuring methods present on only `{float}` or `{integer}` types have appropriate
 /// implementations as necessary for this crate.
@@ -24,20 +25,32 @@ where
     Self: std::marker::Sized + Copy,
 {
     /// Returns true if this value is NaN.
-    fn is_nan(self) -> bool {
-        false
-    }
+    fn is_nan(self) -> bool;
+    fn min_value() -> Self;
+    fn max_value() -> Self;
 }
 
 impl Number for Float {
     fn is_nan(self) -> bool {
         self.is_nan()
     }
+    fn min_value() -> Self {
+        float::MIN
+    }
+    fn max_value() -> Self {
+        float::MAX
+    }
 }
 
 impl Number for isize {
     fn is_nan(self) -> bool {
         false
+    }
+    fn min_value() -> Self {
+        std::isize::MIN
+    }
+    fn max_value() -> Self {
+        std::isize::MAX
     }
 }
 
@@ -87,10 +100,10 @@ where
     /// assert_eq!(Vector3f::from([1., 2., 3.]), Vector3f::new(1., 2., 3.));
     /// ```
     /// ```should_panic
+    /// use pbrt;
     /// use pbrt::core::geometry::Vector3f;
-    /// use pbrt::core::pbrt::Float;
-    /// use pbrt::core::pbrt::NAN;
-    /// let v = Vector3f::from([NAN, 2., 3.]);
+    /// use pbrt::Float;
+    /// let v = Vector3f::from([pbrt::float::NAN, 2., 3.]);
     /// ```
     fn from(v: [T; 3]) -> Self {
         let v = Self {
@@ -109,6 +122,20 @@ pub type Vector3f = Vector3<Float>;
 // TODO(wathiede): Make this generic over float vs int.
 impl Vector3f {
     /// Compute a unit vector form self.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Vector3f;
+    ///
+    /// let v: Vector3f = [1., 0., 0.].into();
+    /// assert_eq!(v.normalize(), [1., 0., 0.].into());
+    ///
+    /// let v: Vector3f = [0., 1., 0.].into();
+    /// assert_eq!(v.normalize(), [0., 1., 0.].into());
+    ///
+    /// let v: Vector3f = [0., 0., 1.].into();
+    /// assert_eq!(v.normalize(), [0., 0., 1.].into());
+    /// ```
     pub fn normalize(&self) -> Vector3f {
         self / self.length()
     }
@@ -137,6 +164,12 @@ impl Vector3f {
     /// use pbrt::core::geometry::Vector3f;
     ///
     /// let v: Vector3f = [1., 0., 0.].into();
+    /// assert_eq!(v.length(), 1.);
+    ///
+    /// let v: Vector3f = [0., 1., 0.].into();
+    /// assert_eq!(v.length(), 1.);
+    ///
+    /// let v: Vector3f = [0., 0., 1.].into();
     /// assert_eq!(v.length(), 1.);
     ///
     /// let v: Vector3f = [2., 0., 0.].into();
@@ -219,7 +252,7 @@ impl<'a> Div<Float> for &'a Vector3i {
 }
 
 /// Generic type for any 2D point.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Point2<T> {
     pub x: T,
     pub y: T,
@@ -231,7 +264,7 @@ pub type Point2f = Point2<Float>;
 pub type Point2i = Point2<isize>;
 
 /// Generic type for any 3D point.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Point3<T> {
     pub x: T,
     pub y: T,
@@ -244,7 +277,7 @@ pub type Point3f = Point3<Float>;
 pub type Point3i = Point3<isize>;
 
 /// Generic type for any 3D normal.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Normal3<T> {
     pub x: T,
     pub y: T,
@@ -254,59 +287,45 @@ pub struct Normal3<T> {
 /// 3D normal type with `Float` members.
 pub type Normal3f = Normal3<Float>;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Generic type for 2D bounding boxes.
+pub struct Bounds2<T>
+where
+    T: Number,
+{
+    pub p_min: Point2<T>,
+    pub p_max: Point2<T>,
+}
 
-    #[test]
-    fn test_normalize() {
-        let v3f = Vector3f {
-            x: 1.,
-            y: 0.,
-            z: 0.,
-        };
-        assert_eq!(v3f.length(), 1.);
-        assert_eq!(
-            v3f.normalize(),
-            Vector3f {
-                x: 1.,
-                y: 0.,
-                z: 0.,
-            }
-        );
-
-        let v3f = Vector3f {
-            x: 0.,
-            y: 1.,
-            z: 0.,
-        };
-        assert_eq!(v3f.length(), 1.);
-        assert_eq!(
-            v3f.normalize(),
-            Vector3f {
-                x: 0.,
-                y: 1.,
-                z: 0.,
-            }
-        );
-
-        let v3f = Vector3f {
-            x: 0.,
-            y: 0.,
-            z: 1.,
-        };
-        assert_eq!(v3f.length(), 1.);
-        assert_eq!(
-            v3f.normalize(),
-            Vector3f {
-                x: 0.,
-                y: 0.,
-                z: 1.,
-            }
-        );
-
-        let v3i = Vector3i { x: 0, y: 0, z: 1 };
-        assert_eq!(v3i.length(), 1.);
-        assert_eq!(v3i.normalize(), Vector3i { x: 0, y: 0, z: 1 });
+impl<T> Default for Bounds2<T>
+where
+    T: Number,
+{
+    fn default() -> Self {
+        Self {
+            p_min: Point2 {
+                x: T::max_value(),
+                y: T::max_value(),
+            },
+            p_max: Point2 {
+                x: T::min_value(),
+                y: T::min_value(),
+            },
+        }
     }
 }
+
+/// 2D bounding box type with `Float` members.
+pub type Bounds2f = Bounds2<Float>;
+/// 2D bounding box type with `isize` members.
+pub type Bounds2i = Bounds2<isize>;
+
+/// Generic type for 3D bounding boxes.
+pub struct Bounds3<T> {
+    pub p_min: Point3<T>,
+    pub p_max: Point3<T>,
+}
+
+/// 3D bounding box type with `Float` members.
+pub type Bounds3f = Bounds3<Float>;
+/// 3D bounding box type with `isize` members.
+pub type Bounds3i = Bounds3<isize>;

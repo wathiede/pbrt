@@ -23,7 +23,7 @@ use std::ops::Mul;
 use log::error;
 
 use crate::core::geometry::Vector3f;
-use crate::core::pbrt::{Degree, Float, EPSILON};
+use crate::{float, Degree, Float};
 
 /// Solve a 2x2 linear system in the form Ax = B.  For parameters `a` and `b`, the solution to `x`
 /// will be returned if any exist.  None will be returned of the answer is numerically unstable or
@@ -275,7 +275,7 @@ impl PartialEq for Matrix4x4 {
         for i in 0..4 {
             for j in 0..4 {
                 let d = (l[i][j] - r[i][j]).abs();
-                if d > EPSILON {
+                if d > float::EPSILON {
                     return false;
                 }
             }
@@ -384,10 +384,10 @@ impl Transform {
     /// Creates a `Transform` representing a rotation of `theta` about `axis`.
     /// # Examples
     /// ```
-    /// use pbrt::core::pbrt::Degree;
-    /// use pbrt::core::pbrt::Float;
     /// use pbrt::core::transform::Matrix4x4;
     /// use pbrt::core::transform::Transform;
+    /// use pbrt::Degree;
+    /// use pbrt::Float;
     ///
     /// let t_deg: Float = 180.;
     /// let t_rad = t_deg.to_radians();

@@ -22,9 +22,9 @@ use std::sync::Arc;
 use log::info;
 
 use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
-use crate::core::pbrt::Float;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
+use crate::Float;
 
 #[derive(Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);

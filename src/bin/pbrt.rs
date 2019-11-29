@@ -60,7 +60,7 @@ fn main() {
     }
 
     info!("Options: {:#?}", &flags);
-    let opts = pbrt::core::pbrt::Options {
+    let opts = pbrt::Options {
         num_threads: flags.num_threads.unwrap_or(1),
         quick_render: flags.quick_render,
         quiet: flags.quiet,

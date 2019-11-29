@@ -22,7 +22,7 @@ use regex;
 
 use crate::core::geometry::Point3f;
 use crate::core::paramset::{ParamList, ParamSet, ParamSetItem, Value};
-use crate::core::pbrt::Float;
+use crate::Float;
 
 #[derive(PartialEq, Debug)]
 pub enum Error {

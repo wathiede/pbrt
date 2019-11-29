@@ -17,10 +17,10 @@ use std::fmt::Result;
 
 use crate::core::interaction::SurfaceInteraction;
 use crate::core::paramset::TextureParams;
-use crate::core::pbrt::Float;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Transform;
+use crate::Float;
 
 #[derive(Clone)]
 pub struct ConstantTexture<T>

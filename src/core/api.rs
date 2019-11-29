@@ -33,14 +33,14 @@ use crate::core::paramset::ParamSet;
 use crate::core::paramset::TextureParams;
 use crate::core::parser;
 use crate::core::parser::Directive;
-use crate::core::pbrt::Degree;
-use crate::core::pbrt::Float;
-use crate::core::pbrt::Options;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Matrix4x4;
 use crate::core::transform::Transform;
 use crate::textures::constant;
+use crate::Degree;
+use crate::Float;
+use crate::Options;
 
 #[derive(Debug)]
 pub enum Error {
@@ -547,8 +547,8 @@ impl Pbrt {
     /// # Examples
     /// ```
     /// use pbrt::core::api::Pbrt;
-    /// use pbrt::core::pbrt::Degree;
     /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::Degree;
     ///
     /// let mut pbrt = Pbrt::default();
     ///
