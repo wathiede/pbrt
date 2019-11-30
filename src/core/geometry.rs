@@ -48,13 +48,10 @@ where
     Self: std::marker::Sized
         + Copy
         + fmt::Display
-        + Add
+        + std::cmp::PartialOrd
         + Add<Output = Self>
-        + Div
         + Div<Output = Self>
-        + Mul
         + Mul<Output = Self>
-        + Sub
         + Sub<Output = Self>,
 {
     /// Returns true if this value is NaN.
