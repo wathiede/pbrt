@@ -121,11 +121,11 @@ fn number(input: &[u8]) -> IResult<&[u8], Float> {
     )
 }
 
-fn integer(input: &[u8]) -> IResult<&[u8], i64> {
+fn integer(input: &[u8]) -> IResult<&[u8], isize> {
     flat_map!(
         input,
         recognize!(tuple!(opt!(alt!(tag!("+") | tag!("-"))), complete!(digit))),
-        parse_to!(i64)
+        parse_to!(isize)
     )
 }
 

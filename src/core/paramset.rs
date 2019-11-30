@@ -26,6 +26,8 @@ use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::Float;
 
+pub mod testutils;
+
 #[derive(Clone, PartialEq)]
 pub struct ParamList<T>(pub Vec<T>);
 
@@ -57,7 +59,7 @@ where
 pub enum Value {
     Bool(ParamList<bool>),
     Float(ParamList<Float>),
-    Int(ParamList<i64>),
+    Int(ParamList<isize>),
     Point2f(ParamList<Point2f>),
     Vector2f(ParamList<Vector2f>),
     Point3f(ParamList<Point3f>),

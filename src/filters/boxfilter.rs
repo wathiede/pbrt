@@ -41,17 +41,10 @@ impl BoxFilter {
     /// // TODO(wathiede): can paramset::* be written to make tests like this more concise?
     /// ```
     /// use pbrt::core::filter::Filter;
-    /// use pbrt::core::paramset::ParamList;
-    /// use pbrt::core::paramset::ParamSet;
-    /// use pbrt::core::paramset::ParamSetItem;
-    /// use pbrt::core::paramset::Value;
+    /// use pbrt::core::paramset::testutils::make_float_param_set;
     /// use pbrt::filters::boxfilter::BoxFilter;
     ///
-    /// let ps: ParamSet = vec![ParamSetItem::new(
-    ///     "xwidth",
-    ///     &Value::Float(ParamList(vec![1.])),
-    /// )]
-    /// .into();
+    /// let ps = make_float_param_set("xwidth", vec![1.]);
     /// let bf = BoxFilter::create_box_filter(&ps);
     /// assert_eq!(bf.radius(), [1., 0.5].into());
     /// assert_eq!(bf.inv_radius(), [1., 2.].into());
@@ -64,8 +57,8 @@ impl BoxFilter {
 }
 
 impl Filter for BoxFilter {
-    /// evalute the filter at the given point `p`.
-    fn evaluate(&self, p: Point2f) -> Float {
+    /// returns 1. for any point given.
+    fn evaluate(&self, _: Point2f) -> Float {
         1.
     }
     /// return the radius this filter was created with.
