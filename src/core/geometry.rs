@@ -13,7 +13,11 @@
 // limitations under the License.
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
+use std::fmt;
+use std::ops::Add;
 use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Sub;
 
 use crate::float;
 use crate::Float;
@@ -22,11 +26,23 @@ use crate::Float;
 /// implementations as necessary for this crate.
 pub trait Number
 where
-    Self: std::marker::Sized + Copy,
+    Self: std::marker::Sized
+        + Copy
+        + fmt::Display
+        + Add
+        + Add<Output = Self>
+        + Div
+        + Div<Output = Self>
+        + Mul
+        + Mul<Output = Self>
+        + Sub
+        + Sub<Output = Self>,
 {
     /// Returns true if this value is NaN.
     fn is_nan(self) -> bool;
+    /// Returns the smallest value this type can hold.
     fn min_value() -> Self;
+    /// Returns the largest value this type can hold.
     fn max_value() -> Self;
 }
 
@@ -55,9 +71,11 @@ impl Number for isize {
 }
 
 /// Generic type for any 2D vector.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vector2<T> {
+    /// The x coordinate of this vector.
     pub x: T,
+    /// The y coordinate of this vector.
     pub y: T,
 }
 
@@ -67,13 +85,16 @@ pub type Vector2f = Vector2<Float>;
 pub type Vector2i = Vector2<isize>;
 
 /// Generic type for any 3D vector.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vector3<T>
 where
     T: Number,
 {
+    /// The x coordinate of this vector.
     pub x: T,
+    /// The y coordinate of this vector.
     pub y: T,
+    /// The z coordinate of this vector.
     pub z: T,
 }
 
@@ -81,6 +102,7 @@ impl<T> Vector3<T>
 where
     T: Number,
 {
+    /// Create a new `Vector3` with the given x,y,z values.
     pub fn new(x: T, y: T, z: T) -> Vector3<T> {
         Vector3 { x, y, z }
     }
@@ -252,10 +274,72 @@ impl<'a> Div<Float> for &'a Vector3i {
 }
 
 /// Generic type for any 2D point.
-#[derive(Default, Debug, Clone, PartialEq)]
-pub struct Point2<T> {
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub struct Point2<T>
+where
+    T: Number,
+{
+    /// The x coordinate of this point.
     pub x: T,
+    /// The y coordinate of this point.
     pub y: T,
+}
+
+impl<T> From<[T; 2]> for Point2<T>
+where
+    T: Number,
+{
+    fn from(xy: [T; 2]) -> Self {
+        Point2 { x: xy[0], y: xy[1] }
+    }
+}
+
+impl<T> From<(T, T)> for Point2<T>
+where
+    T: Number,
+{
+    fn from((x, y): (T, T)) -> Self {
+        Point2 { x, y }
+    }
+}
+
+impl<T> fmt::Display for Point2<T>
+where
+    T: Number,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[ {}, {} ]", self.x, self.y)
+    }
+}
+
+impl<T> Sub for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `-` for Point2<T>
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p1: Point2i = [2, 3].into();
+    /// let p2: Point2i = [4, 5].into();
+    /// assert_eq!(p2 - p1, [2, 2].into());
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p1: Point2f = [2., 3.].into();
+    /// let p2: Point2f = [4., 5.].into();
+    /// assert_eq!(p2 - p1, [2., 2.].into());
+    /// ```
+    fn sub(self, rhs: Self) -> Self::Output {
+        Point2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
 }
 
 /// 2D point type with `Float` members.
@@ -264,10 +348,13 @@ pub type Point2f = Point2<Float>;
 pub type Point2i = Point2<isize>;
 
 /// Generic type for any 3D point.
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Point3<T> {
+    /// The x coordinate of this point.
     pub x: T,
+    /// The y coordinate of this point.
     pub y: T,
+    /// The z coordinate of this point.
     pub z: T,
 }
 
@@ -277,10 +364,13 @@ pub type Point3f = Point3<Float>;
 pub type Point3i = Point3<isize>;
 
 /// Generic type for any 3D normal.
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Normal3<T> {
+    /// The x coordinate of this normal.
     pub x: T,
+    /// The y coordinate of this normal.
     pub y: T,
+    /// The z coordinate of this normal.
     pub z: T,
 }
 
@@ -288,11 +378,14 @@ pub struct Normal3<T> {
 pub type Normal3f = Normal3<Float>;
 
 /// Generic type for 2D bounding boxes.
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Bounds2<T>
 where
     T: Number,
 {
+    /// point representing the minimum x,y value of the bounds.
     pub p_min: Point2<T>,
+    /// point representing the maxium x,y value of the bounds.
     pub p_max: Point2<T>,
 }
 
@@ -314,14 +407,46 @@ where
     }
 }
 
+impl<T> fmt::Display for Bounds2<T>
+where
+    T: Number,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[ {} - {} ]", self.p_min, self.p_max)
+    }
+}
+
+impl<T> From<(Point2<T>, Point2<T>)> for Bounds2<T>
+where
+    T: Number,
+{
+    fn from((p_min, p_max): (Point2<T>, Point2<T>)) -> Self {
+        Bounds2 { p_min, p_max }
+    }
+}
+
+impl<T> Bounds2<T>
+where
+    T: Number,
+{
+    /// Computes the areas covered by this bound.
+    pub fn area(&self) -> T {
+        let d = self.p_max - self.p_min;
+        d.x * d.y
+    }
+}
+
 /// 2D bounding box type with `Float` members.
 pub type Bounds2f = Bounds2<Float>;
 /// 2D bounding box type with `isize` members.
 pub type Bounds2i = Bounds2<isize>;
 
 /// Generic type for 3D bounding boxes.
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Bounds3<T> {
+    /// point representing the minimum x,y,z value of the bounds.
     pub p_min: Point3<T>,
+    /// point representing the maxium x,y,z value of the bounds.
     pub p_max: Point3<T>,
 }
 

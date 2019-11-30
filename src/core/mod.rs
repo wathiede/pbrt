@@ -17,6 +17,8 @@
 
 pub mod api;
 pub mod error;
+pub mod film;
+pub mod filter;
 pub mod geometry;
 pub mod interaction;
 pub mod light;
