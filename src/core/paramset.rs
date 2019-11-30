@@ -114,6 +114,23 @@ impl ParamSet {
         })
     }
 
+    /// find_one_float will return the first parameter in the set for the given `name`.  If no
+    /// values are found, `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::ParamList;
+    /// use pbrt::core::paramset::ParamSet;
+    /// use pbrt::core::paramset::ParamSetItem;
+    /// use pbrt::core::paramset::Value;
+    ///
+    /// let ps: ParamSet = vec![ParamSetItem::new(
+    ///     "xwidth",
+    ///     &Value::Float(ParamList(vec![1.])),
+    /// )]
+    /// .into();
+    /// assert_eq!(ps.find_one_float("xwidth", 0.5), 1.);
+    /// assert_eq!(ps.find_one_float("non-existent", 0.5), 0.5);
     pub fn find_one_float(&self, name: &str, default: Float) -> Float {
         match self.find(name) {
             Some(Value::Float(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
