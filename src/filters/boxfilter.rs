@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 //! Defines a box filter that implements [Filter].
 //! Note: This is named `BoxFilter` and not `Box` due to `Box` being a reserved word in rust.
 //!
 //! [Filter]: crate::core::filter::Filter
+
 use crate::core::filter::Filter;
 use crate::core::geometry::Point2f;
 use crate::core::geometry::Vector2f;
