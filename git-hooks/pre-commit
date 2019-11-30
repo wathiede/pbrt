@@ -4,3 +4,4 @@ if [ ! -z "${FILES_AFFECTED}" ]; then
   scripts/insert.py --presubmit ${FILES_AFFECTED:?}
 fi
 cargo +nightly fmt -- --check
+cargo test
