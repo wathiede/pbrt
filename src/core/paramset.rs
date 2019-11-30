@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Generic storage types created by parser and passed to factory functions when building a scene.
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
