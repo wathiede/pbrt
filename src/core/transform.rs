@@ -69,7 +69,7 @@ pub fn solve_linear_system_2x2(a: [[Float; 2]; 2], b: [Float; 2]) -> Option<[Flo
 }
 
 #[derive(Default, Clone, Copy)]
-/// Matrix4x4 represents a 4x4 matrix in row-major form. So, element m[i][j] corresponds to m<sub>i,j</sub>
+/// Matrix4x4 represents a 4x4 matrix in row-major form. So, element `m[i][j]` corresponds to m<sub>i,j</sub>
 /// where `i` is the row number and `j` is the column number.
 pub struct Matrix4x4 {
     m: [[Float; 4]; 4],
