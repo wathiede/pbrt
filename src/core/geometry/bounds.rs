@@ -20,7 +20,7 @@ use crate::core::geometry::point::Point3;
 use crate::core::geometry::Number;
 use crate::Float;
 
-/// Generic type for 2D bounding boxes.
+/// Generic type for and 2D bounding boxes.
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Bounds2<T>
 where
@@ -63,18 +63,30 @@ impl<T> From<([T; 2], [T; 2])> for Bounds2<T>
 where
     T: Number,
 {
+    /// Create `Bounds2<T>` from tuple of slices.  It also ensures min/max are correct, regardless of
+    /// how they're arranged in the incoming slices.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2f;
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let b = Bounds2f::from(([2., 3.], [4., 5.]));
+    /// assert_eq!(
+    ///     b,
+    ///     Bounds2f {
+    ///         p_min: Point2f { x: 2., y: 3. },
+    ///         p_max: Point2f { x: 4., y: 5. }
+    ///     }
+    /// );
+    ///
+    /// let b = Bounds2f::from(([5., 4.], [3., 2.]));
+    /// assert_eq!(b, Bounds2f::from(([3., 2.], [5., 4.])));
+    /// ```
     fn from((p1, p2): ([T; 2], [T; 2])) -> Self {
         let p1 = Point2::from(p1);
         let p2 = Point2::from(p2);
-        let p_min = Point2::from((
-            if p1.x < p2.x { p1.x } else { p2.x },
-            if p1.y < p2.y { p1.y } else { p2.y },
-        ));
-        let p_max = Point2::from((
-            if p1.x > p2.x { p1.x } else { p2.x },
-            if p1.y > p2.y { p1.y } else { p2.y },
-        ));
-        Bounds2 { p_min, p_max }
+        (p1, p2).into()
     }
 }
 
@@ -82,6 +94,26 @@ impl<T> From<(Point2<T>, Point2<T>)> for Bounds2<T>
 where
     T: Number,
 {
+    /// Create `Bounds2<T>` from tuple of `Point2<t>`.  It also ensures min/max are correct, regardless of
+    /// how they're arranged in the incoming `Point2<t>`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2f;
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let b = Bounds2f::from((Point2f::from([2., 3.]), Point2f::from([4., 5.])));
+    /// assert_eq!(
+    ///     b,
+    ///     Bounds2f {
+    ///         p_min: Point2f { x: 2., y: 3. },
+    ///         p_max: Point2f { x: 4., y: 5. }
+    ///     }
+    /// );
+    ///
+    /// let b = Bounds2f::from((Point2f::from([5., 4.]), Point2f::from([3., 2.])));
+    /// assert_eq!(b, Bounds2f::from(([3., 2.], [5., 4.])));
+    /// ```
     fn from((p1, p2): (Point2<T>, Point2<T>)) -> Self {
         let p_min = Point2::from((
             if p1.x < p2.x { p1.x } else { p2.x },
@@ -99,7 +131,16 @@ impl<T> Bounds2<T>
 where
     T: Number,
 {
-    /// Computes the areas covered by this bound.
+    /// Computes the area covered by this bounding box.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2f;
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let b = Bounds2f::from(([1., 1.], [3., 3.]));
+    /// assert_eq!(b.area(), 4.);
+    /// ```
     pub fn area(&self) -> T {
         let d = self.p_max - self.p_min;
         d.x * d.y

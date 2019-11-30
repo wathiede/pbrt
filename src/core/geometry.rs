@@ -23,19 +23,23 @@ use crate::float;
 use crate::Float;
 
 mod bounds;
+pub use crate::core::geometry::bounds::Bounds2;
 pub use crate::core::geometry::bounds::Bounds2f;
 pub use crate::core::geometry::bounds::Bounds2i;
 
 mod normal;
+pub use crate::core::geometry::normal::Normal3;
 pub use crate::core::geometry::normal::Normal3f;
 
 mod point;
+pub use crate::core::geometry::point::Point2;
 pub use crate::core::geometry::point::Point2f;
 pub use crate::core::geometry::point::Point2i;
 pub use crate::core::geometry::point::Point3f;
 pub use crate::core::geometry::point::Point3i;
 
 mod vector;
+pub use crate::core::geometry::vector::Vector2;
 pub use crate::core::geometry::vector::Vector2f;
 pub use crate::core::geometry::vector::Vector2i;
 pub use crate::core::geometry::vector::Vector3f;
