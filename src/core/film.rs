@@ -5,6 +5,7 @@ use crate::core::geometry::Bounds2f;
 use crate::core::geometry::Bounds2i;
 use crate::core::geometry::Point2f;
 use crate::core::geometry::Point2i;
+use crate::core::geometry::Vector2f;
 use crate::Float;
 
 const FILTER_TABLE_WIDTH: usize = 16;
@@ -78,5 +79,41 @@ impl Film {
             scale,
             max_sample_luminance,
         }
+    }
+
+    /// Return the bounding box for sampling this `Film`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::film::Film;
+    /// use pbrt::core::geometry::Bounds2i;
+    /// use pbrt::core::geometry::Point2i;
+    /// use pbrt::filters::boxfilter::BoxFilter;
+    ///
+    /// let filter = BoxFilter::new([8., 8.].into());
+    /// let film = Film::new(
+    ///     [1920, 1080].into(),
+    ///     ([0.25, 0.25], [0.75, 0.75]).into(),
+    ///     Box::new(filter),
+    ///     35.0,
+    ///     "output.png".to_string(),
+    ///     1.,
+    ///     1.,
+    /// );
+    /// assert_eq!(
+    ///     film.get_sample_bounds(),
+    ///     Bounds2i::from(([472, 262], [1448, 818]))
+    /// );
+    /// ```
+    pub fn get_sample_bounds(&self) -> Bounds2i {
+        Bounds2f::from((
+            (Point2f::from(self.cropped_pixel_bounds.p_min) + Vector2f::from([0.5, 0.5])
+                - self.filter.radius())
+            .floor(),
+            (Point2f::from(self.cropped_pixel_bounds.p_max) - Vector2f::from([0.5, 0.5])
+                + self.filter.radius())
+            .ceil(),
+        ))
+        .into()
     }
 }

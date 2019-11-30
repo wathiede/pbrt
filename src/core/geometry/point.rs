@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![deny(missing_docs)]
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 use std::fmt;
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
 use std::ops::Sub;
 
+use crate::core::geometry::vector::Vector2;
 use crate::core::geometry::Number;
 use crate::Float;
 
@@ -58,6 +63,62 @@ where
     }
 }
 
+impl<T> Div<T> for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `/` for Point2<T> / T
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p: Point2i = [8, 16].into();
+    /// assert_eq!(p / 2, [4, 8].into());
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p: Point2f = [8., 16.].into();
+    /// assert_eq!(p / 2., [4., 8.].into());
+    /// ```
+    fn div(self, rhs: T) -> Self::Output {
+        Point2 {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
+impl<T> Mul<T> for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `*` for Point2<T> * T
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p: Point2i = [8, 16].into();
+    /// assert_eq!(p * 2, [16, 32].into());
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p: Point2f = [8., 16.].into();
+    /// assert_eq!(p * 2., [16., 32.].into());
+    /// ```
+    fn mul(self, rhs: T) -> Self::Output {
+        Point2 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
 impl<T> Sub for Point2<T>
 where
     T: Number,
@@ -88,10 +149,151 @@ where
     }
 }
 
+impl<T> Sub<Vector2<T>> for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `-` for Point2<T> - Vector2<T>
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    /// use pbrt::core::geometry::Vector2i;
+    ///
+    /// let p1: Point2i = [4, 5].into();
+    /// let v1: Vector2i = [2, 3].into();
+    /// assert_eq!(p1 - v1, Point2i::from([2, 2]));
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::Vector2f;
+    ///
+    /// let p1: Point2f = [4., 5.].into();
+    /// let v1: Vector2f = [2., 3.].into();
+    /// assert_eq!(p1 - v1, Point2f::from([2., 2.]));
+    /// ```
+    fn sub(self, rhs: Vector2<T>) -> Self::Output {
+        Point2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl<T> Add for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `+` for Point2<T>
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p1: Point2i = [2, 3].into();
+    /// let p2: Point2i = [4, 5].into();
+    /// assert_eq!(p2 + p1, [6, 8].into());
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p1: Point2f = [2., 3.].into();
+    /// let p2: Point2f = [4., 5.].into();
+    /// assert_eq!(p2 + p1, [6., 8.].into());
+    /// ```
+    fn add(self, rhs: Self) -> Self::Output {
+        Point2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl<T> Add<Vector2<T>> for Point2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `+` for Point2<T> + Vector2<T>
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    /// use pbrt::core::geometry::Vector2i;
+    ///
+    /// let p1: Point2i = [4, 5].into();
+    /// let v1: Vector2i = [2, 3].into();
+    /// assert_eq!(p1 + v1, Point2i::from([6, 8]));
+    ///
+    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::Vector2f;
+    ///
+    /// let p1: Point2f = [4., 5.].into();
+    /// let v1: Vector2f = [2., 3.].into();
+    /// assert_eq!(p1 + v1, Point2f::from([6., 8.]));
+    /// ```
+    fn add(self, rhs: Vector2<T>) -> Self::Output {
+        Point2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
 /// 2D point type with `Float` members.
 pub type Point2f = Point2<Float>;
+
+impl Point2f {
+    /// Returns the floor of each value as a new point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p: Point2f = [1.5, 2.5].into();
+    /// assert_eq!(p.floor(), [1., 2.].into());
+    /// ```
+    pub fn floor(&self) -> Point2f {
+        [self.x.floor(), self.y.floor()].into()
+    }
+
+    /// Returns the ceiling of each value as a new point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2f;
+    ///
+    /// let p: Point2f = [1.5, 2.5].into();
+    /// assert_eq!(p.ceil(), [2., 3.].into());
+    /// ```
+    pub fn ceil(&self) -> Point2f {
+        [self.x.ceil(), self.y.ceil()].into()
+    }
+}
+
+impl From<Point2i> for Point2f {
+    fn from(p: Point2i) -> Self {
+        Self {
+            x: p.x as Float,
+            y: p.y as Float,
+        }
+    }
+}
+
 /// 2D point type with `isize` members.
 pub type Point2i = Point2<isize>;
+
+impl From<Point2f> for Point2i {
+    fn from(p: Point2f) -> Self {
+        Self {
+            x: p.x as isize,
+            y: p.y as isize,
+        }
+    }
+}
 
 /// Generic type for any 3D point.
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -104,7 +306,49 @@ pub struct Point3<T> {
     pub z: T,
 }
 
+impl<T> From<[T; 3]> for Point3<T>
+where
+    T: Number,
+{
+    fn from(xyz: [T; 3]) -> Self {
+        Point3 {
+            x: xyz[0],
+            y: xyz[1],
+            z: xyz[2],
+        }
+    }
+}
+
 /// 2D point type with `Float` members.
 pub type Point3f = Point3<Float>;
+
+impl Point3f {
+    /// Returns the floor of each value as a new point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point3f;
+    ///
+    /// let p: Point3f = [1.5, 2.5, 3.5].into();
+    /// assert_eq!(p.floor(), [1., 2., 3.].into());
+    /// ```
+    pub fn floor(&self) -> Point3f {
+        [self.x.floor(), self.y.floor(), self.z.floor()].into()
+    }
+
+    /// Returns the ceiling of each value as a new point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point3f;
+    ///
+    /// let p: Point3f = [1.5, 2.5, 3.5].into();
+    /// assert_eq!(p.ceil(), [2., 3., 4.].into());
+    /// ```
+    pub fn ceil(&self) -> Point3f {
+        [self.x.ceil(), self.y.ceil(), self.z.ceil()].into()
+    }
+}
+
 /// 3D point type with `isize` members.
 pub type Point3i = Point3<isize>;

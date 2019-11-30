@@ -28,7 +28,7 @@ where
 {
     /// point representing the minimum x,y value of the bounds.
     pub p_min: Point2<T>,
-    /// point representing the maxium x,y value of the bounds.
+    /// point representing the maximum x,y value of the bounds.
     pub p_max: Point2<T>,
 }
 
@@ -59,11 +59,38 @@ where
     }
 }
 
+impl<T> From<([T; 2], [T; 2])> for Bounds2<T>
+where
+    T: Number,
+{
+    fn from((p1, p2): ([T; 2], [T; 2])) -> Self {
+        let p1 = Point2::from(p1);
+        let p2 = Point2::from(p2);
+        let p_min = Point2::from((
+            if p1.x < p2.x { p1.x } else { p2.x },
+            if p1.y < p2.y { p1.y } else { p2.y },
+        ));
+        let p_max = Point2::from((
+            if p1.x > p2.x { p1.x } else { p2.x },
+            if p1.y > p2.y { p1.y } else { p2.y },
+        ));
+        Bounds2 { p_min, p_max }
+    }
+}
+
 impl<T> From<(Point2<T>, Point2<T>)> for Bounds2<T>
 where
     T: Number,
 {
-    fn from((p_min, p_max): (Point2<T>, Point2<T>)) -> Self {
+    fn from((p1, p2): (Point2<T>, Point2<T>)) -> Self {
+        let p_min = Point2::from((
+            if p1.x < p2.x { p1.x } else { p2.x },
+            if p1.y < p2.y { p1.y } else { p2.y },
+        ));
+        let p_max = Point2::from((
+            if p1.x > p2.x { p1.x } else { p2.x },
+            if p1.y > p2.y { p1.y } else { p2.y },
+        ));
         Bounds2 { p_min, p_max }
     }
 }
@@ -81,15 +108,34 @@ where
 
 /// 2D bounding box type with `Float` members.
 pub type Bounds2f = Bounds2<Float>;
+
+impl From<Bounds2i> for Bounds2f {
+    fn from(b: Bounds2i) -> Self {
+        Self {
+            p_min: b.p_min.into(),
+            p_max: b.p_max.into(),
+        }
+    }
+}
+
 /// 2D bounding box type with `isize` members.
 pub type Bounds2i = Bounds2<isize>;
+
+impl From<Bounds2f> for Bounds2i {
+    fn from(b: Bounds2f) -> Self {
+        Self {
+            p_min: b.p_min.into(),
+            p_max: b.p_max.into(),
+        }
+    }
+}
 
 /// Generic type for 3D bounding boxes.
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Bounds3<T> {
     /// point representing the minimum x,y,z value of the bounds.
     pub p_min: Point3<T>,
-    /// point representing the maxium x,y,z value of the bounds.
+    /// point representing the maximum x,y,z value of the bounds.
     pub p_max: Point3<T>,
 }
 

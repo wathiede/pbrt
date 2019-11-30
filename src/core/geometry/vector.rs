@@ -27,6 +27,15 @@ pub struct Vector2<T> {
     pub y: T,
 }
 
+impl<T> From<[T; 2]> for Vector2<T>
+where
+    T: Number,
+{
+    fn from(xy: [T; 2]) -> Self {
+        Vector2 { x: xy[0], y: xy[1] }
+    }
+}
+
 /// 2D vector type with `Float` members.
 pub type Vector2f = Vector2<Float>;
 /// 2D vector type with `isize` members.

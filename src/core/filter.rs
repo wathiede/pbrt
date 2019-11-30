@@ -1,3 +1,5 @@
+//! Defines the interface for filter functions.
+
 use crate::core::geometry::Point2f;
 use crate::core::geometry::Vector2f;
 use crate::Float;
