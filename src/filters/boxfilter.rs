@@ -38,7 +38,6 @@ impl BoxFilter {
     /// Create `BoxFilter` from `ParamSet`.
     ///
     /// # Examples
-    /// // TODO(wathiede): can paramset::* be written to make tests like this more concise?
     /// ```
     /// use pbrt::core::filter::Filter;
     /// use pbrt::core::paramset::testutils::make_float_param_set;
