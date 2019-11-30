@@ -18,6 +18,7 @@
 use crate::core::filter::Filter;
 use crate::core::geometry::Point2f;
 use crate::core::geometry::Vector2f;
+use crate::core::paramset::ParamSet;
 use crate::Float;
 
 /// Filter that returns 1. within the configured `radius`.
@@ -34,6 +35,32 @@ impl BoxFilter {
             inv_radius: [1. / radius.x, 1. / radius.y].into(),
         }
     }
+    /// Create `BoxFilter` from `ParamSet`.
+    ///
+    /// # Examples
+    /// // TODO(wathiede): can paramset::* be written to make tests like this more concise?
+    /// ```
+    /// use pbrt::core::filter::Filter;
+    /// use pbrt::core::paramset::ParamList;
+    /// use pbrt::core::paramset::ParamSet;
+    /// use pbrt::core::paramset::ParamSetItem;
+    /// use pbrt::core::paramset::Value;
+    /// use pbrt::filters::boxfilter::BoxFilter;
+    ///
+    /// let ps: ParamSet = vec![ParamSetItem::new(
+    ///     "xwidth",
+    ///     &Value::Float(ParamList(vec![1.])),
+    /// )]
+    /// .into();
+    /// let bf = BoxFilter::create_box_filter(&ps);
+    /// assert_eq!(bf.radius(), [1., 0.5].into());
+    /// assert_eq!(bf.inv_radius(), [1., 2.].into());
+    /// ```
+    pub fn create_box_filter(ps: &ParamSet) -> Self {
+        let xw = ps.find_one_float("xwidth", 0.5);
+        let yw = ps.find_one_float("ywidth", 0.5);
+        BoxFilter::new([xw, yw].into())
+    }
 }
 
 impl Filter for BoxFilter {
@@ -45,7 +72,7 @@ impl Filter for BoxFilter {
     fn radius(&self) -> Vector2f {
         self.radius
     }
-    /// return the inv_radius this filter was created with.
+    /// return the inverse of the radius this filter was created with.
     fn inv_radius(&self) -> Vector2f {
         self.inv_radius
     }

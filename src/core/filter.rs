@@ -22,6 +22,6 @@ pub trait Filter {
     fn evaluate(&self, p: Point2f) -> Float;
     /// return the radius this filter was created with.
     fn radius(&self) -> Vector2f;
-    /// return the inv_radius this filter was created with.
+    /// return the inverse of the radius this filter was created with.
     fn inv_radius(&self) -> Vector2f;
 }

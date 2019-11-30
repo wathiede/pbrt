@@ -21,12 +21,14 @@ use std::io;
 use std::io::Read;
 use std::ops::{Index, IndexMut};
 use std::path::Path;
+use std::process::exit;
 use std::sync::Arc;
 
 use log::error;
 use log::info;
 use log::warn;
 
+use crate::core::filter::Filter;
 use crate::core::light::Light;
 use crate::core::medium::Medium;
 use crate::core::paramset::ParamSet;
@@ -37,6 +39,7 @@ use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Matrix4x4;
 use crate::core::transform::Transform;
+use crate::filters::boxfilter::BoxFilter;
 use crate::textures::constant;
 use crate::Degree;
 use crate::Float;
@@ -812,6 +815,21 @@ fn make_spectrum_texture(
 
 fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) -> Medium {
     unimplemented!("make_medium");
+}
+
+fn make_filter(name: &str, param_set: &ParamSet) -> Box<dyn Filter> {
+    let filter = match name {
+        "box" => Box::new(BoxFilter::create_box_filter(param_set)),
+        "gaussian" | "mitchell" | "sinc" | "triangle" => {
+            unimplemented!("Filter type '{}' not implemented", name)
+        }
+        _ => {
+            error!("Filter '{}' unknown.", name);
+            exit(1);
+        }
+    };
+    param_set.report_unused();
+    filter
 }
 
 #[cfg(test)]
