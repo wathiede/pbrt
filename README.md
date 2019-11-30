@@ -1,3 +1,8 @@
+# PBRT
+[![Crate](https://img.shields.io/crates/v/pbrt.svg)](https://crates.io/crates/pbrt)
+[![API](https://docs.rs/pbrt/badge.svg)](https://docs.rs/pbrt)
+[![Actions Status](https://github.com/wathiede/pbrt/workflows/Rust/badge.svg)](https://github.com/wathiede/pbrt/actions)
+
 # What is this?
 This is not an officially supported Google product.  This is a personal
 project, it serves as a learning experience for both: programming in rust, and
