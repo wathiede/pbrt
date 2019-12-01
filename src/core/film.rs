@@ -23,6 +23,7 @@ use crate::core::geometry::Point2f;
 use crate::core::geometry::Point2i;
 use crate::core::geometry::Vector2f;
 use crate::core::parallel::AtomicFloat;
+use crate::core::spectrum::Spectrum;
 use crate::Float;
 
 const FILTER_TABLE_WIDTH: usize = 16;
@@ -136,4 +137,80 @@ impl Film {
         ))
         .into()
     }
+
+    /// Compute physical size of the film.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::film::Film;
+    /// use pbrt::core::geometry::Bounds2f;
+    /// use pbrt::filters::boxfilter::BoxFilter;
+    ///
+    /// let filter = BoxFilter::new([8., 8.].into());
+    /// let diag_mm = 100.;
+    /// let film = Film::new(
+    ///     [800, 600].into(),
+    ///     ([0., 0.], [1., 1.]).into(),
+    ///     Box::new(filter),
+    ///     diag_mm,
+    ///     "output.png".to_string(),
+    ///     1.,
+    ///     1.,
+    /// );
+    /// assert_eq!(
+    ///     film.get_physical_extent(),
+    ///     Bounds2f::from(([-0.04, -0.03], [0.04, 0.03]))
+    /// );
+    ///
+    /// let filter = BoxFilter::new([8., 8.].into());
+    /// let film = Film::new(
+    ///     [800, 600].into(),
+    ///     ([0.25, 0.25], [0.75, 0.75]).into(),
+    ///     Box::new(filter),
+    ///     diag_mm,
+    ///     "output.png".to_string(),
+    ///     1.,
+    ///     1.,
+    /// );
+    /// assert_eq!(
+    ///     film.get_physical_extent(),
+    ///     Bounds2f::from(([-0.04, -0.03], [0.04, 0.03]))
+    /// );
+    /// ```
+    pub fn get_physical_extent(&self) -> Bounds2f {
+        let aspect = self.full_resolution.y as Float / self.full_resolution.x as Float;
+        let x = (self.diagonal_m * self.diagonal_m / (1. + aspect * aspect)).sqrt();
+        let y = aspect * x;
+        (
+            Point2f::from([-x / 2., -y / 2.]),
+            Point2f::from([x / 2., y / 2.]),
+        )
+            .into()
+    }
+
+    pub fn get_film_tile(&self, sample_bounds: &Bounds2i) -> FilmTile {
+        unimplemented!()
+    }
+
+    pub fn merge_film_tile(&self, tile: FilmTile) {
+        unimplemented!()
+    }
+
+    pub fn set_image(&self, img: Vec<Spectrum>) {
+        unimplemented!()
+    }
+
+    pub fn add_splat(&self, p: &Point2f, v: Spectrum) {
+        unimplemented!()
+    }
+
+    pub fn write_image(&self, splat_scale: Float) {
+        unimplemented!()
+    }
+
+    pub fn clear(&self) {
+        unimplemented!()
+    }
 }
+
+pub struct FilmTile {}
