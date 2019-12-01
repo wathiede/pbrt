@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Types to model film and pixels in the sensor of the simulated sensor.
+
 use log::info;
 
 use crate::core::filter::Filter;
@@ -19,12 +22,16 @@ use crate::core::geometry::Bounds2i;
 use crate::core::geometry::Point2f;
 use crate::core::geometry::Point2i;
 use crate::core::geometry::Vector2f;
+use crate::core::parallel::AtomicFloat;
 use crate::Float;
 
 const FILTER_TABLE_WIDTH: usize = 16;
 
 struct Pixel {
-    // TODO(wathiede): implement
+    xyz: [Float; 3],
+    filter_weight_sum: Float,
+    splat_xyz: [AtomicFloat; 3],
+    _pad: Float,
 }
 
 pub struct Film {
