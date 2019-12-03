@@ -36,6 +36,41 @@ where
     pub y: T,
 }
 
+impl<T> Point2<T>
+where
+    T: Number,
+{
+    /// Create a new `Point2` with the min `x` and `y` values from p1 & p2.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p1 = Point2i::from([2, 8]);
+    /// let p2 = Point2i::from([7, 3]);
+    /// assert_eq!(Point2i::min(p1, p2), Point2i::from([2, 3]));
+    /// ```
+    pub fn min(p1: Point2<T>, p2: Point2<T>) -> Point2<T> {
+        let x = p1.x.min(p2.x);
+        let y = p1.y.min(p2.y);
+        Point2 { x, y }
+    }
+
+    /// Create a new `Point2` with the max `x` and `y` values from p1 & p2.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let p1 = Point2i::from([2, 8]);
+    /// let p2 = Point2i::from([7, 3]);
+    /// assert_eq!(Point2i::max(p1, p2), Point2i::from([7, 8]));
+    /// ```
+    pub fn max(p1: Point2<T>, p2: Point2<T>) -> Point2<T> {
+        let x = p1.x.max(p2.x);
+        let y = p1.y.max(p2.y);
+        Point2 { x, y }
+    }
+}
+
 impl<T> From<[T; 2]> for Point2<T>
 where
     T: Number,
@@ -306,6 +341,42 @@ pub struct Point3<T> {
     pub z: T,
 }
 
+impl<T> Point3<T>
+where
+    T: Number,
+{
+    /// Create a new `Point3` with the min `x`, `y` and `z` values from p1 & p2.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point3i;
+    ///
+    /// let p1 = Point3i::from([2, 4, 8]);
+    /// let p2 = Point3i::from([7, 5, 3]);
+    /// assert_eq!(Point3i::min(p1, p2), Point3i::from([2, 4, 3]));
+    /// ```
+    pub fn min(p1: Point3<T>, p2: Point3<T>) -> Point3<T> {
+        let x = p1.x.min(p2.x);
+        let y = p1.y.min(p2.y);
+        let z = p1.z.min(p2.z);
+        Point3 { x, y, z }
+    }
+
+    /// Create a new `Point2` with the max `x`, `y` and `z` values from p1 & p2.
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Point3i;
+    ///
+    /// let p1 = Point3i::from([2, 4, 8]);
+    /// let p2 = Point3i::from([7, 5, 3]);
+    /// assert_eq!(Point3i::max(p1, p2), Point3i::from([7, 5, 8]));
+    /// ```
+    pub fn max(p1: Point3<T>, p2: Point3<T>) -> Point3<T> {
+        let x = p1.x.max(p2.x);
+        let y = p1.y.max(p2.y);
+        let z = p1.z.max(p2.z);
+        Point3 { x, y, z }
+    }
+}
 impl<T> From<[T; 3]> for Point3<T>
 where
     T: Number,
