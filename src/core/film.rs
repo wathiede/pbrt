@@ -304,7 +304,7 @@ impl<'ft> FilmTile<'ft> {
             inv_filter_radius: [1. / filter_radius.x, 1. / filter_radius.y].into(),
             filter_table,
             filter_table_size,
-            pixels: Vec::new(),
+            pixels: Vec::with_capacity(0.max(pixel_bounds.area() as usize)),
             max_sample_luminance,
         }
     }
