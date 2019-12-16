@@ -1,7 +1,7 @@
 {
   "done": [
     "core/error",
-    "filters/boxfilter"
+    "filters/box"
   ],
   "skipped": [
     "core/port"
