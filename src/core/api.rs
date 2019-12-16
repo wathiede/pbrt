@@ -726,7 +726,7 @@ impl Pbrt {
     pub fn make_named_medium(&mut self, name: String, params: &mut ParamSet) {
         verify_initialized!(self, "pbrt.make_named_medium");
         self.warn_if_animated_transform("pbrt.make_named_medium");
-        let kind = params.find_one_string("type", "");
+        let kind = params.find_one_string("type", "".to_string());
         let medium = make_medium(&kind, params, self.current_transform[0]);
         self.render_options.named_media.insert(name, medium);
     }

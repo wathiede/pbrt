@@ -119,43 +119,229 @@ impl ParamSet {
         })
     }
 
-    /// find_one_float will return the first parameter in the set for the given `name`.  If no
-    /// values are found, `default` is returned.
+    /// find_one_bool will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::ParamList;
-    /// use pbrt::core::paramset::ParamSet;
-    /// use pbrt::core::paramset::ParamSetItem;
-    /// use pbrt::core::paramset::Value;
+    /// use pbrt::core::paramset::testutils::make_bool_param_set;
     ///
-    /// let ps: ParamSet = vec![ParamSetItem::new(
-    ///     "xwidth",
-    ///     &Value::Float(ParamList(vec![1.])),
-    /// )]
-    /// .into();
-    /// assert_eq!(ps.find_one_float("xwidth", 0.5), 1.);
-    /// assert_eq!(ps.find_one_float("non-existent", 0.5), 0.5);
+    /// let ps = make_bool_param_set("value", vec![true]);
+    /// assert_eq!(ps.find_one_bool("value", false), true);
+    /// assert_eq!(ps.find_one_bool("non-existent", false), false);
+    /// ```
+    pub fn find_one_bool(&self, name: &str, default: bool) -> bool {
+        match self.find(name) {
+            Some(Value::Bool(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_float will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_float_param_set;
+    ///
+    /// let ps = make_float_param_set("value", vec![1.]);
+    /// assert_eq!(ps.find_one_float("value", 2.), 1.);
+    /// assert_eq!(ps.find_one_float("non-existent", 2.), 2.);
+    /// ```
     pub fn find_one_float(&self, name: &str, default: Float) -> Float {
         match self.find(name) {
-            Some(Value::Float(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
-            None => default.into(),
+            Some(Value::Float(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
             _ => panic!("Unexpected type returned from find"),
         }
     }
 
-    pub fn find_one_string(&self, name: &str, default: &str) -> String {
+    /// find_one_int will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_int_param_set;
+    ///
+    /// let ps = make_int_param_set("value", vec![1]);
+    /// assert_eq!(ps.find_one_int("value", 2), 1);
+    /// assert_eq!(ps.find_one_int("non-existent", 2), 2);
+    /// ```
+    pub fn find_one_int(&self, name: &str, default: isize) -> isize {
         match self.find(name) {
-            Some(Value::String(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
-            None => default.into(),
+            Some(Value::Int(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
             _ => panic!("Unexpected type returned from find"),
         }
     }
 
+    /// find_one_point2f will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_point2f_param_set;
+    /// use pbrt::core::geometry::Point2f;
+
+    /// let ps = make_point2f_param_set("value", vec![Point2f::from([1., 1.])]);
+    /// assert_eq!(ps.find_one_point2f("value", Point2f::from([2., 2.])), Point2f::from([1., 1.]));
+    /// assert_eq!(ps.find_one_point2f("non-existent", Point2f::from([2., 2.])), Point2f::from([2., 2.]));
+    /// ```
+    pub fn find_one_point2f(&self, name: &str, default: Point2f) -> Point2f {
+        match self.find(name) {
+            Some(Value::Point2f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_vector2f will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_vector2f_param_set;
+    /// use pbrt::core::geometry::Vector2f;
+
+    /// let ps = make_vector2f_param_set("value", vec![Vector2f::from([1., 1.])]);
+    /// assert_eq!(ps.find_one_vector2f("value", Vector2f::from([2., 2.])), Vector2f::from([1., 1.]));
+    /// assert_eq!(ps.find_one_vector2f("non-existent", Vector2f::from([2., 2.])), Vector2f::from([2., 2.]));
+    /// ```
+    pub fn find_one_vector2f(&self, name: &str, default: Vector2f) -> Vector2f {
+        match self.find(name) {
+            Some(Value::Vector2f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_point3f will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_point3f_param_set;
+    /// use pbrt::core::geometry::Point3f;
+
+    /// let ps = make_point3f_param_set("value", vec![Point3f::from([1., 1., 1.])]);
+    /// assert_eq!(ps.find_one_point3f("value", Point3f::from([2., 2., 2.])), Point3f::from([1., 1., 1.]));
+    /// assert_eq!(ps.find_one_point3f("non-existent", Point3f::from([2., 2., 2.])), Point3f::from([2., 2., 2.]));
+    /// ```
+    pub fn find_one_point3f(&self, name: &str, default: Point3f) -> Point3f {
+        match self.find(name) {
+            Some(Value::Point3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_vector3f will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_vector3f_param_set;
+    /// use pbrt::core::geometry::Vector3f;
+
+    /// let ps = make_vector3f_param_set("value", vec![Vector3f::from([1., 1., 1.])]);
+    /// assert_eq!(ps.find_one_vector3f("value", Vector3f::from([2., 2., 2.])), Vector3f::from([1., 1., 1.]));
+    /// assert_eq!(ps.find_one_vector3f("non-existent", Vector3f::from([2., 2., 2.])), Vector3f::from([2., 2., 2.]));
+    /// ```
+    pub fn find_one_vector3f(&self, name: &str, default: Vector3f) -> Vector3f {
+        match self.find(name) {
+            Some(Value::Vector3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_normal3f will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_normal3f_param_set;
+    /// use pbrt::core::geometry::Normal3f;
+
+    /// let ps = make_normal3f_param_set("value", vec![Normal3f::from([1., 1., 1.])]);
+    /// assert_eq!(ps.find_one_normal3f("value", Normal3f::from([2., 2., 2.])), Normal3f::from([1., 1., 1.]));
+    /// assert_eq!(ps.find_one_normal3f("non-existent", Normal3f::from([2., 2., 2.])), Normal3f::from([2., 2., 2.]));
+    /// ```
+    pub fn find_one_normal3f(&self, name: &str, default: Normal3f) -> Normal3f {
+        match self.find(name) {
+            Some(Value::Normal3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_spectrum will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_spectrum_param_set;
+    /// use pbrt::core::spectrum::Spectrum;
+
+    /// let ps = make_spectrum_param_set("value", vec![Spectrum::from_rgb([1., 1., 1.])]);
+    /// assert_eq!(ps.find_one_spectrum("value", Spectrum::from_rgb([2., 2., 2.])), Spectrum::from_rgb([1., 1., 1.]));
+    /// assert_eq!(ps.find_one_spectrum("non-existent", Spectrum::from_rgb([2., 2., 2.])), Spectrum::from_rgb([2., 2., 2.]));
+    /// ```
     pub fn find_one_spectrum(&self, name: &str, default: Spectrum) -> Spectrum {
         match self.find(name) {
-            Some(Value::Spectrum(pl)) => pl.0.first().map_or(default.into(), |v| v.clone()),
-            None => default.into(),
+            Some(Value::Spectrum(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_string will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_string_param_set;
+    ///
+    /// let ps = make_string_param_set("value", vec!["found".to_string()]);
+    /// assert_eq!(
+    ///     ps.find_one_string("value", "default".to_string()),
+    ///     "found".to_string()
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_string("non-existent", "default".to_string()),
+    ///     "default".to_string()
+    /// );
+    /// ```
+    pub fn find_one_string(&self, name: &str, default: String) -> String {
+        match self.find(name) {
+            Some(Value::String(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
+            _ => panic!("Unexpected type returned from find"),
+        }
+    }
+
+    /// find_one_texture will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_texture_param_set;
+    ///
+    /// let ps = make_texture_param_set("value", vec!["found".to_string()]);
+    /// assert_eq!(
+    ///     ps.find_one_texture("value", "default".to_string()),
+    ///     "found".to_string()
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_texture("non-existent", "default".to_string()),
+    ///     "default".to_string()
+    /// );
+    /// ```
+    pub fn find_one_texture(&self, name: &str, default: String) -> String {
+        match self.find(name) {
+            Some(Value::Texture(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            None => default,
             _ => panic!("Unexpected type returned from find"),
         }
     }
@@ -283,7 +469,7 @@ mod tests {
         .into();
 
         let test2: String = "one".to_owned();
-        assert_eq!(ps.find_one_string("test2", "one"), test2);
+        assert_eq!(ps.find_one_string("test2", "one".to_string()), test2);
 
         // let test3: String = "one".to_owned();
         // assert_eq!(ps.find("test3").unwrap_or("one").first(), test3);
