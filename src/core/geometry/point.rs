@@ -158,9 +158,11 @@ impl<T> Sub for Point2<T>
 where
     T: Number,
 {
-    type Output = Self;
+    type Output = Vector2<T>;
 
-    /// Implement `-` for Point2<T>
+    /// Implement `-` for Point2<T> - Point2<T>
+    ///
+    /// Mathematically a point minus a point is a vector, and a point minus a vector is a point.
     ///
     /// # Examples
     /// ```
@@ -177,7 +179,7 @@ where
     /// assert_eq!(p2 - p1, [2., 2.].into());
     /// ```
     fn sub(self, rhs: Self) -> Self::Output {
-        Point2 {
+        Vector2 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
         }
@@ -191,6 +193,8 @@ where
     type Output = Self;
 
     /// Implement `-` for Point2<T> - Vector2<T>
+    ///
+    /// Mathematically a point minus a point is a vector, and a point minus a vector is a point.
     ///
     /// # Examples
     /// ```

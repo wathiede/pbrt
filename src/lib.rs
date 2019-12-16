@@ -72,6 +72,27 @@ impl Default for Options {
 //const PI_OVER4: Float = 0.78539816339744830961;
 //const SQRT2: Float = 1.41421356237309504880;
 
+pub fn gamma_correct(value: Float) -> Float {
+    if value <= 0.0031308 {
+        12.92 * value
+    } else {
+        1.055 * value.powf(1. / 2.4) - 0.055
+    }
+}
+
+pub fn clamp<T>(val: T, low: T, high: T) -> T
+where
+    T: PartialOrd,
+{
+    if val < low {
+        low
+    } else if val > high {
+        high
+    } else {
+        val
+    }
+}
+
 /// Linear interpolate `t` between `v1` and `v2`.
 ///
 /// # Examples

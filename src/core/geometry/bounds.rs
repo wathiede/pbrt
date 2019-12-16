@@ -16,7 +16,9 @@
 use std::fmt;
 
 use crate::core::geometry::point::Point2;
+use crate::core::geometry::point::Point2i;
 use crate::core::geometry::point::Point3;
+use crate::core::geometry::vector::Vector2;
 use crate::core::geometry::Number;
 use crate::Float;
 
@@ -169,6 +171,10 @@ impl<T> Bounds2<T>
 where
     T: Number,
 {
+    pub fn diagonal(&self) -> Vector2<T> {
+        self.p_max - self.p_min
+    }
+
     /// Computes the area covered by this bounding box.
     ///
     /// # Examples
@@ -182,6 +188,10 @@ where
     pub fn area(&self) -> T {
         let d = self.p_max - self.p_min;
         d.x * d.y
+    }
+
+    pub fn inside_exclusive(&self, p: Point2<T>) -> bool {
+        p.x >= self.p_min.x && p.x < self.p_max.x && p.y >= self.p_min.y && p.y < self.p_max.y
     }
 }
 
@@ -240,12 +250,43 @@ impl From<Bounds2i> for Bounds2f {
 /// 2D bounding box type with `isize` members.
 pub type Bounds2i = Bounds2<isize>;
 
+impl Bounds2i {
+    pub fn iter(&self) -> impl Iterator<Item = Point2i> {
+        let x_range = self.p_min.x..self.p_max.x;
+        let y_range = self.p_min.y..self.p_max.y;
+        y_range.flat_map(move |y| x_range.clone().map(move |x| [x, y].into()))
+    }
+}
+
 impl From<Bounds2f> for Bounds2i {
     fn from(b: Bounds2f) -> Self {
         Self {
             p_min: b.p_min.into(),
             p_max: b.p_max.into(),
         }
+    }
+}
+
+pub struct Bounds2iIterator {
+    b: Bounds2i,
+    p: Point2i,
+}
+
+// For inspiration see:
+// https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=775d8823d2a9c97707be44b74ed77f2b
+impl Iterator for Bounds2iIterator {
+    type Item = Point2i;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.p.x += 1;
+        if self.p.x == self.b.p_max.x {
+            self.p.x = self.b.p_min.x;
+            self.p.y += 1;
+            if self.p.x == self.b.p_max.y {
+                return None;
+            }
+        }
+        Some(self.p)
     }
 }
 
@@ -262,3 +303,17 @@ pub struct Bounds3<T> {
 pub type Bounds3f = Bounds3<Float>;
 /// 3D bounding box type with `isize` members.
 pub type Bounds3i = Bounds3<isize>;
+
+impl<T> Bounds3<T>
+where
+    T: Number,
+{
+    pub fn inside_exclusive(&self, p: Point3<T>) -> bool {
+        p.x >= self.p_min.x
+            && p.x < self.p_max.x
+            && p.y >= self.p_min.y
+            && p.y < self.p_max.y
+            && p.z >= self.p_min.z
+            && p.z < self.p_max.z
+    }
+}

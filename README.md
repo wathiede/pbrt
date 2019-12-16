@@ -29,3 +29,5 @@ If you're looking for a more fully-formed implementation, check out
    should implement
    [`From`](https://doc.rust-lang.org/std/convert/trait.From.html).
  * `pbrt.h`'s functionality has been put in `lib.rs`.  This is a different location from the C++ implmentation.  It allows usage like `use pbrt::Float;` instead of the more stuttery `use pbrt::core::pbrt::Float;`
+ * `Inside` and `InsideExclusive` are members on `Bounds[23]<T>` to overcome
+   differences in parameter overloading abilities between C++ and rust.

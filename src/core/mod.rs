@@ -20,6 +20,7 @@ pub mod error;
 pub mod film;
 pub mod filter;
 pub mod geometry;
+pub mod imageio;
 pub mod interaction;
 pub mod light;
 pub mod medium;

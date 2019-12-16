@@ -41,11 +41,21 @@ use float::UsizeFloat;
 
 /// AtomicFloat allows atomic addition of a `Float` by treating its bits as an unsigned integer of
 /// the same bit width.
+#[derive(Debug)]
 pub struct AtomicFloat {
     bits: AtomicUsizeFloat,
 }
 
+impl From<Float> for AtomicFloat {
+    fn from(f: Float) -> Self {
+        AtomicFloat {
+            bits: AtomicUsizeFloat::new(f.to_bits()),
+        }
+    }
+}
+
 impl AtomicFloat {
+    // TODO(wathiede): deprecate this in favor ofr From<Float>.
     pub fn new(f: Float) -> AtomicFloat {
         AtomicFloat {
             bits: AtomicUsizeFloat::new(f.to_bits()),

@@ -1,19 +1,17 @@
 [package]
-name = "pbrt"
-version = "0.1.3"
 authors = ["Bill Thiede <rust@xinu.tv>"]
-license = "Apache-2.0"
-readme = "README.md"
 description = "Rust implementation of https://pbrt.org/"
-repository = "https://github.com/wathiede/pbrt"
 edition = "2018"
-
+license = "Apache-2.0"
+name = "pbrt"
+readme = "README.md"
+repository = "https://github.com/wathiede/pbrt"
+version = "0.1.3"
 [dependencies]
-nom = "3.2.1"
-regex = "0.2.5"
 log = "0.4.1"
-
-# For the binary.
+nom = "3.2.1"
+image = "0.22.3"
+regex = "0.2.5"
 simplelog = "0.4.4"
 structopt = "0.3.5"
 
@@ -22,5 +20,6 @@ pretty_assertions = "0.5.0"
 rayon = "1.2.1"
 
 [features]
-sampled-spectrum = []
 float-as-double = []
+sampled-spectrum = []
+uble = []
