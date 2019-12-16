@@ -1,6 +1,6 @@
 #!/bin/sh
 cargo +nightly fmt -- --check
-cargo test --features=float-as-double --queit
+cargo test --features=float-as-double --quiet
 FILES_AFFECTED=$(git diff --name-only --diff-filter=AMR|xargs)
 if [ ! -z "${FILES_AFFECTED}" ]; then
   scripts/insert.py --presubmit ${FILES_AFFECTED:?}
