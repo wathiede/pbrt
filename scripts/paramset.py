@@ -20,7 +20,7 @@ class Type:
         self.example_bad = example_bad
 
 input_types = [
-    Type('bool', 'bool', 'true', 'false'),
+    Type('Bool', 'bool', 'true', 'false'),
     Type('Float', 'Float', '1.', '2.'),
     Type('Int', 'isize', '1', '2'),
     Type('Point2f',
@@ -50,11 +50,11 @@ input_types = [
     Type('String',
         'String',
         '"found".to_string()',
-        '"default".to_string()'), 
+        '"default".to_string()'),
     Type('Texture',
         'String',
         '"found".to_string()',
-        '"default".to_string()'), 
+        '"default".to_string()'),
 ];
 
 use_map = {

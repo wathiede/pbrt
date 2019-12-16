@@ -24,7 +24,8 @@ from paramset import input_types
 from paramset import use_map
 
 tmpl = """
-/// find_one_{2} will return the first parameter in the set for the given `name.  If no values are found `default` is returned.
+/// find_one_{2} will return the first parameter in the set for the given
+/// `name`.  If no values are found `default` is returned.
 ///
 /// # Examples
 /// ```
