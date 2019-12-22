@@ -6,7 +6,7 @@ license = "Apache-2.0"
 name = "pbrt"
 readme = "README.md"
 repository = "https://github.com/wathiede/pbrt"
-version = "0.1.5-alpha.0"
+version = "0.1.5"
 [dependencies]
 log = "0.4.1"
 nom = "3.2.1"

@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "pbrt"
-version = "0.1.5-alpha.0"
+version = "0.1.5"
 dependencies = [
  "image 0.22.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
