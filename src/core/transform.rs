@@ -75,6 +75,19 @@ pub struct Matrix4x4 {
     m: [[Float; 4]; 4],
 }
 
+impl From<[Float; 16]> for Matrix4x4 {
+    fn from(t: [Float; 16]) -> Self {
+        Matrix4x4 {
+            m: [
+                [t[0], t[1], t[2], t[3]],
+                [t[4], t[5], t[6], t[7]],
+                [t[8], t[9], t[10], t[11]],
+                [t[12], t[13], t[14], t[15]],
+            ],
+        }
+    }
+}
+
 impl Matrix4x4 {
     /// Create a `Matrix4x4` containing the identity, all zeros with ones along the diagonal.
     pub fn identity() -> Matrix4x4 {
@@ -559,6 +572,12 @@ impl From<Matrix4x4> for Transform {
             m,
             m_inv: m.inverse(),
         }
+    }
+}
+
+impl From<[Float; 16]> for Transform {
+    fn from(t: [Float; 16]) -> Self {
+        Matrix4x4::from(t).into()
     }
 }
 

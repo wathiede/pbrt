@@ -25,7 +25,8 @@ from paramset import use_map
 
 tmpl = """
 /// find_one_{2} will return the first parameter in the set for the given
-/// `name`.  If no values are found `default` is returned.
+/// `name`.  If no values are found `default` is returned. If the value by that
+/// name is found but isn't of type `{1}` then `default` will be returned.
 ///
 /// # Examples
 /// ```
@@ -48,7 +49,7 @@ def gen():
     for t in input_types:
         use = ''
         if t.wrapped_type in use_map:
-            use = '{}\n'.format(use_map[t.wrapped_type])
+            use = '{}\n///'.format(use_map[t.wrapped_type])
 
         print(tmpl.format(
             t.wrapped_type,

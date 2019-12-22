@@ -55,20 +55,13 @@ impl From<Float> for AtomicFloat {
 }
 
 impl AtomicFloat {
-    // TODO(wathiede): deprecate this in favor ofr From<Float>.
-    pub fn new(f: Float) -> AtomicFloat {
-        AtomicFloat {
-            bits: AtomicUsizeFloat::new(f.to_bits()),
-        }
-    }
-
     /// Get the current value stored in the atomic.
     ///
     /// # Examples
     /// ```
     /// use pbrt::core::parallel::AtomicFloat;
     ///
-    /// let af = AtomicFloat::new(8.);
+    /// let af = AtomicFloat::from(8.);
     /// af.add(4.);
     /// assert_eq!(12., af.get());
     /// ```
@@ -85,7 +78,7 @@ impl AtomicFloat {
     /// use pbrt::Float;
     /// use rayon::prelude::*;
     ///
-    /// let af = AtomicFloat::new(8.);
+    /// let af = AtomicFloat::from(8.);
     /// (0..10000).into_par_iter().for_each(|_| {
     ///     af.add(0.5);
     /// });

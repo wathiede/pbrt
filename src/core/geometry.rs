@@ -26,6 +26,9 @@ mod bounds;
 pub use crate::core::geometry::bounds::Bounds2;
 pub use crate::core::geometry::bounds::Bounds2f;
 pub use crate::core::geometry::bounds::Bounds2i;
+pub use crate::core::geometry::bounds::Bounds3;
+pub use crate::core::geometry::bounds::Bounds3f;
+pub use crate::core::geometry::bounds::Bounds3i;
 
 mod normal;
 pub use crate::core::geometry::normal::Normal3;
@@ -35,6 +38,7 @@ mod point;
 pub use crate::core::geometry::point::Point2;
 pub use crate::core::geometry::point::Point2f;
 pub use crate::core::geometry::point::Point2i;
+pub use crate::core::geometry::point::Point3;
 pub use crate::core::geometry::point::Point3f;
 pub use crate::core::geometry::point::Point3i;
 

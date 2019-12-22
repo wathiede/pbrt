@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![deny(missing_docs)]
 
 //! Types to model film and pixels in the sensor of the simulated sensor.
 
@@ -71,7 +70,7 @@ pub struct Film {
     /// full_resolution represents the full extents of the film.  This `Film` may be further
     /// limited by `crop_window`.
     pub full_resolution: Point2i,
-    crop_window: Bounds2f,
+    _crop_window: Bounds2f,
     /// filter specifies the sampling algorithm to use when evaluating pixels in the `Film`.
     pub filter: Box<dyn Filter>,
     /// physical distance of the `Film`'s diagonal in meters.
@@ -135,7 +134,7 @@ impl Film {
 
         Film {
             full_resolution,
-            crop_window,
+            _crop_window: crop_window,
             filter,
             diagonal_m: diagonal_mm * 0.001,
             filename,
@@ -330,12 +329,12 @@ impl Film {
     }
 
     /// set_image allows the caller to directly set the pixel values of the entire `Film`
-    pub fn set_image(&self, img: Vec<Spectrum>) {
+    pub fn set_image(&self, _img: Vec<Spectrum>) {
         unimplemented!()
     }
 
     /// add_splat adds the contributions of `v` to the `Film` at `p`
-    pub fn add_splat(&self, p: &Point2f, v: Spectrum) {
+    pub fn add_splat(&self, _p: &Point2f, _v: Spectrum) {
         unimplemented!()
     }
 
@@ -434,31 +433,31 @@ impl Film {
 /// [merge_film_tile]: Film::merge_film_tile
 pub struct FilmTile<'ft> {
     pixel_bounds: Bounds2i,
-    filter_radius: Vector2f,
-    inv_filter_radius: Vector2f,
-    filter_table: &'ft Vec<Float>,
-    filter_table_size: usize,
-    max_sample_luminance: Float,
+    _filter_radius: Vector2f,
+    _inv_filter_radius: Vector2f,
+    _filter_table: &'ft Vec<Float>,
+    _filter_table_size: usize,
+    _max_sample_luminance: Float,
     pixels: Vec<FilmTilePixel>,
 }
 
 impl<'ft> FilmTile<'ft> {
     fn new(
         pixel_bounds: Bounds2i,
-        filter_radius: Vector2f,
-        filter_table: &'ft Vec<Float>,
-        filter_table_size: usize,
-        max_sample_luminance: Float,
+        _filter_radius: Vector2f,
+        _filter_table: &'ft Vec<Float>,
+        _filter_table_size: usize,
+        _max_sample_luminance: Float,
     ) -> FilmTile<'ft> {
         let pixel_count = 0.max(pixel_bounds.area());
         FilmTile {
             pixel_bounds,
-            filter_radius,
-            inv_filter_radius: [1. / filter_radius.x, 1. / filter_radius.y].into(),
-            filter_table,
-            filter_table_size,
+            _filter_radius,
+            _inv_filter_radius: [1. / _filter_radius.x, 1. / _filter_radius.y].into(),
+            _filter_table,
+            _filter_table_size,
             pixels: (0..pixel_count).map(|_| FilmTilePixel::default()).collect(),
-            max_sample_luminance,
+            _max_sample_luminance,
         }
     }
 

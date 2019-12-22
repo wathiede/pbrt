@@ -11,17 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Defines the trait all texture algorithms must implement.  See [textures] for the currently
+//! implemented algorithms.
+//!
+//! [textures]: crate::textures
 use std::fmt::Debug;
 
 use crate::core::interaction::SurfaceInteraction;
 
+/// The `Texture` trait allows for sampling a material that varies across the surface of an object.
 pub trait Texture<T>: Debug
 where
     T: Debug,
 {
+    /// `evaluate` the texture function at given surface location.
     fn evaluate(&self, _si: &SurfaceInteraction) -> T;
 }
 
+/// Helper definition so boxed `Texture`s are usable as `Texture` trait objects.
 impl<T> Texture<T> for Box<dyn Texture<T>>
 where
     T: Debug,

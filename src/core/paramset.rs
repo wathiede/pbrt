@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO(wathiede): rethink ParamSet implement to more closely match C++ versions vectors of
+// templated ParamSetItems.  Allow undocumented members until that rethink is done.
+#![allow(missing_docs)]
 //! Generic storage types created by parser and passed to factory functions when building a scene.
 
 use std::cell::RefCell;
@@ -84,6 +87,7 @@ pub struct ParamSetItem {
 }
 
 impl ParamSetItem {
+    /// Create a new `ParamSetItem` with the given `name` and `values`.
     pub fn new(name: &str, values: &Value) -> ParamSetItem {
         ParamSetItem {
             name: String::from(name),
@@ -93,13 +97,20 @@ impl ParamSetItem {
     }
 }
 
+/// `ParamSet` provides a generic way to pass data between the scene files and the factory
+/// functions that create various pieces of the rendering pipeline.  It enables the renderer to be
+/// extensible, many of the constructor methods on [Pbrt] take a name and a `ParamSet`.  This
+/// allows new types of `Texture`s, `Camera`s, `Shape`s, etc. to be added without haven't to change
+/// and method signatures.
+///
+/// [Pbrt]: crate::core::api::Pbrt
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ParamSet {
     values: HashMap<String, ParamSetItem>,
 }
 
 impl ParamSet {
-    pub fn add(&mut self, name: &str, values: Value) {
+    fn add(&mut self, name: &str, values: Value) {
         let name = String::from_str(name).unwrap();
         self.values.insert(
             name.clone(),
@@ -111,7 +122,7 @@ impl ParamSet {
         );
     }
 
-    pub fn find(&self, name: &str) -> Option<Value> {
+    fn find(&self, name: &str) -> Option<Value> {
         // Defer unwrapping to call site or consider to use a macro.
         self.values.get(name).map(|psi| {
             *psi.looked_up.borrow_mut() = true;
@@ -120,7 +131,8 @@ impl ParamSet {
     }
 
     /// find_one_bool will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `bool` then `default` will be returned.
     ///
     /// # Examples
     /// ```
@@ -139,7 +151,8 @@ impl ParamSet {
     }
 
     /// find_one_float will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Float` then `default` will be returned.
     ///
     /// # Examples
     /// ```
@@ -158,7 +171,8 @@ impl ParamSet {
     }
 
     /// find_one_int will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `isize` then `default` will be returned.
     ///
     /// # Examples
     /// ```
@@ -177,16 +191,23 @@ impl ParamSet {
     }
 
     /// find_one_point2f will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Point2f` then `default` will be returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_point2f_param_set;
     /// use pbrt::core::geometry::Point2f;
-
+    /// use pbrt::core::paramset::testutils::make_point2f_param_set;
+    ///
     /// let ps = make_point2f_param_set("value", vec![Point2f::from([1., 1.])]);
-    /// assert_eq!(ps.find_one_point2f("value", Point2f::from([2., 2.])), Point2f::from([1., 1.]));
-    /// assert_eq!(ps.find_one_point2f("non-existent", Point2f::from([2., 2.])), Point2f::from([2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_point2f("value", Point2f::from([2., 2.])),
+    ///     Point2f::from([1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_point2f("non-existent", Point2f::from([2., 2.])),
+    ///     Point2f::from([2., 2.])
+    /// );
     /// ```
     pub fn find_one_point2f(&self, name: &str, default: Point2f) -> Point2f {
         match self.find(name) {
@@ -197,16 +218,23 @@ impl ParamSet {
     }
 
     /// find_one_vector2f will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Vector2f` then `default` will be returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_vector2f_param_set;
     /// use pbrt::core::geometry::Vector2f;
-
+    /// use pbrt::core::paramset::testutils::make_vector2f_param_set;
+    ///
     /// let ps = make_vector2f_param_set("value", vec![Vector2f::from([1., 1.])]);
-    /// assert_eq!(ps.find_one_vector2f("value", Vector2f::from([2., 2.])), Vector2f::from([1., 1.]));
-    /// assert_eq!(ps.find_one_vector2f("non-existent", Vector2f::from([2., 2.])), Vector2f::from([2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_vector2f("value", Vector2f::from([2., 2.])),
+    ///     Vector2f::from([1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_vector2f("non-existent", Vector2f::from([2., 2.])),
+    ///     Vector2f::from([2., 2.])
+    /// );
     /// ```
     pub fn find_one_vector2f(&self, name: &str, default: Vector2f) -> Vector2f {
         match self.find(name) {
@@ -217,16 +245,23 @@ impl ParamSet {
     }
 
     /// find_one_point3f will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Point3f` then `default` will be returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_point3f_param_set;
     /// use pbrt::core::geometry::Point3f;
-
+    /// use pbrt::core::paramset::testutils::make_point3f_param_set;
+    ///
     /// let ps = make_point3f_param_set("value", vec![Point3f::from([1., 1., 1.])]);
-    /// assert_eq!(ps.find_one_point3f("value", Point3f::from([2., 2., 2.])), Point3f::from([1., 1., 1.]));
-    /// assert_eq!(ps.find_one_point3f("non-existent", Point3f::from([2., 2., 2.])), Point3f::from([2., 2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_point3f("value", Point3f::from([2., 2., 2.])),
+    ///     Point3f::from([1., 1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_point3f("non-existent", Point3f::from([2., 2., 2.])),
+    ///     Point3f::from([2., 2., 2.])
+    /// );
     /// ```
     pub fn find_one_point3f(&self, name: &str, default: Point3f) -> Point3f {
         match self.find(name) {
@@ -237,16 +272,23 @@ impl ParamSet {
     }
 
     /// find_one_vector3f will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Vector3f` then `default` will be returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_vector3f_param_set;
     /// use pbrt::core::geometry::Vector3f;
-
+    /// use pbrt::core::paramset::testutils::make_vector3f_param_set;
+    ///
     /// let ps = make_vector3f_param_set("value", vec![Vector3f::from([1., 1., 1.])]);
-    /// assert_eq!(ps.find_one_vector3f("value", Vector3f::from([2., 2., 2.])), Vector3f::from([1., 1., 1.]));
-    /// assert_eq!(ps.find_one_vector3f("non-existent", Vector3f::from([2., 2., 2.])), Vector3f::from([2., 2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_vector3f("value", Vector3f::from([2., 2., 2.])),
+    ///     Vector3f::from([1., 1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_vector3f("non-existent", Vector3f::from([2., 2., 2.])),
+    ///     Vector3f::from([2., 2., 2.])
+    /// );
     /// ```
     pub fn find_one_vector3f(&self, name: &str, default: Vector3f) -> Vector3f {
         match self.find(name) {
@@ -257,16 +299,23 @@ impl ParamSet {
     }
 
     /// find_one_normal3f will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Normal3f` then `default` will be returned.
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_normal3f_param_set;
     /// use pbrt::core::geometry::Normal3f;
-
+    /// use pbrt::core::paramset::testutils::make_normal3f_param_set;
+    ///
     /// let ps = make_normal3f_param_set("value", vec![Normal3f::from([1., 1., 1.])]);
-    /// assert_eq!(ps.find_one_normal3f("value", Normal3f::from([2., 2., 2.])), Normal3f::from([1., 1., 1.]));
-    /// assert_eq!(ps.find_one_normal3f("non-existent", Normal3f::from([2., 2., 2.])), Normal3f::from([2., 2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_normal3f("value", Normal3f::from([2., 2., 2.])),
+    ///     Normal3f::from([1., 1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_normal3f("non-existent", Normal3f::from([2., 2., 2.])),
+    ///     Normal3f::from([2., 2., 2.])
+    /// );
     /// ```
     pub fn find_one_normal3f(&self, name: &str, default: Normal3f) -> Normal3f {
         match self.find(name) {
@@ -277,16 +326,23 @@ impl ParamSet {
     }
 
     /// find_one_spectrum will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Spectrum` then `default` will be returned.
     ///
     /// # Examples
     /// ```
     /// use pbrt::core::paramset::testutils::make_spectrum_param_set;
     /// use pbrt::core::spectrum::Spectrum;
-
+    ///
     /// let ps = make_spectrum_param_set("value", vec![Spectrum::from_rgb([1., 1., 1.])]);
-    /// assert_eq!(ps.find_one_spectrum("value", Spectrum::from_rgb([2., 2., 2.])), Spectrum::from_rgb([1., 1., 1.]));
-    /// assert_eq!(ps.find_one_spectrum("non-existent", Spectrum::from_rgb([2., 2., 2.])), Spectrum::from_rgb([2., 2., 2.]));
+    /// assert_eq!(
+    ///     ps.find_one_spectrum("value", Spectrum::from_rgb([2., 2., 2.])),
+    ///     Spectrum::from_rgb([1., 1., 1.])
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_spectrum("non-existent", Spectrum::from_rgb([2., 2., 2.])),
+    ///     Spectrum::from_rgb([2., 2., 2.])
+    /// );
     /// ```
     pub fn find_one_spectrum(&self, name: &str, default: Spectrum) -> Spectrum {
         match self.find(name) {
@@ -297,7 +353,8 @@ impl ParamSet {
     }
 
     /// find_one_string will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `String` then `default` will be returned.
     ///
     /// # Examples
     /// ```
@@ -322,7 +379,8 @@ impl ParamSet {
     }
 
     /// find_one_texture will return the first parameter in the set for the given
-    /// `name`.  If no values are found `default` is returned.
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `String` then `default` will be returned.
     ///
     /// # Examples
     /// ```
@@ -346,6 +404,10 @@ impl ParamSet {
         }
     }
 
+    /// `report_unused` will print out all values in this `ParamSet` that have not been accessed,
+    /// will return true if any unused values are found.
+    /// Useful after parsing a scene to see what configuration data was superfluous, or for
+    /// detecting incomplete implementations of scene factory fuctions.
     pub fn report_unused(&self) -> bool {
         let mut unused = false;
         info!("report_unused");
@@ -371,6 +433,10 @@ impl From<Vec<ParamSetItem>> for ParamSet {
     }
 }
 
+/// `TextureParams` represent values necessary to create a new [Texture].
+/// TODO(wathiede): currently only a stub, textures not implemented.
+///
+/// [Texture]: crate::core::texture::Texture
 #[derive(Default)]
 pub struct TextureParams {
     _float_textures: HashMap<String, Arc<dyn Texture<Float>>>,
@@ -380,6 +446,8 @@ pub struct TextureParams {
 }
 
 impl TextureParams {
+    /// Create a new `TextureParams` from the given set of parameters.
+    /// TODO(wathiede): currently only a stub, textures not implemented.
     pub fn new(
         geom_params: ParamSet,
         material_params: ParamSet,
@@ -394,11 +462,19 @@ impl TextureParams {
         }
     }
 
+    /// find_float will return the first `Float` value with the given `name` in this
+    /// `TextureParams`'s `geom_params` set, if none is found, it will find the first `Float` value
+    /// in the `material_params` set.  If no value is found there, the provided `default` will be
+    /// returned.
     pub fn find_float(&self, name: &str, default: Float) -> Float {
         self.geom_params
             .find_one_float(name, self.material_params.find_one_float(name, default))
     }
 
+    /// find_spectrum will return the first `Spectrum` value with the given `name` in this
+    /// `TextureParams`'s `geom_params` set, if none is found, it will find the first `Spectrum`
+    /// value in the `material_params` set.  If no value is found there, the provided `default`
+    /// will be returned.
     pub fn find_spectrum(&self, name: &str, default: Spectrum) -> Spectrum {
         self.geom_params
             .find_one_spectrum(name, self.material_params.find_one_spectrum(name, default))

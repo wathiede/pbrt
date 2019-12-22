@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![deny(missing_docs)]
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 use std::fmt;
 use std::ops::Add;
@@ -381,6 +380,7 @@ where
         Point3 { x, y, z }
     }
 }
+
 impl<T> From<[T; 3]> for Point3<T>
 where
     T: Number,

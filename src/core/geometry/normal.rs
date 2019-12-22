@@ -14,6 +14,7 @@
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 
+use crate::core::geometry::Number;
 use crate::Float;
 
 /// Generic type for any 3D normal.
@@ -25,6 +26,19 @@ pub struct Normal3<T> {
     pub y: T,
     /// The z coordinate of this normal.
     pub z: T,
+}
+
+impl<T> From<[T; 3]> for Normal3<T>
+where
+    T: Number,
+{
+    fn from(xyz: [T; 3]) -> Self {
+        Normal3 {
+            x: xyz[0],
+            y: xyz[1],
+            z: xyz[2],
+        }
+    }
 }
 
 /// 3D normal type with `Float` members.

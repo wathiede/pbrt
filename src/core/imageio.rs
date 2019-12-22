@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Utilities for writing out `Float` based image data to common image file formats.
 use std::path::Path;
 
 use image::save_buffer_with_format;
@@ -51,7 +53,7 @@ pub fn write_image(
     name: &str,
     rgb: &Vec<Float>,
     output_bounds: Bounds2i,
-    total_resolution: Point2i,
+    _total_resolution: Point2i,
 ) {
     let resolution = output_bounds.diagonal();
     match Path::new(name)
@@ -63,7 +65,7 @@ pub fn write_image(
         .as_str()
     {
         "png" => {
-            let mut rgb8: Vec<u8> = rgb.iter().map(|f| to_byte(*f)).collect();
+            let rgb8: Vec<u8> = rgb.iter().map(|f| to_byte(*f)).collect();
 
             if let Err(err) = save_buffer_with_format(
                 name,

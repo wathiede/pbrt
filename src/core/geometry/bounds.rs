@@ -171,6 +171,16 @@ impl<T> Bounds2<T>
 where
     T: Number,
 {
+    /// `diagonal` computes the `Vector2` representing the diagonal of this `Bounds2`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2f;
+    /// use pbrt::core::geometry::Vector2f;
+    ///
+    /// let b = Bounds2f::from([[1., 1.], [3., 3.]]);
+    /// assert_eq!(b.diagonal(), Vector2f::from([2.,2.]));
+    /// ```
     pub fn diagonal(&self) -> Vector2<T> {
         self.p_max - self.p_min
     }
@@ -190,6 +200,17 @@ where
         d.x * d.y
     }
 
+    /// Determine if `p` inside `self` excluding upper-bounds.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2i;
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let b = Bounds2i::from([[2, 2], [4, 4]]);
+    /// assert!(b.inside_exclusive(Point2i::from([2, 2])));
+    /// assert!(!b.inside_exclusive(Point2i::from([4, 4])));
+    /// ```
     pub fn inside_exclusive(&self, p: Point2<T>) -> bool {
         p.x >= self.p_min.x && p.x < self.p_max.x && p.y >= self.p_min.y && p.y < self.p_max.y
     }
@@ -251,6 +272,20 @@ impl From<Bounds2i> for Bounds2f {
 pub type Bounds2i = Bounds2<isize>;
 
 impl Bounds2i {
+    /// Returns and iterator that visits each `Point2i` within the `Bound2i`.  
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds2i;
+    /// use pbrt::core::geometry::Point2i;
+    ///
+    /// let b = Bounds2i::from([[2, 2], [4, 4]]);
+    /// let mut it = b.iter();
+    /// assert_eq!(it.next(), Some(Point2i::from([2, 2])));
+    /// assert_eq!(it.next(), Some(Point2i::from([3, 2])));
+    /// assert_eq!(it.next(), Some(Point2i::from([2, 3])));
+    /// assert_eq!(it.next(), Some(Point2i::from([3, 3])));
+    /// assert_eq!(it.next(), None);
+    /// ```
     pub fn iter(&self) -> impl Iterator<Item = Point2i> {
         let x_range = self.p_min.x..self.p_max.x;
         let y_range = self.p_min.y..self.p_max.y;
@@ -304,10 +339,92 @@ pub type Bounds3f = Bounds3<Float>;
 /// 3D bounding box type with `isize` members.
 pub type Bounds3i = Bounds3<isize>;
 
+impl<T> From<[[T; 3]; 2]> for Bounds3<T>
+where
+    T: Number,
+{
+    /// Create `Bounds3<T>` from tuple of slices.  It also ensures min/max are correct, regardless of
+    /// how they're arranged in the incoming slices.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds3f;
+    /// use pbrt::core::geometry::Point3f;
+    ///
+    /// let b = Bounds3f::from([[2., 3., 4.], [4., 5.,6.]]);
+    /// assert_eq!(
+    ///     b,
+    ///     Bounds3f {
+    ///         p_min: Point3f { x: 2., y: 3.,z:4. },
+    ///         p_max: Point3f { x: 4., y: 5.,z:6. }
+    ///     }
+    /// );
+    ///
+    /// let b = Bounds3f::from([[5., 4., 1.], [3., 2.,3.]]);
+    /// assert_eq!(b, Bounds3f::from([[3., 2.,1.], [5., 4.,3.]]));
+    /// ```
+    fn from(ps: [[T; 3]; 2]) -> Self {
+        let p1 = Point3::from(ps[0]);
+        let p2 = Point3::from(ps[1]);
+        [p1, p2].into()
+    }
+}
+
+impl<T> From<[Point3<T>; 2]> for Bounds3<T>
+where
+    T: Number,
+{
+    /// Create `Bounds3<T>` from slice of `Point3<t>`.  It also ensures min/max are correct, regardless of
+    /// how they're arranged in the incoming `Point3<t>`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds3f;
+    /// use pbrt::core::geometry::Point3f;
+    ///
+    /// let b = Bounds3f::from([Point3f::from([2., 3.,4.]), Point3f::from([4., 5.,6.])]);
+    /// assert_eq!(
+    ///     b,
+    ///     Bounds3f {
+    ///         p_min: Point3f { x: 2., y: 3. ,z:4.},
+    ///         p_max: Point3f { x: 4., y: 5.,z:6. }
+    ///     }
+    /// );
+    ///
+    /// let b = Bounds3f::from([Point3f::from([5., 4.,1.]), Point3f::from([3., 2.,3.])]);
+    /// assert_eq!(b, Bounds3f::from([[3., 2.,1.], [5., 4.,3.]]));
+    /// ```
+    fn from(ps: [Point3<T>; 2]) -> Self {
+        let (p1, p2) = (ps[0], ps[1]);
+        let p_min = Point3::from([
+            if p1.x < p2.x { p1.x } else { p2.x },
+            if p1.y < p2.y { p1.y } else { p2.y },
+            if p1.z < p2.z { p1.z } else { p2.z },
+        ]);
+        let p_max = Point3::from([
+            if p1.x > p2.x { p1.x } else { p2.x },
+            if p1.y > p2.y { p1.y } else { p2.y },
+            if p1.z > p2.z { p1.z } else { p2.z },
+        ]);
+        Bounds3 { p_min, p_max }
+    }
+}
+
 impl<T> Bounds3<T>
 where
     T: Number,
 {
+    /// Determine if `p` inside `self` excluding upper-bounds.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Bounds3i;
+    /// use pbrt::core::geometry::Point3i;
+    ///
+    /// let b = Bounds3i::from([[2, 2, 2], [4, 4, 4]]);
+    /// assert!(b.inside_exclusive(Point3i::from([2, 2, 2])));
+    /// assert!(!b.inside_exclusive(Point3i::from([4, 4, 4])));
+    /// ```
     pub fn inside_exclusive(&self, p: Point3<T>) -> bool {
         p.x >= self.p_min.x
             && p.x < self.p_max.x

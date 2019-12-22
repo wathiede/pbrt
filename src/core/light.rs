@@ -11,5 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Stub type for flushing out [Pbrt].  TODO(wathiede): actually implement and document.
+//!
+//! [Pbrt]: crate::core::api::Pbrt
+
+/// Stub type for flushing out [Pbrt].  TODO(wathiede): actually implement and document.
+///
+/// [Pbrt]: crate::core::api::Pbrt
 #[derive(Debug)]
 pub struct Light {}

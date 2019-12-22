@@ -11,21 +11,32 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#![warn(missing_docs)]
+
+//! pbrt is a rust implementation of http://www.pbr-book.org/3ed-2018/contents.html
+
 pub mod core;
 pub mod filters;
 pub mod textures;
 
 #[cfg(feature = "float-as-double")]
+/// submodule to defined types, constants and methods when `Float` is defined as a `f64` using the
+/// "float-as-double" cargo feature.
 pub mod float {
     pub use std::f64::*;
-    /// Alias of the `f64` type, to be used through out the codebase anywhere a default sized float is
-    /// necessary.
+    /// Alias of the `f64` type, to be used through out the codebase anywhere a default sized
+    /// `Float` is necessary.
     pub type Float = f64;
 }
 
 #[cfg(not(feature = "float-as-double"))]
+/// submodule to defined types, constants and methods when `Float` is defined as a `f32` when not using the
+/// "float-as-double" cargo feature.
 pub mod float {
     pub use std::f32::*;
+    /// Alias of the `f32` type, to be used through out the codebase anywhere a default sized
+    /// `Float` is necessary.
     pub type Float = f32;
 }
 
@@ -45,10 +56,15 @@ impl From<Float> for Degree {
 /// configuration file parsed.
 #[derive(Clone, Debug)]
 pub struct Options {
+    /// number of threads to use when rendering.
     pub num_threads: u32,
+    /// Not implemented: enable some options for quick draft quality rendering.
     pub quick_render: bool,
+    /// Squelch all non-error output.
     pub quiet: bool,
+    /// Enable extra logging output.
     pub verbose: bool,
+    /// Path to stored rendered output.
     pub image_file: String,
 }
 
@@ -72,6 +88,7 @@ impl Default for Options {
 //const PI_OVER4: Float = 0.78539816339744830961;
 //const SQRT2: Float = 1.41421356237309504880;
 
+/// Convert `value` into sRGB gamma-corrected value.
 pub fn gamma_correct(value: Float) -> Float {
     if value <= 0.0031308 {
         12.92 * value
@@ -80,6 +97,20 @@ pub fn gamma_correct(value: Float) -> Float {
     }
 }
 
+/// Clamp `val` between `low` and `high`.
+///
+/// # Examples
+/// ```
+/// use pbrt::clamp;
+///
+/// assert_eq!(clamp(-1., 0., 1.), 0.);
+/// assert_eq!(clamp(0.5, 0., 1.), 0.5);
+/// assert_eq!(clamp(2., 0., 1.), 1.0);
+///
+/// assert_eq!(clamp(-1, 0, 2), 0);
+/// assert_eq!(clamp(1, 0, 2), 1);
+/// assert_eq!(clamp(3, 0, 2), 2);
+/// ```
 pub fn clamp<T>(val: T, low: T, high: T) -> T
 where
     T: PartialOrd,

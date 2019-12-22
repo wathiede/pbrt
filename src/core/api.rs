@@ -37,7 +37,6 @@ use crate::core::parser;
 use crate::core::parser::Directive;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
-use crate::core::transform::Matrix4x4;
 use crate::core::transform::Transform;
 use crate::filters::boxfilter::BoxFilter;
 use crate::textures::constant;
@@ -45,10 +44,14 @@ use crate::Degree;
 use crate::Float;
 use crate::Options;
 
+/// Common error type for all public methods in the `api` crate.
 #[derive(Debug)]
 pub enum Error {
+    /// Wrapper for `std::io::Error`s
     Io(io::Error),
+    /// Wrapper for errors coming from [pbrt::core::parser]
     Parser(parser::Error),
+    /// Unknown errors, wraps a string for human consumption.
     Unhandled(String),
 }
 
@@ -64,6 +67,7 @@ impl From<parser::Error> for Error {
     }
 }
 
+/// State machine for the API.
 #[derive(Debug, PartialEq)]
 enum APIState {
     Uninitialized,
@@ -247,8 +251,9 @@ pub struct Pbrt {
      * static TransformCache transformCache; */
 }
 
-impl Pbrt {
-    pub fn new(opt: Options) -> Pbrt {
+impl From<Options> for Pbrt {
+    /// Creates a `Pbrt` from the given options.
+    fn from(opt: Options) -> Self {
         Pbrt {
             opt,
             current_api_state: APIState::Uninitialized,
@@ -262,7 +267,12 @@ impl Pbrt {
             pushed_active_transform_bits: Vec::new(),
         }
     }
+}
 
+impl Pbrt {
+    /// Parse a scene file at `path` on the file-system.  This will parse the contents of the file
+    /// generating an inmemory representation of the scene, and trigger the rendering and output of
+    /// the image.
     // TODO(wathiede): replace Ok() with something that prints stats about the scene render.
     pub fn parse_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Error> {
         let mut f = File::open(path)?;
@@ -348,7 +358,8 @@ impl Pbrt {
         self.render_options = Default::default();
     }
 
-    pub fn cleaup(&mut self) {
+    /// Reset the internal state of self.
+    pub fn cleanup(&mut self) {
         if self.current_api_state == APIState::Uninitialized {
             error!("cleanup() called without init().");
         } else if self.current_api_state == APIState::WorldBlock {
@@ -358,6 +369,7 @@ impl Pbrt {
         self.render_options = Default::default();
     }
 
+    /// Called when parser sees a `WorldBegin` keyword
     pub fn world_begin(&mut self) {
         verify_options!(self, "pbrt.world_begin");
         self.current_api_state = APIState::WorldBlock;
@@ -369,6 +381,7 @@ impl Pbrt {
             .insert("world".to_owned(), self.current_transform);
     }
 
+    /// Called when parser sees a `WorldEnd` keyword
     pub fn world_end(&mut self) {
         verify_world!(self, "pbrt.world_end");
         // TODO(wathiede): call everything
@@ -412,6 +425,7 @@ impl Pbrt {
         // ImageTexture<RGBSpectrum, Spectrum>::ClearCache();
     }
 
+    /// Called when parser sees a `AttributeBegin` keyword
     pub fn attribute_begin(&mut self) {
         verify_world!(self, "pbrt.attribute_begin");
         self.pushed_graphics_states
@@ -421,6 +435,7 @@ impl Pbrt {
             .push(self.active_transform_bits);
     }
 
+    /// Called when parser sees a `AttributeEnd` keyword
     pub fn attribute_end(&mut self) {
         verify_world!(self, "pbrt.attribute_end");
         if self.pushed_graphics_states.is_empty()
@@ -435,6 +450,7 @@ impl Pbrt {
         self.active_transform_bits = self.pushed_active_transform_bits.pop().unwrap();
     }
 
+    /// Called when parser sees a `TransformBegin` keyword
     pub fn transform_begin(&mut self) {
         verify_world!(self, "pbrt.transform_begin");
         self.pushed_transforms.push(self.current_transform);
@@ -442,6 +458,7 @@ impl Pbrt {
             .push(self.active_transform_bits);
     }
 
+    /// Called when parser sees a `TransformEnd` keyword
     pub fn transform_end(&mut self) {
         verify_world!(self, "pbrt.transform_end");
         if self.pushed_transforms.is_empty() || self.pushed_active_transform_bits.is_empty() {
@@ -452,6 +469,7 @@ impl Pbrt {
         self.active_transform_bits = self.pushed_active_transform_bits.pop().unwrap();
     }
 
+    /// Called when the parser sees a `Texture` line.
     pub fn texture(&mut self, name: &str, kind: &str, texname: &str, params: ParamSet) {
         verify_world!(self, "pbrt.texture");
         info!(
@@ -596,6 +614,7 @@ impl Pbrt {
         self.for_active_transforms_mut(|ct| *ct = *ct * Transform::rotate(angle, [ax, ay, az]));
     }
 
+    /// Sets the current transforms to look at the given directions.
     pub fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
         verify_initialized!(self, "pbrt.look_at");
         info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
@@ -625,39 +644,26 @@ impl Pbrt {
         self.for_active_transforms_mut(|ct| *ct = *ct * Transform::scale(sx, sy, sz));
     }
 
+    /// Multiples the current transform matrix by `transform`.
     pub fn concat_transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.concat_transform");
-        self.for_active_transforms_mut(|ct| {
-            let t = transform;
-            *ct = *ct
-                * Transform::from(Matrix4x4::new(
-                    [t[0], t[1], t[2], t[3]],
-                    [t[4], t[5], t[6], t[7]],
-                    [t[8], t[9], t[10], t[11]],
-                    [t[12], t[13], t[14], t[15]],
-                ))
-        });
+        self.for_active_transforms_mut(|ct| *ct = *ct * Transform::from(transform));
     }
 
+    /// Sets the current transform matrix to `transform`.
     pub fn transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.transform");
-        self.for_active_transforms_mut(|ct| {
-            let t = transform;
-            *ct = Transform::from(Matrix4x4::new(
-                [t[0], t[1], t[2], t[3]],
-                [t[4], t[5], t[6], t[7]],
-                [t[8], t[9], t[10], t[11]],
-                [t[12], t[13], t[14], t[15]],
-            ))
-        });
+        self.for_active_transforms_mut(|ct| *ct = Transform::from(transform));
     }
 
+    /// Creates a new coordinate system assigning `name` the current tranform matrix.
     pub fn coordinate_system(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system");
         self.named_coordinate_systems
             .insert(name.to_string(), self.current_transform);
     }
 
+    /// Sets the current transform matrix to the one stored under `name`.
     pub fn coordinate_system_transform(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system_transform");
         match self.named_coordinate_systems.get(name) {
@@ -666,54 +672,64 @@ impl Pbrt {
         }
     }
 
+    /// Sets the active transform bits to `ALL_TRANSFORMS_BITS`.
     pub fn active_transform_all(&mut self) {
         self.active_transform_bits = ALL_TRANSFORMS_BITS;
     }
 
+    /// Sets the active transform bits to `END_TRANSFORMS_BITS`.
     pub fn active_transform_end_time(&mut self) {
         self.active_transform_bits = END_TRANSFORM_BITS;
     }
 
+    /// Sets the active transform bits to `START_TRANSFORMS_BITS`.
     pub fn active_transform_start_time(&mut self) {
         self.active_transform_bits = START_TRANSFORM_BITS;
     }
 
+    /// Sets the start/end times for the transform matrix to `start` & `end`.
     pub fn transform_times(&mut self, start: Float, end: Float) {
         verify_options!(self, "pbrt.tranform_times");
         self.render_options.transform_start_time = start;
         self.render_options.transform_end_time = end;
     }
 
+    /// Sets the renderer's filter settings to `name` & `params`.
     pub fn pixel_filter(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.pixel_filter");
         self.render_options.filter_name = name;
         self.render_options.filter_params = params;
     }
 
+    /// Sets the renderer's film settings to `name` & `params`.
     pub fn film(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.film");
         self.render_options.film_name = name;
         self.render_options.film_params = params;
     }
 
+    /// Sets the renderer's sampler settings to `name` & `params`.
     pub fn sampler(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.sampler");
         self.render_options.sampler_name = name;
         self.render_options.sampler_params = params;
     }
 
+    /// Sets the renderer's accelerator settings to `name` & `params`.
     pub fn accelerator(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.accelerator");
         self.render_options.accelerator_name = name;
         self.render_options.accelerator_params = params;
     }
 
+    /// Sets the renderer's integrator settings to `name` & `params`.
     pub fn integrator(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.integrator");
         self.render_options.integrator_name = name;
         self.render_options.integrator_params = params;
     }
 
+    /// Sets the renderer's camera settings to `name` & `params`.
     pub fn camera(&mut self, name: String, params: ParamSet) {
         verify_options!(self, "pbrt.camera");
         self.render_options.camera_name = name;
@@ -723,6 +739,7 @@ impl Pbrt {
             .insert("camera".to_owned(), self.render_options.camera_to_world);
     }
 
+    /// Creates a medium with the given `params` and stores it as a named media under `name`.
     pub fn make_named_medium(&mut self, name: String, params: &mut ParamSet) {
         verify_initialized!(self, "pbrt.make_named_medium");
         self.warn_if_animated_transform("pbrt.make_named_medium");
@@ -731,6 +748,8 @@ impl Pbrt {
         self.render_options.named_media.insert(name, medium);
     }
 
+    /// Specifies the current inside and outside media by the names given.  Cameras and lights
+    /// without geometry ignore the `inside_name`.
     pub fn medium_interface(&mut self, inside_name: &str, outside_name: &str) {
         verify_initialized!(self, "pbrt.medium_interface");
         self.graphics_state.current_inside_medium = inside_name.into();
@@ -769,7 +788,7 @@ impl Pbrt {
 
 impl Default for Pbrt {
     fn default() -> Pbrt {
-        Pbrt::new(Default::default())
+        Pbrt::from(Options::default())
     }
 }
 
@@ -817,6 +836,8 @@ fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) ->
     unimplemented!("make_medium");
 }
 
+// TODO(wathiede): remove #[allow(dead_code)] after make_camera is implemented.
+#[allow(dead_code)]
 fn make_filter(name: &str, param_set: &ParamSet) -> Box<dyn Filter> {
     let filter = match name {
         "box" => Box::new(BoxFilter::create_box_filter(param_set)),
@@ -834,6 +855,9 @@ fn make_filter(name: &str, param_set: &ParamSet) -> Box<dyn Filter> {
 
 #[cfg(test)]
 mod tests {
+    use crate::core::paramset::testutils::make_float_param_set;
+    use crate::core::transform::Matrix4x4;
+
     use super::*;
 
     #[test]
@@ -920,5 +944,13 @@ mod tests {
         let params = Default::default();
         pbrt.texture("", "", "", params);
         pbrt.world_end();
+    }
+
+    #[test]
+    fn test_make_filter() {
+        let ps = make_float_param_set("xwidth", vec![1.]);
+        let bf = make_filter("box", &ps);
+        assert_eq!(bf.radius(), [1., 0.5].into());
+        assert_eq!(bf.inv_radius(), [1., 2.].into());
     }
 }

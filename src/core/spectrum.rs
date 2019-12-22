@@ -11,6 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! The spectrum module houses two main types, [RGBSpectrum] and [SampledSpectrum] used to represent color. The default [Spectrum] type is defined as `RGBSpectrum` or `SampledSpectrum` based on the compile time feature `sampled-spectrum`.
+//!
+//! [RGBSpectrum]: crate::core::spectrum::RGBSpectrum
+//! [SampledSpectrum]: crate::core::spectrum::SampledSpectrum
+//! [Spectrum]: crate::core::spectrum::Spectrum
 use std::cmp;
 use std::fmt;
 
@@ -49,6 +55,8 @@ impl $t {
 }
 
 const N_SPECTRAL_SAMPLES: usize = 60;
+/// `SampledSpectrum` is a spectrum represented by `N_SPECTRAL_SAMPLES` (currently 60) values
+/// evenly spread across 400 nm to 700 nm.
 pub struct SampledSpectrum {
     c: [Float; N_SPECTRAL_SAMPLES],
 }
@@ -73,6 +81,8 @@ impl cmp::PartialEq for SampledSpectrum {
     }
 }
 
+/// Convert tristimulus values in the XYZ color space (as defined by CIE) matching the human eye's
+/// response to RGB values in the sRGB color space.
 pub fn xyz_to_rgb(xyz: [Float; 3]) -> [Float; 3] {
     [
         3.240479 * xyz[0] - 1.537150 * xyz[1] - 0.498535 * xyz[2],
@@ -81,6 +91,8 @@ pub fn xyz_to_rgb(xyz: [Float; 3]) -> [Float; 3] {
     ]
 }
 
+/// Convert tristimulus values in the sRGB color space values to the XYZ color space (as defined by
+/// CIE) matching the human eye's response.
 pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
     [
         0.412453 * rgb[0] + 0.357580 * rgb[1] + 0.180423 * rgb[2],
@@ -89,6 +101,8 @@ pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
     ]
 }
 
+/// `RGBSpectrum` is a sample implemented with 3 values at red, green and blue points in the
+/// spectrum.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RGBSpectrum {
     c: [Float; 3],
@@ -97,12 +111,15 @@ pub struct RGBSpectrum {
 common_implementation!(RGBSpectrum, 3);
 
 #[cfg(not(feature = "sampled-spectrum"))]
+/// Define the `Spectrum` type to be `RGBSpectrum` when compiling without the `sampled-spectrum` feature enabled.
 pub type Spectrum = RGBSpectrum;
 
 impl RGBSpectrum {
+    /// extract this `RGBSpectrum`'s value in the XYZ color space.
     pub fn to_xyz(&self) -> [Float; 3] {
         rgb_to_xyz(self.c)
     }
+    /// create an `RGBSpectrum` from the given tristimulus values in sRGB color space.
     pub fn from_rgb(c: [Float; 3]) -> RGBSpectrum {
         let s = RGBSpectrum { c };
         debug_assert!(!s.has_nans(), "c {:?}", s);
@@ -111,4 +128,5 @@ impl RGBSpectrum {
 }
 
 #[cfg(feature = "sampled-spectrum")]
+/// Define the `Spectrum` type to be `SampledSpectrum` when compiling with the `sampled-spectrum` feature enabled.
 pub type Spectrum = SampledSpectrum;

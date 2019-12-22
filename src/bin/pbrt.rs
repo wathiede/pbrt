@@ -21,7 +21,7 @@ use structopt;
 use structopt::StructOpt;
 
 use pbrt;
-use pbrt::core::api;
+use pbrt::core::api::Pbrt;
 
 #[derive(Clone, Debug, Default, StructOpt)]
 #[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
@@ -67,7 +67,7 @@ fn main() {
         verbose: flags.verbose,
         image_file: flags.image_file.unwrap_or("".to_owned()),
     };
-    let ref mut pbrt = api::Pbrt::new(opts.clone());
+    let ref mut pbrt = Pbrt::from(opts.clone());
     pbrt.init();
     for f in &flags.scene_files {
         match pbrt.parse_file(&f) {
@@ -82,5 +82,5 @@ fn main() {
             }
         }
     }
-    pbrt.cleaup();
+    pbrt.cleanup();
 }

@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! Implements a [Texture] that always returns the given value.
+//!
+//! [Texture]: crate::core::texture::Texture
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::fmt::Result;
@@ -23,6 +27,9 @@ use crate::core::transform::Transform;
 use crate::Float;
 
 #[derive(Clone)]
+/// Implements trait [Texture] to return the given `value`.
+///
+/// [Texture]: crate::core::texture::Texture
 pub struct ConstantTexture<T>
 where
     T: Debug,
@@ -30,6 +37,25 @@ where
     value: T,
 }
 
+/// Creates new `ConstantTexture` from the given `TextureParams` with `Float` as the data type.
+///
+/// # Examples
+/// ```
+/// use pbrt::core::paramset::testutils::make_float_param_set;
+/// use pbrt::core::paramset::TextureParams;
+/// use pbrt::core::texture::Texture;
+/// use pbrt::core::transform::Transform;
+/// use pbrt::textures::constant::create_constant_float_texture;
+///
+/// let tp = TextureParams::new(
+///     make_float_param_set("value", vec![10.]),
+///     Default::default(),
+///     Default::default(),
+///     Default::default(),
+/// );
+/// let t = create_constant_float_texture(&Transform::identity(), &tp);
+/// assert_eq!(10., t.evaluate(&Default::default()));
+/// ```
 pub fn create_constant_float_texture(
     _tex2world: &Transform,
     tp: &TextureParams,
@@ -39,6 +65,29 @@ pub fn create_constant_float_texture(
     }
 }
 
+/// Creates new `ConstantTexture` from the given `TextureParams` with `Spectrum` as the data type.
+///
+/// # Examples
+/// ```
+/// use pbrt::core::paramset::testutils::make_spectrum_param_set;
+/// use pbrt::core::paramset::TextureParams;
+/// use pbrt::core::spectrum::Spectrum;
+/// use pbrt::core::texture::Texture;
+/// use pbrt::core::transform::Transform;
+/// use pbrt::textures::constant::create_constant_spectrum_texture;
+///
+/// let tp = TextureParams::new(
+///     make_spectrum_param_set("value", vec![Spectrum::from_rgb([1., 0., 0.])]),
+///     Default::default(),
+///     Default::default(),
+///     Default::default(),
+/// );
+/// let t = create_constant_spectrum_texture(&Transform::identity(), &tp);
+/// assert_eq!(
+///     Spectrum::from_rgb([1., 0., 0.]),
+///     t.evaluate(&Default::default())
+/// );
+/// ```
 pub fn create_constant_spectrum_texture(
     _tex2world: &Transform,
     tp: &TextureParams,
@@ -52,6 +101,23 @@ impl<T> ConstantTexture<T>
 where
     T: Debug,
 {
+    /// Create a new `ConstantTexture` with the given constant `value`.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::spectrum::Spectrum;
+    /// use pbrt::core::texture::Texture;
+    /// use pbrt::textures::constant::ConstantTexture;
+    ///
+    /// let t = ConstantTexture::new(10.);
+    /// assert_eq!(10., t.evaluate(&Default::default()));
+    ///
+    /// let t = ConstantTexture::new(Spectrum::from_rgb([1., 0., 0.]));
+    /// assert_eq!(
+    ///     Spectrum::from_rgb([1., 0., 0.]),
+    ///     t.evaluate(&Default::default())
+    /// );
+    /// ```
     pub fn new(value: T) -> ConstantTexture<T> {
         ConstantTexture { value }
     }
@@ -61,6 +127,9 @@ impl<T> Texture<T> for ConstantTexture<T>
 where
     T: Clone + Debug,
 {
+    /// Implements [evaluate] that just returns the same value for any `SurfaceInteraction`
+    ///
+    /// [evaluate]: crate::core::texture::Texture
     fn evaluate(&self, _si: &SurfaceInteraction) -> T {
         self.value.clone()
     }
@@ -70,6 +139,9 @@ impl<T> Debug for ConstantTexture<T>
 where
     T: Debug,
 {
+    /// Implements [fmt] that surfaces the relevant details for the `ConstantTexture`.
+    ///
+    /// [fmt]: std::fmt::Debug::fmt
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "ConstantTexture{{{:?}}}", &self.value)
     }
