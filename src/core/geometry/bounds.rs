@@ -179,7 +179,7 @@ where
     /// use pbrt::core::geometry::Vector2f;
     ///
     /// let b = Bounds2f::from([[1., 1.], [3., 3.]]);
-    /// assert_eq!(b.diagonal(), Vector2f::from([2.,2.]));
+    /// assert_eq!(b.diagonal(), Vector2f::from([2., 2.]));
     /// ```
     pub fn diagonal(&self) -> Vector2<T> {
         self.p_max - self.p_min
@@ -351,17 +351,25 @@ where
     /// use pbrt::core::geometry::Bounds3f;
     /// use pbrt::core::geometry::Point3f;
     ///
-    /// let b = Bounds3f::from([[2., 3., 4.], [4., 5.,6.]]);
+    /// let b = Bounds3f::from([[2., 3., 4.], [4., 5., 6.]]);
     /// assert_eq!(
     ///     b,
     ///     Bounds3f {
-    ///         p_min: Point3f { x: 2., y: 3.,z:4. },
-    ///         p_max: Point3f { x: 4., y: 5.,z:6. }
+    ///         p_min: Point3f {
+    ///             x: 2.,
+    ///             y: 3.,
+    ///             z: 4.
+    ///         },
+    ///         p_max: Point3f {
+    ///             x: 4.,
+    ///             y: 5.,
+    ///             z: 6.
+    ///         }
     ///     }
     /// );
     ///
-    /// let b = Bounds3f::from([[5., 4., 1.], [3., 2.,3.]]);
-    /// assert_eq!(b, Bounds3f::from([[3., 2.,1.], [5., 4.,3.]]));
+    /// let b = Bounds3f::from([[5., 4., 1.], [3., 2., 3.]]);
+    /// assert_eq!(b, Bounds3f::from([[3., 2., 1.], [5., 4., 3.]]));
     /// ```
     fn from(ps: [[T; 3]; 2]) -> Self {
         let p1 = Point3::from(ps[0]);
@@ -382,17 +390,25 @@ where
     /// use pbrt::core::geometry::Bounds3f;
     /// use pbrt::core::geometry::Point3f;
     ///
-    /// let b = Bounds3f::from([Point3f::from([2., 3.,4.]), Point3f::from([4., 5.,6.])]);
+    /// let b = Bounds3f::from([Point3f::from([2., 3., 4.]), Point3f::from([4., 5., 6.])]);
     /// assert_eq!(
     ///     b,
     ///     Bounds3f {
-    ///         p_min: Point3f { x: 2., y: 3. ,z:4.},
-    ///         p_max: Point3f { x: 4., y: 5.,z:6. }
+    ///         p_min: Point3f {
+    ///             x: 2.,
+    ///             y: 3.,
+    ///             z: 4.
+    ///         },
+    ///         p_max: Point3f {
+    ///             x: 4.,
+    ///             y: 5.,
+    ///             z: 6.
+    ///         }
     ///     }
     /// );
     ///
-    /// let b = Bounds3f::from([Point3f::from([5., 4.,1.]), Point3f::from([3., 2.,3.])]);
-    /// assert_eq!(b, Bounds3f::from([[3., 2.,1.], [5., 4.,3.]]));
+    /// let b = Bounds3f::from([Point3f::from([5., 4., 1.]), Point3f::from([3., 2., 3.])]);
+    /// assert_eq!(b, Bounds3f::from([[3., 2., 1.], [5., 4., 3.]]));
     /// ```
     fn from(ps: [Point3<T>; 2]) -> Self {
         let (p1, p2) = (ps[0], ps[1]);
