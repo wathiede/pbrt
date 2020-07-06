@@ -24,9 +24,8 @@ use std::path::Path;
 use std::process::exit;
 use std::sync::Arc;
 
-use log::error;
-use log::info;
-use log::warn;
+use log::{error, info, warn};
+use thiserror::Error;
 
 use crate::core::filter::Filter;
 use crate::core::light::Light;
@@ -45,26 +44,17 @@ use crate::Float;
 use crate::Options;
 
 /// Common error type for all public methods in the `api` crate.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
     /// Wrapper for `std::io::Error`s
-    Io(io::Error),
+    #[error("IO error")]
+    Io(#[from] io::Error),
     /// Wrapper for errors coming from [pbrt::core::parser]
-    Parser(parser::Error),
+    #[error("parse error")]
+    Parser(#[from] parser::Error),
     /// Unknown errors, wraps a string for human consumption.
+    #[error("unknown error")]
     Unhandled(String),
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Error {
-        Error::Io(err)
-    }
-}
-
-impl From<parser::Error> for Error {
-    fn from(err: parser::Error) -> Error {
-        Error::Parser(err)
-    }
 }
 
 /// State machine for the API.

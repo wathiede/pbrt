@@ -1,0 +1,7 @@
+WHITESPACE = _{ " " }
+num = @{ ASCII_DIGIT }
+param_type = { "float" | "color" }
+name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* } 
+params = { "[" ~ (num)+ ~ "]" }
+param_set_item = { "\"" ~ param_type ~ name ~ "\"" ~ params }
+file = { SOI ~ param_set_item ~ EOI } 

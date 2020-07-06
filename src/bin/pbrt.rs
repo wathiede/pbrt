@@ -13,10 +13,8 @@
 // limitations under the License.
 use std::process;
 
-use log::error;
+use anyhow::{Context, Result};
 use log::info;
-use simplelog::{Config, LogLevelFilter, TermLogger};
-
 use structopt;
 use structopt::StructOpt;
 
@@ -44,18 +42,27 @@ pub struct Options {
     pub scene_files: Vec<String>,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let flags = Options::from_args();
-    if flags.verbose {
-        let _ = TermLogger::init(LogLevelFilter::Debug, Config::default());
+    let verbosity = if flags.verbose {
+        // Enable DEBUG logging.
+        3
     } else if flags.quiet {
-        let _ = TermLogger::init(LogLevelFilter::Warn, Config::default());
+        // Only WARN and higher.
+        1
     } else {
-        let _ = TermLogger::init(LogLevelFilter::Info, Config::default());
-    }
+        // Default to INFO.
+        2
+    };
+
+    stderrlog::new()
+        .verbosity(verbosity)
+        .timestamp(stderrlog::Timestamp::Millisecond)
+        .init()?;
+
     if flags.scene_files.is_empty() {
         println!("One or more scene files required.\n");
-        Options::clap().print_help().unwrap();
+        Options::clap().print_help()?;
         process::exit(1);
     }
 
@@ -70,17 +77,12 @@ fn main() {
     let ref mut pbrt = Pbrt::from(opts.clone());
     pbrt.init();
     for f in &flags.scene_files {
-        match pbrt.parse_file(&f) {
-            Ok(_) => {
-                if opts.verbose {
-                    println!("Rendered {}\n{:#?}", f, pbrt);
-                }
-            }
-            Err(err) => {
-                error!("Failed to parse {}: {:?}", f, err);
-                process::exit(1);
-            }
+        pbrt.parse_file(&f)
+            .with_context(|| format!("failed to parse {}", f))?;
+        if opts.verbose {
+            println!("Rendered {}\n{:#?}", f, pbrt);
         }
     }
     pbrt.cleanup();
+    Ok(())
 }
