@@ -16,10 +16,6 @@
 
 //! pbrt is a rust implementation of http://www.pbr-book.org/3ed-2018/contents.html
 
-extern crate pest;
-#[macro_use]
-extern crate pest_derive;
-
 pub mod core;
 pub mod filters;
 pub mod textures;

@@ -1,7 +1,16 @@
-WHITESPACE = _{ " " }
-num = @{ ASCII_DIGIT }
-param_type = { "float" | "color" }
+COMMENT = _{ "#" ~ (!"\n" ~ ANY)* }
+WHITESPACE = _{ (" "|"\n"|"\t") }
+
+file = { SOI ~ (lookat|param_set_item) ~ EOI } 
 name = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* } 
-params = { "[" ~ (num)+ ~ "]" }
+integers = @{ ASCII_DIGIT+ }
+floats = @{
+  ("." ~ ASCII_DIGIT+) |
+  (ASCII_DIGIT+ ~ ".") |
+  (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+)
+}
+num = @{ ("-")? ~ (integers|floats) }
 param_set_item = { "\"" ~ param_type ~ name ~ "\"" ~ params }
-file = { SOI ~ param_set_item ~ EOI } 
+param_type = { "float" | "color" }
+params = { "[" ~ (num)+ ~ "]" }
+lookat = { "LookAt" ~ num{9} } 

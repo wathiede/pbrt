@@ -14,8 +14,6 @@
 //use std::str;
 //use std::str::FromStr;
 
-use pest::iterators::Pairs;
-use pest::Parser;
 use thiserror::Error;
 
 //use crate::core::geometry::Point3f;
@@ -25,8 +23,6 @@ use crate::Float;
 
 #[derive(PartialEq, Debug, Error)]
 pub enum Error {
-    #[error("parse error")]
-    PestError(#[from] pest::error::Error<Rule>),
     #[error("input not utf-8")]
     StrError(#[from] std::str::Utf8Error),
 }
@@ -68,18 +64,8 @@ pub struct Scene {
     pub directives: Vec<Directive>,
 }
 
-impl From<Pairs<'_, Rule>> for Scene {
-    fn from(pairs: Pairs<'_, Rule>) -> Self {
-        // TODO(wathiede): convert from tokens to scene.
-        Scene {
-            directives: Vec::new(),
-        }
-    }
-}
-
 pub fn parse_scene(input: &[u8]) -> Result<Scene, Error> {
     let pairs = PbrtParser::parse(Rule::file, &std::str::from_utf8(input)?)?;
-    dbg!(&pairs);
     Ok(Scene::from(pairs))
 }
 
