@@ -16,9 +16,7 @@
 //! member functions as it interprets a scene file.
 
 use std::collections::HashMap;
-use std::fs::File;
 use std::io;
-use std::io::Read;
 use std::ops::{Index, IndexMut};
 use std::path::Path;
 use std::process::exit;
@@ -33,7 +31,6 @@ use crate::core::medium::Medium;
 use crate::core::paramset::ParamSet;
 use crate::core::paramset::TextureParams;
 use crate::core::parser;
-use crate::core::parser::Directive;
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Transform;
@@ -49,7 +46,9 @@ pub enum Error {
     /// Wrapper for `std::io::Error`s
     #[error("IO error")]
     Io(#[from] io::Error),
-    /// Wrapper for errors coming from [pbrt::core::parser]
+    /// Wrapper for errors coming from [parser].
+    ///
+    /// [parser]: crate::core::parser
     #[error("parse error")]
     Parser(#[from] parser::Error),
     /// Unknown errors, wraps a string for human consumption.
@@ -263,54 +262,16 @@ impl Pbrt {
     /// Parse a scene file at `path` on the file-system.  This will parse the contents of the file
     /// generating an inmemory representation of the scene, and trigger the rendering and output of
     /// the image.
-    // TODO(wathiede): replace Ok() with something that prints stats about the scene render.
-    pub fn parse_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Error> {
-        let mut f = File::open(path)?;
-        let mut buffer = Vec::new();
-
-        // read the whole file
-        f.read_to_end(&mut buffer)?;
-        let scene = parser::parse_scene(&buffer[..])?;
-        info!("Scene {:#?}", &scene);
-        for d in scene.directives {
-            println!("d: {:?}", &d);
-            match d {
-                Directive::LookAt(
-                    eye_x,
-                    eye_y,
-                    eye_z,
-                    look_x,
-                    look_y,
-                    look_z,
-                    up_x,
-                    up_y,
-                    up_z,
-                ) => self.look_at(
-                    [eye_x, eye_y, eye_z],    // eye xyz
-                    [look_x, look_y, look_z], // look xyz
-                    [up_x, up_y, up_z],       // up xyz
-                ),
-                Directive::Camera(name, params) => self.camera(name, params),
-                Directive::Sampler(name, params) => self.sampler(name, params),
-                Directive::Integrator(name, params) => self.integrator(name, params),
-                Directive::Film(name, params) => self.film(name, params),
-                Directive::WorldBegin => self.world_begin(),
-                Directive::WorldEnd => self.world_end(),
-                Directive::AttributeBegin => self.attribute_begin(),
-                Directive::AttributeEnd => self.attribute_end(),
-                Directive::LightSource(_name, _params) => (),
-                Directive::Material(_name, _params) => (),
-                Directive::Shape(_name, _params) => (),
-                Directive::Scale(x, y, z) => self.scale(x, y, z),
-                Directive::Rotate(angle, x, y, z) => self.rotate(Degree(angle), x, y, z),
-                Directive::Translate(x, y, z) => self.translate(x, y, z),
-                Directive::Texture(name, kind, texname, params) => {
-                    self.texture(&name, &kind, &texname, params)
-                }
-                Directive::Unhandled(statement) => return Err(Error::Unhandled(statement)),
-            }
-        }
-        Ok(())
+    pub fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error> {
+        /*
+        let f = File::open(&path)?;
+        let mmap = unsafe {
+            MmapOptions::new()
+                .map(&f)
+                .with_context(|| format!("failed to mmap {}", path.display()))?
+        };
+        */
+        unimplemented!();
     }
 
     /// Verifies all the active transforms are equivalent to `t`.
