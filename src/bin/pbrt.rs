@@ -19,7 +19,7 @@ use structopt;
 use structopt::StructOpt;
 
 use pbrt;
-use pbrt::core::api::Pbrt;
+use pbrt::core::api::PbrtAPI;
 
 #[derive(Clone, Debug, Default, StructOpt)]
 #[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
         verbose: flags.verbose,
         image_file: flags.image_file.unwrap_or("".to_owned()),
     };
-    let ref mut pbrt = Pbrt::from(opts.clone());
+    let ref mut pbrt = PbrtAPI::from(opts.clone());
     pbrt.init();
     for f in &flags.scene_files {
         pbrt.parse_file(&f)

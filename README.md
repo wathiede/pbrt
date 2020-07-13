@@ -21,7 +21,7 @@ If you're looking for a more fully-formed implementation, check out
    Option<>.
  * Scene parsing is two-phase.  First phase parses the file into a series of
    enums, see parser::{WorldBlock,OptionsBlock} into a parser::Scene object.
-   The second phase then walks the Scene object calling api::Pbrt methods as
+   The second phase then walks the Scene object calling api::API methods as
    appropriate.
  * Constructors: zero-parameter constructors should implement
    [`Default`](https://doc.rust-lang.org/std/default/trait.Default.html), or

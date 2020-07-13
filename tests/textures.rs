@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use pbrt::core::api::Pbrt;
+use pbrt::core::api::PbrtAPI;
 
 #[test]
 fn test_constant_float_texture_default() {
     let p = Default::default();
-    let mut pbrt = Pbrt::default();
+    let mut pbrt = PbrtAPI::default();
     pbrt.init();
     pbrt.world_begin();
     pbrt.texture("tex1", "float", "constant", p);

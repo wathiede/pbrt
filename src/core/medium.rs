@@ -16,8 +16,8 @@
 
 // TODO(wathiede): This is a virtual base class in C++, can we make it a trait?  How do you have a
 // collection of trait objects?
-/// Stub type for flushing out [Pbrt].  TODO(wathiede): actually implement and document.
+/// Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
 ///
-/// [Pbrt]: crate::core::api::Pbrt
+/// [PbrtAPI]: crate::core::api::PbrtAPI
 #[derive(Debug)]
 pub struct Medium {}

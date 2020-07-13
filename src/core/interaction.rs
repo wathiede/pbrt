@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Stub type for flushing out [Pbrt].  TODO(wathiede): actually implement and document.
+//! Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
 //!
-//! [Pbrt]: crate::core::api::Pbrt
+//! [PbrtAPI]: crate::core::api::PbrtAPI
 
-/// Stub type for flushing out [Pbrt].  TODO(wathiede): actually implement and document.
+/// Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
 ///
-/// [Pbrt]: crate::core::api::Pbrt
+/// [PbrtAPI]: crate::core::api::PbrtAPI
 #[derive(Default)]
 pub struct SurfaceInteraction {}

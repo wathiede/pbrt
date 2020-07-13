@@ -16,6 +16,8 @@
 
 use thiserror::Error;
 
+use crate::core::api::API;
+
 /// Error type for tokenization and parsing errors.
 #[derive(PartialEq, Debug, Error)]
 pub enum Error {
@@ -154,6 +156,13 @@ pub fn create_from_file<P: AsRef<Path>>(path: P) -> Tokenizer<'a> {
 /// [Tokenizer]: crate::core::parser::Tokenizer
 pub fn create_from_string<'a>(data: &'a [u8]) -> Tokenizer<'a> {
     Tokenizer { data, pos: 0 }
+}
+
+/// Parse the tokens provided by `t` and called the appropriate methos on `a`.
+pub fn parse<A: API>(t: Tokenizer, api: A) {
+    let _ = t;
+    let _ = api;
+    todo!();
 }
 
 #[cfg(test)]

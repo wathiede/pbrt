@@ -99,11 +99,11 @@ impl ParamSetItem {
 
 /// `ParamSet` provides a generic way to pass data between the scene files and the factory
 /// functions that create various pieces of the rendering pipeline.  It enables the renderer to be
-/// extensible, many of the constructor methods on [Pbrt] take a name and a `ParamSet`.  This
+/// extensible, many of the constructor methods on [PbrtAPI] take a name and a `ParamSet`.  This
 /// allows new types of `Texture`s, `Camera`s, `Shape`s, etc. to be added without haven't to change
 /// and method signatures.
 ///
-/// [Pbrt]: crate::core::api::Pbrt
+/// [PbrtAPI]: crate::core::api::PbrtAPI
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct ParamSet {
     values: HashMap<String, ParamSetItem>,
