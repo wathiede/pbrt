@@ -41,6 +41,7 @@ impl From<Float> for $t {
 }
 
 impl $t {
+    #[allow(dead_code)]
     fn has_nans(&self) -> bool {
         for i in 0..$n {
             if self.c[i].is_nan() {
