@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use pbrt::core::api::PbrtAPI;
+use pbrt::core::api::{PbrtAPI, API};
 
 #[test]
 fn test_constant_float_texture_default() {
