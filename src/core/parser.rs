@@ -13,12 +13,15 @@
 // limitations under the License.
 
 //! Utilities for parsing pbrt scene files.
+use std::convert::TryFrom;
 
+use log::{error, warn};
 use thiserror::Error;
 
 use crate::core::api::API;
+use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
 use crate::core::paramset::ParamSet;
-use crate::core::spectrum::SpectrumType;
+use crate::Float;
 
 /// Error type for tokenization and parsing errors.
 #[derive(PartialEq, Debug, Error)]
@@ -44,6 +47,10 @@ pub enum Error {
     /// Mixed string and numeric parameters found.
     #[error("mixed string and numeric parameters")]
     MixedParameters,
+    /// Hit a part of the parser not yet implemented.
+    // TODO(wathiede): remove this when Parser::parse() is complete.
+    #[error("have not yet implemented '{0}'")]
+    NotImplemented(String),
 }
 
 /// Tokenizer holds state necessary to tokenize a pbrt scene file.
@@ -185,6 +192,12 @@ struct ParamListItem<'a> {
     string_values: Vec<&'a str>,
 }
 
+impl<'a> ParamListItem<'a> {
+    fn size(&self) -> usize {
+        self.double_values.len() + self.string_values.len()
+    }
+}
+
 struct Parser<'a> {
     file_stack: Vec<Tokenizer<'a>>,
     unget_token: Option<&'a str>,
@@ -206,10 +219,74 @@ impl<'a> Parser<'a> {
             };
             let tok = tok?;
             match tok {
+                "Accelerator" => p.basic_param_list_entrypoint(|n, p| api.accelerator(n, p))?,
+                "ActiveTransform" => {
+                    return Err(Error::NotImplemented("ActiveTransform".to_string()))
+                }
+                "AreaLightSource" => {
+                    return Err(Error::NotImplemented("AreaLightSource".to_string()))
+                }
                 "AttrbuteBegin" => api.attribute_begin(),
-                "Sampler" => p.basic_param_list_entrypoint(SpectrumType::Reflectance, |n, p| {
-                    api.sampler(n, p)
-                })?,
+                "AttributeEnd" => api.attribute_end(),
+                "Camera" => return Err(Error::NotImplemented("Camera".to_string())),
+                "ConcatTransform" => {
+                    return Err(Error::NotImplemented("ConcatTransform".to_string()))
+                }
+                "CoordinateSystem" => {
+                    return Err(Error::NotImplemented("CoordinateSystem".to_string()))
+                }
+                "CoordSysTransform" => {
+                    return Err(Error::NotImplemented("CoordSysTransform".to_string()))
+                }
+                "Film" => p.basic_param_list_entrypoint(|n, p| api.film(n, p))?,
+                "Identity" => return Err(Error::NotImplemented("Identity".to_string())),
+                "Include" => return Err(Error::NotImplemented("Include".to_string())),
+                "Integrator" => return Err(Error::NotImplemented("Integrator".to_string())),
+                "LightSource" => return Err(Error::NotImplemented("LightSource".to_string())),
+                "LookAt" => return Err(Error::NotImplemented("LookAt".to_string())),
+                "MakeNamedMaterial" => {
+                    return Err(Error::NotImplemented("MakeNamedMaterial".to_string()))
+                }
+                "MakeNamedMedium" => {
+                    return Err(Error::NotImplemented("MakeNamedMedium".to_string()))
+                }
+                "Material" => return Err(Error::NotImplemented("Material".to_string())),
+                "MediumInterface" => {
+                    return Err(Error::NotImplemented("MediumInterface".to_string()))
+                }
+                "NamedMaterial" => return Err(Error::NotImplemented("NamedMaterial".to_string())),
+                "ObjectBegin" => return Err(Error::NotImplemented("ObjectBegin".to_string())),
+                "ObjectEnd" => return Err(Error::NotImplemented("ObjectEnd".to_string())),
+                "ObjectInstance" => {
+                    return Err(Error::NotImplemented("ObjectInstance".to_string()))
+                }
+                "PixelFilter" => return Err(Error::NotImplemented("PixelFilter".to_string())),
+                "ReverseOrientation" => {
+                    return Err(Error::NotImplemented("ReverseOrientation".to_string()))
+                }
+                "Rotate" => return Err(Error::NotImplemented("Rotate".to_string())),
+                "Sampler" => p.basic_param_list_entrypoint(|n, p| api.sampler(n, p))?,
+                "Scale" => {
+                    let mut v: [Float; 3] = Default::default();
+                    for i in 0..3 {
+                        let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
+                        v[i] = tok.parse()?;
+                    }
+                    api.scale(v[0], v[1], v[2]);
+                }
+                "Shape" => return Err(Error::NotImplemented("Shape".to_string())),
+                "Texture" => return Err(Error::NotImplemented("Texture".to_string())),
+                "Transform" => return Err(Error::NotImplemented("Transform".to_string())),
+                "TransformBegin" => {
+                    return Err(Error::NotImplemented("TransformBegin".to_string()))
+                }
+                "TransformEnd" => return Err(Error::NotImplemented("TransformEnd".to_string())),
+                "TransformTimes" => {
+                    return Err(Error::NotImplemented("TransformTimes".to_string()))
+                }
+                "Translate" => return Err(Error::NotImplemented("Translate".to_string())),
+                "WorldBegin" => return Err(Error::NotImplemented("WorldBegin".to_string())),
+                "WorldEnd" => return Err(Error::NotImplemented("WorldEnd".to_string())),
                 _ => return Err(Error::Syntax(tok.to_string())),
             }
         }
@@ -251,8 +328,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_params(&mut self, spectrum_type: SpectrumType) -> Result<ParamSet, Error> {
-        let ps = ParamSet::default();
+    fn parse_params(&mut self) -> Result<ParamSet, Error> {
+        let mut ps = ParamSet::default();
         loop {
             let decl = match self.next_token(Token::Optional) {
                 None => return Ok(ps),
@@ -270,6 +347,9 @@ impl<'a> Parser<'a> {
                 ..ParamListItem::default()
             };
 
+            // TODO(wathiede): The C++ version uses an arena allocator to manage double_values and
+            // string_values.  Profile this at some point and see if the rust version needs a
+            // similar optimization.
             let mut add_val = |val| -> Result<(), Error> {
                 if is_quoted_string(val) {
                     if !item.double_values.is_empty() {
@@ -305,14 +385,12 @@ impl<'a> Parser<'a> {
             } else {
                 add_val(val)?;
             }
-
-            add_param(&ps, item, &spectrum_type);
+            add_param(&mut ps, item);
         }
     }
 
     fn basic_param_list_entrypoint<F: FnMut(&str, ParamSet)>(
         &mut self,
-        spectrum_type: SpectrumType,
         mut api_func: F,
     ) -> Result<(), Error> {
         let token = match self.next_token(Token::Required) {
@@ -321,14 +399,326 @@ impl<'a> Parser<'a> {
         };
         let token = token?;
         let n = dequote_string(token)?;
-        let params = self.parse_params(spectrum_type)?;
+        let params = self.parse_params()?;
+        dbg!(&params);
         api_func(n, params);
         Ok(())
     }
 }
 
-fn add_param(ps: &ParamSet, item: ParamListItem, spectrum_type: &SpectrumType) {
-    dbg!(ps, item, spectrum_type);
+#[derive(Debug)]
+enum ParamType {
+    Int,
+    Bool,
+    Float,
+    Point2,
+    Vector2,
+    Point3,
+    Vector3,
+    Normal,
+    RGB,
+    XYZ,
+    Blackbody,
+    Spectrum,
+    String,
+    Texture,
+}
+
+impl TryFrom<&str> for ParamType {
+    type Error = String;
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        let p_type = match input {
+            "integer" => ParamType::Int,
+            "bool" => ParamType::Bool,
+            "float" => ParamType::Float,
+            "point2" => ParamType::Point2,
+            "vector2" => ParamType::Vector2,
+            "point3" => ParamType::Point3,
+            "vector3" => ParamType::Vector3,
+            "normal" => ParamType::Normal,
+            "color" => ParamType::RGB,
+            "rgb" => ParamType::RGB,
+            "xyz" => ParamType::XYZ,
+            "blackbody" => ParamType::Blackbody,
+            "spectrum" => ParamType::Spectrum,
+            "string" => ParamType::String,
+            "texture" => ParamType::Texture,
+            _ => return Err(format!("unknown parameter type '{}'", input)),
+        };
+        Ok(p_type)
+    }
+}
+
+fn lookup_type(decl: &str) -> Option<(ParamType, &str)> {
+    let p_type = decl.trim_start();
+    if p_type.is_empty() {
+        error!("Parameter '{}' doesn't have a type declaration?!", decl);
+        return None;
+    }
+    let (p_type, p_name) = match p_type.find(&[' ', '\t'][..]) {
+        Some(idx) => (&p_type[..idx], p_type[idx..].trim()),
+        None => {
+            error!("Parameter '{}' missing space before name", decl);
+            return None;
+        }
+    };
+    let p_type = match ParamType::try_from(p_type) {
+        Ok(p_type) => p_type,
+        Err(e) => {
+            error!("Unable to decode type from '{}': {}", decl, e);
+            return None;
+        }
+    };
+    if p_name.is_empty() {
+        error!("Unable to find parameter name from '{}'", decl);
+        return None;
+    }
+    Some((p_type, p_name))
+}
+
+fn add_param(ps: &mut ParamSet, item: ParamListItem) {
+    fn iter2d<'a>(items: &'a [f64]) -> impl Iterator<Item = (Float, Float)> + 'a {
+        let xs =
+            items
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &v)| if i % 2 == 0 { Some(v as Float) } else { None });
+        let ys =
+            items
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &v)| if i % 2 == 1 { Some(v as Float) } else { None });
+        xs.zip(ys)
+    };
+    fn iter3d<'a>(items: &'a [f64]) -> impl Iterator<Item = (Float, Float, Float)> + 'a {
+        let xs =
+            items
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &v)| if i % 3 == 0 { Some(v as Float) } else { None });
+        let ys =
+            items
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &v)| if i % 3 == 1 { Some(v as Float) } else { None });
+        let zs =
+            items
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &v)| if i % 3 == 2 { Some(v as Float) } else { None });
+        xs.zip(ys).zip(zs).map(|((x, y), z)| (x, y, z))
+    };
+    match lookup_type(&item.name) {
+        Some((p_type, p_name)) => {
+            match p_type {
+                ParamType::Texture | ParamType::String | ParamType::Bool => {
+                    if item.string_values.is_empty() {
+                        error!(
+                        "Expected string parameter value for parameter '{}' with type '{:?}' Ignoring.",
+                        p_name, p_type
+                    );
+                        return;
+                    }
+                }
+                ParamType::Int
+                | ParamType::Float
+                | ParamType::Point2
+                | ParamType::Vector2
+                | ParamType::Point3
+                | ParamType::Vector3
+                | ParamType::Normal
+                | ParamType::RGB
+                | ParamType::XYZ
+                | ParamType::Blackbody => {
+                    if !item.string_values.is_empty() {
+                        error!(
+                        "Expected numeric parameter value for parameter '{}' with type '{:?}' Ignoring.",
+                        p_name, p_type
+                    );
+                        return;
+                    }
+                }
+
+                // Spectrum can be strings or numeric.
+                ParamType::Spectrum => (),
+            };
+            let n_items = item.size();
+
+            match p_type {
+                ParamType::Int => {
+                    ps.add_int(
+                        p_name,
+                        item.double_values.iter().map(|f| *f as isize).collect(),
+                    );
+                }
+                ParamType::Bool => ps.add_bool(
+                    p_name,
+                    item.string_values
+                        .iter()
+                        // TODO |&s| and drop the *s
+                        .map(|s| match *s {
+                            "true" => true,
+                            "false" => false,
+                            _ => {
+                                warn!(
+                                    "Value '{}' unknown for Boolean parameter '{}'. Using 'false'.",
+                                    s, item.name
+                                );
+                                false
+                            }
+                        })
+                        .collect(),
+                ),
+                ParamType::Float => {
+                    ps.add_float(
+                        p_name,
+                        item.double_values.iter().map(|f| *f as Float).collect(),
+                    );
+                }
+                ParamType::Point2 => {
+                    if (n_items % 2) != 0 {
+                        warn!("Excess values given with point2 parameter '{}'. Ignoring last one of them.", item.name);
+                    }
+                    ps.add_point2f(
+                        p_name,
+                        iter2d(&item.double_values)
+                            .map(|xy| Point2f::from(xy))
+                            .collect(),
+                    );
+                }
+                ParamType::Vector2 => {
+                    if (n_items % 2) != 0 {
+                        warn!("Excess values given with vector2 parameter '{}'. Ignoring last one of them.", item.name);
+                    }
+                    ps.add_vector2f(
+                        p_name,
+                        iter2d(&item.double_values)
+                            .map(|xy| Vector2f::from(xy))
+                            .collect(),
+                    );
+                }
+                ParamType::Point3 => {
+                    if (n_items % 3) != 0 {
+                        warn!("Excess values given with point3 parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
+                    }
+                    ps.add_point3f(
+                        p_name,
+                        iter3d(&item.double_values)
+                            .map(|xyz| Point3f::from(xyz))
+                            .collect(),
+                    );
+                }
+                ParamType::Vector3 => {
+                    if (n_items % 3) != 0 {
+                        warn!("Excess values given with vector3 parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
+                    }
+                    ps.add_vector3f(
+                        p_name,
+                        iter3d(&item.double_values)
+                            .map(|xyz| Vector3f::from(xyz))
+                            .collect(),
+                    );
+                }
+                ParamType::Normal => {
+                    if (n_items % 3) != 0 {
+                        warn!("Excess values given with normal parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
+                    }
+                    ps.add_normal3f(
+                        p_name,
+                        iter3d(&item.double_values)
+                            .map(|xyz| Normal3f::from(xyz))
+                            .collect(),
+                    );
+                }
+                ParamType::RGB => {
+                    if (n_items % 3) != 0 {
+                        warn!("Excess RGB values given with parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
+                    }
+                    let end = n_items - n_items % 3;
+                    ps.add_rgb_spectrum(
+                        p_name,
+                        item.double_values
+                            .iter()
+                            .take(end)
+                            .map(|&f| f as Float)
+                            .collect(),
+                    );
+                }
+                ParamType::XYZ => {
+                    if (n_items % 3) != 0 {
+                        warn!("Excess XYZ values given with parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
+                    }
+                    let end = n_items - n_items % 3;
+                    ps.add_rgb_spectrum(
+                        p_name,
+                        item.double_values
+                            .iter()
+                            .take(end)
+                            .map(|&f| f as Float)
+                            .collect(),
+                    );
+                }
+                ParamType::Blackbody => {
+                    if (n_items % 2) != 0 {
+                        warn!(
+                            "Excess value given with blackbody parameter '{}'. Ignoring extra one.",
+                            item.name
+                        );
+                    }
+                    let end = n_items - n_items % 2;
+                    ps.add_blackbody(
+                        p_name,
+                        item.double_values
+                            .iter()
+                            .take(end)
+                            .map(|&f| f as Float)
+                            .collect(),
+                    );
+                }
+                ParamType::Spectrum => {
+                    if !item.string_values.is_empty() {
+                        ps.add_sampled_spectrum_files(
+                            p_name,
+                            item.string_values.iter().map(|s| s.to_string()).collect(),
+                        );
+                    } else {
+                        if (n_items % 2) != 0 {
+                            warn!(
+                            "Non-even number of values given with sampled spectrum '{}'. Ignoring extra.",
+                            item.name
+                        );
+                        }
+                        let end = n_items - n_items % 2;
+                        ps.add_sampled_spectrum(
+                            p_name,
+                            item.double_values
+                                .iter()
+                                .take(end)
+                                .map(|&f| f as Float)
+                                .collect(),
+                        );
+                    }
+                }
+                ParamType::String => {
+                    ps.add_string(
+                        p_name,
+                        item.string_values.iter().map(|s| s.to_string()).collect(),
+                    );
+                }
+                ParamType::Texture => {
+                    if n_items == 1 {
+                        ps.add_texture(p_name, item.string_values[0].to_string());
+                    } else {
+                        error!(
+                            "Only one string allowed for 'texture' paramter '{}'",
+                            p_name
+                        );
+                    }
+                }
+            }
+        }
+        None => warn!("Type of parameter '{}' is unknown", item.name),
+    }
 }
 
 fn is_quoted_string(s: &str) -> bool {

@@ -36,6 +36,15 @@ where
     }
 }
 
+impl<T> From<(T, T)> for Vector2<T>
+where
+    T: Number,
+{
+    fn from((x, y): (T, T)) -> Self {
+        Vector2 { x, y }
+    }
+}
+
 /// 2D vector type with `Float` members.
 pub type Vector2f = Vector2<Float>;
 /// 2D vector type with `isize` members.
@@ -92,6 +101,15 @@ where
         };
         debug_assert!(!v.has_nans());
         v
+    }
+}
+
+impl<T> From<(T, T, T)> for Vector3<T>
+where
+    T: Number,
+{
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Vector3 { x, y, z }
     }
 }
 

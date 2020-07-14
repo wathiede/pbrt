@@ -394,6 +394,15 @@ where
     }
 }
 
+impl<T> From<(T, T, T)> for Point3<T>
+where
+    T: Number,
+{
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Point3 { x, y, z }
+    }
+}
+
 /// 2D point type with `Float` members.
 pub type Point3f = Point3<Float>;
 

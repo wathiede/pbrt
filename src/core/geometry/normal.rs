@@ -41,5 +41,14 @@ where
     }
 }
 
+impl<T> From<(T, T, T)> for Normal3<T>
+where
+    T: Number,
+{
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Normal3 { x, y, z }
+    }
+}
+
 /// 3D normal type with `Float` members.
 pub type Normal3f = Normal3<Float>;

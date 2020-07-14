@@ -71,12 +71,9 @@ pub enum Value {
     Point3f(ParamList<Point3f>),
     Vector3f(ParamList<Vector3f>),
     Normal3f(ParamList<Normal3f>),
-    Spectrum(ParamList<Spectrum>),
     String(ParamList<String>),
     Texture(ParamList<String>),
-    // TODO(wathiede): make a generic 'Spectrum' type?
-    RGB(ParamList<Float>),
-    Blackbody(ParamList<Float>),
+    Spectrum(ParamList<Spectrum>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -109,6 +106,22 @@ pub struct ParamSet {
     values: HashMap<String, ParamSetItem>,
 }
 
+fn iter3d<'a>(items: &'a [Float]) -> impl Iterator<Item = (Float, Float, Float)> + 'a {
+    let xs = items
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if i % 3 == 0 { Some(v) } else { None });
+    let ys = items
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if i % 3 == 1 { Some(v) } else { None });
+    let zs = items
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &v)| if i % 3 == 2 { Some(v) } else { None });
+    xs.zip(ys).zip(zs).map(|((x, y), z)| (x, y, z))
+}
+
 impl ParamSet {
     fn add(&mut self, name: &str, values: Value) {
         let name = String::from_str(name).unwrap();
@@ -120,6 +133,80 @@ impl ParamSet {
                 looked_up: RefCell::new(false),
             },
         );
+    }
+
+    pub fn add_int(&mut self, name: &str, values: Vec<isize>) {
+        self.add(name, Value::Int(ParamList(values)))
+    }
+
+    pub fn add_bool(&mut self, name: &str, values: Vec<bool>) {
+        self.add(name, Value::Bool(ParamList(values)))
+    }
+
+    pub fn add_float(&mut self, name: &str, values: Vec<Float>) {
+        self.add(name, Value::Float(ParamList(values)))
+    }
+
+    pub fn add_point2f(&mut self, name: &str, values: Vec<Point2f>) {
+        self.add(name, Value::Point2f(ParamList(values)))
+    }
+
+    pub fn add_vector2f(&mut self, name: &str, values: Vec<Vector2f>) {
+        self.add(name, Value::Vector2f(ParamList(values)))
+    }
+
+    pub fn add_point3f(&mut self, name: &str, values: Vec<Point3f>) {
+        self.add(name, Value::Point3f(ParamList(values)))
+    }
+
+    pub fn add_vector3f(&mut self, name: &str, values: Vec<Vector3f>) {
+        self.add(name, Value::Vector3f(ParamList(values)))
+    }
+
+    pub fn add_normal3f(&mut self, name: &str, values: Vec<Normal3f>) {
+        self.add(name, Value::Normal3f(ParamList(values)))
+    }
+
+    pub fn add_rgb_spectrum(&mut self, name: &str, values: Vec<Float>) {
+        assert_eq!(values.len() % 3, 0);
+        let values = iter3d(&values)
+            .map(|(r, g, b)| {
+                let rgb: [Float; 3] = [r, g, b];
+                Spectrum::from_rgb(rgb)
+            })
+            .collect();
+        self.add(name, Value::Spectrum(ParamList(values)))
+    }
+
+    pub fn add_xyz_spectrum(&mut self, name: &str, values: Vec<Float>) {
+        assert_eq!(values.len() % 3, 0);
+        let values = iter3d(&values)
+            .map(|(x, y, z)| {
+                let xyz: [Float; 3] = [x, y, z];
+                Spectrum::from_xyz(xyz)
+            })
+            .collect();
+        self.add(name, Value::Spectrum(ParamList(values)))
+    }
+
+    pub fn add_blackbody(&mut self, _name: &str, _values: Vec<Float>) {
+        todo!();
+    }
+
+    pub fn add_sampled_spectrum_files(&mut self, _name: &str, _values: Vec<String>) {
+        todo!();
+    }
+
+    pub fn add_sampled_spectrum(&mut self, _name: &str, _values: Vec<Float>) {
+        todo!();
+    }
+
+    pub fn add_string(&mut self, name: &str, values: Vec<String>) {
+        self.add(name, Value::String(ParamList(values)))
+    }
+
+    pub fn add_texture(&mut self, name: &str, value: String) {
+        self.add(name, Value::Texture(ParamList(vec![value])))
     }
 
     fn find(&self, name: &str) -> Option<Value> {

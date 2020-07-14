@@ -135,6 +135,14 @@ impl RGBSpectrum {
         debug_assert!(!s.has_nans(), "c {:?}", s);
         s
     }
+
+    /// create an `RGBSpectrum` from the given tristimulus values in XYZ color space.
+    pub fn from_xyz(c: [Float; 3]) -> RGBSpectrum {
+        let rgb = xyz_to_rgb(c);
+        let s = RGBSpectrum { c: rgb };
+        debug_assert!(!s.has_nans(), "c {:?}", s);
+        s
+    }
 }
 
 #[cfg(feature = "sampled-spectrum")]
