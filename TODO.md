@@ -7,4 +7,9 @@
   a `std::vector<FilmTilePixel>`, why not the same for both?
 * Why isn't `LOOKUP_ONE` and `LOOKUP_PTR` used for `FindOneFloat` and
   `FindFloat`.
-* Why does `ParamListItem` have `isString`, it's not used.
+
+# Pull requests:
+* https://github.com/mmp/pbrt-v3/pull/295
+  * Why does `ParamListItem` have `isString`, it's not used.
+  * Why do `parseParams` and `AddParam` take a `SpectrumType`, it doesn't appear
+    to be used.
