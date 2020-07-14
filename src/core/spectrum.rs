@@ -22,6 +22,15 @@ use std::fmt;
 
 use crate::Float;
 
+/// Spectrum type, used when converting between RGB and [SampledSpectrum]
+#[derive(Debug)]
+pub enum SpectrumType {
+    /// Use reflectance coefficients
+    Reflectance,
+    /// Use illuminant coefficients
+    Illuminant,
+}
+
 macro_rules! common_implementation {
     ($($t:ty, $n:expr)*) => ($(
 impl Default for $t {

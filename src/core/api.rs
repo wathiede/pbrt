@@ -63,140 +63,76 @@ pub enum Error {
 /// with only the methods of interest defined.
 pub trait API {
     /// Sets the renderer's accelerator settings to `name` & `params`.
-    fn accelerator(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn accelerator(&mut self, _name: &str, _params: ParamSet);
     /// Sets the active transform bits to `ALL_TRANSFORMS_BITS`.
-    fn active_transform_all(&mut self) {
-        unimplemented!()
-    }
+    fn active_transform_all(&mut self);
     /// Sets the active transform bits to `END_TRANSFORMS_BITS`.
-    fn active_transform_end_time(&mut self) {
-        unimplemented!()
-    }
+    fn active_transform_end_time(&mut self);
     /// Sets the active transform bits to `START_TRANSFORMS_BITS`.
-    fn active_transform_start_time(&mut self) {
-        unimplemented!()
-    }
+    fn active_transform_start_time(&mut self);
     /// Called when parser sees a `AttributeBegin` keyword
-    fn attribute_begin(&mut self) {
-        unimplemented!()
-    }
+    fn attribute_begin(&mut self);
     /// Called when parser sees a `AttributeEnd` keyword
-    fn attribute_end(&mut self) {
-        unimplemented!()
-    }
+    fn attribute_end(&mut self);
     /// Sets the renderer's camera settings to `name` & `params`.
-    fn camera(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn camera(&mut self, _name: &str, _params: ParamSet);
     /// Reset the internal state of self.
-    fn cleanup(&mut self) {
-        unimplemented!()
-    }
+    fn cleanup(&mut self);
     /// Multiples the current transform matrix by `transform`.
-    fn concat_transform(&mut self, _transform: [Float; 16]) {
-        unimplemented!()
-    }
+    fn concat_transform(&mut self, _transform: [Float; 16]);
     /// Creates a new coordinate system assigning `name` the current tranform matrix.
-    fn coordinate_system(&mut self, _name: &str) {
-        unimplemented!()
-    }
+    fn coordinate_system(&mut self, _name: &str);
     /// Sets the current transform matrix to the one stored under `name`.
-    fn coordinate_system_transform(&mut self, _name: &str) {
-        unimplemented!()
-    }
+    fn coordinate_system_transform(&mut self, _name: &str);
     /// Sets the renderer's film settings to `name` & `params`.
-    fn film(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn film(&mut self, _name: &str, _params: ParamSet);
     /// Sets the currently active transform matrix by the given values.
-    fn identity(&mut self) {
-        unimplemented!()
-    }
+    fn identity(&mut self);
     /// Moves the internal statemachine from `APIState::Uninitialized` to `APIState::OptionsBlock`.
     /// This function must be called before most of the API will work.
-    fn init(&mut self) {
-        unimplemented!()
-    }
+    fn init(&mut self);
     /// Sets the renderer's integrator settings to `name` & `params`.
-    fn integrator(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn integrator(&mut self, _name: &str, _params: ParamSet);
     /// Sets the current transforms to look at the given directions.
-    fn look_at(&mut self, _eye: [Float; 3], _look: [Float; 3], _up: [Float; 3]) {
-        unimplemented!()
-    }
+    fn look_at(&mut self, _eye: [Float; 3], _look: [Float; 3], _up: [Float; 3]);
     /// Creates a medium with the given `params` and stores it as a named media under `name`.
-    fn make_named_medium(&mut self, _name: String, _params: &mut ParamSet) {
-        unimplemented!()
-    }
+    fn make_named_medium(&mut self, _name: &str, _params: &mut ParamSet);
     /// Specifies the current inside and outside media by the names given.  Cameras and lights
     /// without geometry ignore the `inside_name`.
-    fn medium_interface(&mut self, _inside_name: &str, _outside_name: &str) {
-        unimplemented!()
-    }
+    fn medium_interface(&mut self, _inside_name: &str, _outside_name: &str);
     /// Parse a scene file at `path` on the file-system.  This will parse the contents of the file
     /// generating an inmemory representation of the scene, and trigger the rendering and output of
     /// the image.
-    fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error> {
-        unimplemented!()
-    }
+    fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error>;
     /// Parse a scene file represented as text stored in `data`.  This will parse the contents of
     /// data generating an inmemory representation of the scene, and trigger the rendering and
     /// output of
     /// the image.
-    fn parse_string(&mut self, _data: &[u8]) -> Result<(), Error> {
-        unimplemented!()
-    }
+    fn parse_string(&mut self, _data: &[u8]) -> Result<(), Error>;
     /// Sets the renderer's filter settings to `name` & `params`.
-    fn pixel_filter(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn pixel_filter(&mut self, _name: &str, _params: ParamSet);
     /// Rotates the currently active transform matrix by the given values.
-    fn rotate(&mut self, _angle: Degree, _ax: Float, _ay: Float, _az: Float) {
-        unimplemented!()
-    }
+    fn rotate(&mut self, _angle: Degree, _ax: Float, _ay: Float, _az: Float);
     /// Sets the renderer's sampler settings to `name` & `params`.
-    fn sampler(&mut self, _name: String, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn sampler(&mut self, _name: &str, _params: ParamSet);
     /// Scales the currently active transform matrix by the given values.
-    fn scale(&mut self, _sx: Float, _sy: Float, _sz: Float) {
-        unimplemented!()
-    }
+    fn scale(&mut self, _sx: Float, _sy: Float, _sz: Float);
     /// Called when the parser sees a `Texture` line.
-    fn texture(&mut self, _name: &str, _kind: &str, _texname: &str, _params: ParamSet) {
-        unimplemented!()
-    }
+    fn texture(&mut self, _name: &str, _kind: &str, _texname: &str, _params: ParamSet);
     /// Called when parser sees a `TransformBegin` keyword
-    fn transform_begin(&mut self) {
-        unimplemented!()
-    }
+    fn transform_begin(&mut self);
     /// Called when parser sees a `TransformEnd` keyword
-    fn transform_end(&mut self) {
-        unimplemented!()
-    }
+    fn transform_end(&mut self);
     /// Sets the current transform matrix to `transform`.
-    fn transform(&mut self, _transform: [Float; 16]) {
-        unimplemented!()
-    }
+    fn transform(&mut self, _transform: [Float; 16]);
     /// Sets the start/end times for the transform matrix to `start` & `end`.
-    fn transform_times(&mut self, _start: Float, _end: Float) {
-        unimplemented!()
-    }
+    fn transform_times(&mut self, _start: Float, _end: Float);
     /// Translates the currently active transform matrix by the given values.
-    fn translate(&mut self, _dx: Float, _dy: Float, _dz: Float) {
-        unimplemented!()
-    }
+    fn translate(&mut self, _dx: Float, _dy: Float, _dz: Float);
     /// Called when parser sees a `WorldBegin` keyword
-    fn world_begin(&mut self) {
-        unimplemented!()
-    }
+    fn world_begin(&mut self);
     /// Called when parser sees a `WorldEnd` keyword
-    fn world_end(&mut self) {
-        unimplemented!()
-    }
+    fn world_end(&mut self);
 }
 
 /// State machine for the API.
@@ -401,11 +337,11 @@ impl From<Options> for PbrtAPI {
     }
 }
 
-impl PbrtAPI {
+impl API for PbrtAPI {
     /// Parse a scene file at `path` on the file-system.  This will parse the contents of the file
     /// generating an inmemory representation of the scene, and trigger the rendering and output of
     /// the image.
-    pub fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error> {
+    fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error> {
         /*
         let f = File::open(&path)?;
         let mmap = unsafe {
@@ -417,31 +353,9 @@ impl PbrtAPI {
         unimplemented!();
     }
 
-    /// Verifies all the active transforms are equivalent to `t`.
-    ///
-    /// # Note
-    /// This method isn't part of the API described by pbrt. It exists to make rustdoc
-    /// implementations easier.
-    ///
-    /// # Examples
-    /// ```
-    /// use pbrt::core::api::PbrtAPI;
-    /// use pbrt::core::transform::Matrix4x4;
-    ///
-    /// let mut pbrt: PbrtAPI = Default::default();
-    ///
-    /// pbrt.init();
-    /// pbrt.identity();
-    /// pbrt.assert_transforms(Matrix4x4::identity());
-    /// ```
-    pub fn assert_transforms<T: Into<Transform>>(&self, t: T) {
-        let t = t.into();
-        self.for_active_transforms(|ct| assert_eq!(ct, &t));
-    }
-
     /// Moves the internal statemachine from `APIState::Uninitialized` to `APIState::OptionsBlock`.
     /// This function must be called before most of the API will work.
-    pub fn init(&mut self) {
+    fn init(&mut self) {
         if self.current_api_state != APIState::Uninitialized {
             error!("init() has already been called.");
         }
@@ -450,7 +364,7 @@ impl PbrtAPI {
     }
 
     /// Reset the internal state of self.
-    pub fn cleanup(&mut self) {
+    fn cleanup(&mut self) {
         if self.current_api_state == APIState::Uninitialized {
             error!("cleanup() called without init().");
         } else if self.current_api_state == APIState::WorldBlock {
@@ -461,7 +375,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `WorldBegin` keyword
-    pub fn world_begin(&mut self) {
+    fn world_begin(&mut self) {
         verify_options!(self, "pbrt.world_begin");
         self.current_api_state = APIState::WorldBlock;
         for i in 0..MAX_TRANSFORMS {
@@ -473,7 +387,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `WorldEnd` keyword
-    pub fn world_end(&mut self) {
+    fn world_end(&mut self) {
         verify_world!(self, "pbrt.world_end");
         // TODO(wathiede): call everything
         // // Ensure there are no pushed graphics states
@@ -517,7 +431,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `AttributeBegin` keyword
-    pub fn attribute_begin(&mut self) {
+    fn attribute_begin(&mut self) {
         verify_world!(self, "pbrt.attribute_begin");
         self.pushed_graphics_states
             .push(self.graphics_state.clone());
@@ -527,7 +441,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `AttributeEnd` keyword
-    pub fn attribute_end(&mut self) {
+    fn attribute_end(&mut self) {
         verify_world!(self, "pbrt.attribute_end");
         if self.pushed_graphics_states.is_empty()
             || self.pushed_transforms.is_empty()
@@ -542,7 +456,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `TransformBegin` keyword
-    pub fn transform_begin(&mut self) {
+    fn transform_begin(&mut self) {
         verify_world!(self, "pbrt.transform_begin");
         self.pushed_transforms.push(self.current_transform);
         self.pushed_active_transform_bits
@@ -550,7 +464,7 @@ impl PbrtAPI {
     }
 
     /// Called when parser sees a `TransformEnd` keyword
-    pub fn transform_end(&mut self) {
+    fn transform_end(&mut self) {
         verify_world!(self, "pbrt.transform_end");
         if self.pushed_transforms.is_empty() || self.pushed_active_transform_bits.is_empty() {
             error!("Unmatched pbrt.tranform_end() encountered. Ignoring it.");
@@ -561,7 +475,7 @@ impl PbrtAPI {
     }
 
     /// Called when the parser sees a `Texture` line.
-    pub fn texture(&mut self, name: &str, kind: &str, texname: &str, params: ParamSet) {
+    fn texture(&mut self, name: &str, kind: &str, texname: &str, params: ParamSet) {
         verify_world!(self, "pbrt.texture");
         info!(
             "Creating texture name {} kind {} texname {} paramset {:?}",
@@ -623,7 +537,7 @@ impl PbrtAPI {
     ///     [0., 0., 0., 1.],
     /// ));
     /// ```
-    pub fn identity(&mut self) {
+    fn identity(&mut self) {
         verify_initialized!(self, "identity");
         self.for_active_transforms_mut(|ct| *ct = Transform::identity());
     }
@@ -646,7 +560,7 @@ impl PbrtAPI {
     ///     [0., 0., 0., 1.],
     /// ));
     /// ```
-    pub fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
+    fn translate(&mut self, dx: Float, dy: Float, dz: Float) {
         verify_initialized!(self, "translate");
         self.for_active_transforms_mut(|ct| {
             // TODO(wathiede): is it wrong to clone ct? I needed to convert a &mut to a non-mutable
@@ -700,13 +614,13 @@ impl PbrtAPI {
     ///     [0., 0., 0., 1.],
     /// ));
     /// ```
-    pub fn rotate(&mut self, angle: Degree, ax: Float, ay: Float, az: Float) {
+    fn rotate(&mut self, angle: Degree, ax: Float, ay: Float, az: Float) {
         verify_initialized!(self, "pbrt.rotate");
         self.for_active_transforms_mut(|ct| *ct = *ct * Transform::rotate(angle, [ax, ay, az]));
     }
 
     /// Sets the current transforms to look at the given directions.
-    pub fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
+    fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
         verify_initialized!(self, "pbrt.look_at");
         info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
         unimplemented!();
@@ -730,32 +644,32 @@ impl PbrtAPI {
     ///     [0., 0., 0., 1.],
     /// ));
     /// ```
-    pub fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
+    fn scale(&mut self, sx: Float, sy: Float, sz: Float) {
         verify_initialized!(self, "pbrt.scale");
         self.for_active_transforms_mut(|ct| *ct = *ct * Transform::scale(sx, sy, sz));
     }
 
     /// Multiples the current transform matrix by `transform`.
-    pub fn concat_transform(&mut self, transform: [Float; 16]) {
+    fn concat_transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.concat_transform");
         self.for_active_transforms_mut(|ct| *ct = *ct * Transform::from(transform));
     }
 
     /// Sets the current transform matrix to `transform`.
-    pub fn transform(&mut self, transform: [Float; 16]) {
+    fn transform(&mut self, transform: [Float; 16]) {
         verify_initialized!(self, "pbrt.transform");
         self.for_active_transforms_mut(|ct| *ct = Transform::from(transform));
     }
 
     /// Creates a new coordinate system assigning `name` the current tranform matrix.
-    pub fn coordinate_system(&mut self, name: &str) {
+    fn coordinate_system(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system");
         self.named_coordinate_systems
             .insert(name.to_string(), self.current_transform);
     }
 
     /// Sets the current transform matrix to the one stored under `name`.
-    pub fn coordinate_system_transform(&mut self, name: &str) {
+    fn coordinate_system_transform(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system_transform");
         match self.named_coordinate_systems.get(name) {
             Some(t) => self.current_transform = *t,
@@ -764,66 +678,70 @@ impl PbrtAPI {
     }
 
     /// Sets the active transform bits to `ALL_TRANSFORMS_BITS`.
-    pub fn active_transform_all(&mut self) {
+    fn active_transform_all(&mut self) {
         self.active_transform_bits = ALL_TRANSFORMS_BITS;
     }
 
     /// Sets the active transform bits to `END_TRANSFORMS_BITS`.
-    pub fn active_transform_end_time(&mut self) {
+    fn active_transform_end_time(&mut self) {
         self.active_transform_bits = END_TRANSFORM_BITS;
     }
 
     /// Sets the active transform bits to `START_TRANSFORMS_BITS`.
-    pub fn active_transform_start_time(&mut self) {
+    fn active_transform_start_time(&mut self) {
         self.active_transform_bits = START_TRANSFORM_BITS;
     }
 
     /// Sets the start/end times for the transform matrix to `start` & `end`.
-    pub fn transform_times(&mut self, start: Float, end: Float) {
+    fn transform_times(&mut self, start: Float, end: Float) {
         verify_options!(self, "pbrt.tranform_times");
         self.render_options.transform_start_time = start;
         self.render_options.transform_end_time = end;
     }
 
+    fn parse_string(&mut self, _data: &[u8]) -> Result<(), Error> {
+        todo!()
+    }
+
     /// Sets the renderer's filter settings to `name` & `params`.
-    pub fn pixel_filter(&mut self, name: String, params: ParamSet) {
+    fn pixel_filter(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.pixel_filter");
-        self.render_options.filter_name = name;
+        self.render_options.filter_name = name.to_string();
         self.render_options.filter_params = params;
     }
 
     /// Sets the renderer's film settings to `name` & `params`.
-    pub fn film(&mut self, name: String, params: ParamSet) {
+    fn film(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.film");
-        self.render_options.film_name = name;
+        self.render_options.film_name = name.to_string();
         self.render_options.film_params = params;
     }
 
     /// Sets the renderer's sampler settings to `name` & `params`.
-    pub fn sampler(&mut self, name: String, params: ParamSet) {
+    fn sampler(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.sampler");
-        self.render_options.sampler_name = name;
+        self.render_options.sampler_name = name.to_string();
         self.render_options.sampler_params = params;
     }
 
     /// Sets the renderer's accelerator settings to `name` & `params`.
-    pub fn accelerator(&mut self, name: String, params: ParamSet) {
+    fn accelerator(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.accelerator");
-        self.render_options.accelerator_name = name;
+        self.render_options.accelerator_name = name.to_string();
         self.render_options.accelerator_params = params;
     }
 
     /// Sets the renderer's integrator settings to `name` & `params`.
-    pub fn integrator(&mut self, name: String, params: ParamSet) {
+    fn integrator(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.integrator");
-        self.render_options.integrator_name = name;
+        self.render_options.integrator_name = name.to_string();
         self.render_options.integrator_params = params;
     }
 
     /// Sets the renderer's camera settings to `name` & `params`.
-    pub fn camera(&mut self, name: String, params: ParamSet) {
+    fn camera(&mut self, name: &str, params: ParamSet) {
         verify_options!(self, "pbrt.camera");
-        self.render_options.camera_name = name;
+        self.render_options.camera_name = name.to_string();
         self.render_options.camera_params = params;
         self.render_options.camera_to_world = self.current_transform.inverse();
         self.named_coordinate_systems
@@ -831,23 +749,57 @@ impl PbrtAPI {
     }
 
     /// Creates a medium with the given `params` and stores it as a named media under `name`.
-    pub fn make_named_medium(&mut self, name: String, params: &mut ParamSet) {
+    fn make_named_medium(&mut self, name: &str, params: &mut ParamSet) {
         verify_initialized!(self, "pbrt.make_named_medium");
         self.warn_if_animated_transform("pbrt.make_named_medium");
         let kind = params.find_one_string("type", "".to_string());
         let medium = make_medium(&kind, params, self.current_transform[0]);
-        self.render_options.named_media.insert(name, medium);
+        self.render_options
+            .named_media
+            .insert(name.to_string(), medium);
     }
 
     /// Specifies the current inside and outside media by the names given.  Cameras and lights
     /// without geometry ignore the `inside_name`.
-    pub fn medium_interface(&mut self, inside_name: &str, outside_name: &str) {
+    fn medium_interface(&mut self, inside_name: &str, outside_name: &str) {
         verify_initialized!(self, "pbrt.medium_interface");
         self.graphics_state.current_inside_medium = inside_name.into();
         self.graphics_state.current_outside_medium = outside_name.into();
         self.render_options.have_scattering_media = true;
     }
+}
 
+impl Default for PbrtAPI {
+    fn default() -> PbrtAPI {
+        PbrtAPI::from(Options::default())
+    }
+}
+
+impl PbrtAPI {
+    /// Verifies all the active transforms are equivalent to `t`.
+    ///
+    /// # Note
+    /// This method isn't part of the API described by pbrt. It exists to make rustdoc
+    /// implementations easier.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::transform::Matrix4x4;
+    ///
+    /// let mut pbrt: PbrtAPI = Default::default();
+    ///
+    /// pbrt.init();
+    /// pbrt.identity();
+    /// pbrt.assert_transforms(Matrix4x4::identity());
+    /// ```
+    #[allow(dead_code)]
+    fn assert_transforms<T: Into<Transform>>(&self, t: T) {
+        let t = t.into();
+        self.for_active_transforms(|ct| assert_eq!(ct, &t));
+    }
+
+    #[allow(dead_code)]
     fn for_active_transforms<F>(&self, f: F)
     where
         F: Fn(&Transform),
@@ -872,14 +824,8 @@ impl PbrtAPI {
     fn warn_if_animated_transform(&self, name: &str) {
         if self.current_transform.is_animated() {
             warn!(
-                "Animated transformations set; ignoring for \"{}\" and using the start transform only",                name);
+                "Animated transformations set; ignoring for \"{}\" and using the start transform only", name);
         }
-    }
-}
-
-impl Default for PbrtAPI {
-    fn default() -> PbrtAPI {
-        PbrtAPI::from(Options::default())
     }
 }
 

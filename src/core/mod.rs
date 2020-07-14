@@ -16,6 +16,7 @@
 //! has no public functionality.
 
 pub mod api;
+mod api_test;
 pub mod error;
 pub mod film;
 pub mod filter;

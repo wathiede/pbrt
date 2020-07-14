@@ -19,7 +19,7 @@ use structopt;
 use structopt::StructOpt;
 
 use pbrt;
-use pbrt::core::api::PbrtAPI;
+use pbrt::core::api::{PbrtAPI, API};
 
 #[derive(Clone, Debug, Default, StructOpt)]
 #[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
