@@ -7,3 +7,4 @@
   a `std::vector<FilmTilePixel>`, why not the same for both?
 * Why isn't `LOOKUP_ONE` and `LOOKUP_PTR` used for `FindOneFloat` and
   `FindFloat`.
+* Why does `ParamListItem` have `isString`, it's not used.
