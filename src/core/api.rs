@@ -523,7 +523,7 @@ impl API for PbrtAPI {
     /// Sets the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::api::{PbrtAPI, API};
     /// use pbrt::core::transform::Matrix4x4;
     ///
     /// let mut pbrt = PbrtAPI::default();
@@ -545,7 +545,7 @@ impl API for PbrtAPI {
     /// Translates the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::api::{PbrtAPI, API};
     /// use pbrt::core::transform::Matrix4x4;
     ///
     /// let mut pbrt = PbrtAPI::default();
@@ -572,7 +572,7 @@ impl API for PbrtAPI {
     /// Rotates the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::api::{PbrtAPI, API};
     /// use pbrt::core::transform::Matrix4x4;
     /// use pbrt::Degree;
     ///
@@ -629,7 +629,7 @@ impl API for PbrtAPI {
     /// Scales the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::api::{PbrtAPI, API};
     /// use pbrt::core::transform::Matrix4x4;
     ///
     /// let mut pbrt = PbrtAPI::default();
@@ -784,7 +784,7 @@ impl PbrtAPI {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::api::PbrtAPI;
+    /// use pbrt::core::api::{PbrtAPI, API};
     /// use pbrt::core::transform::Matrix4x4;
     ///
     /// let mut pbrt: PbrtAPI = Default::default();
@@ -794,7 +794,7 @@ impl PbrtAPI {
     /// pbrt.assert_transforms(Matrix4x4::identity());
     /// ```
     #[allow(dead_code)]
-    fn assert_transforms<T: Into<Transform>>(&self, t: T) {
+    pub fn assert_transforms<T: Into<Transform>>(&self, t: T) {
         let t = t.into();
         self.for_active_transforms(|ct| assert_eq!(ct, &t));
     }
