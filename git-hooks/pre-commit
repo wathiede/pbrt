@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-cargo +nightly fmt -- --check
+cargo +nightly fmt -- --check || (echo 'To fix, run: cargo +nightly fmt' && false)
 cargo test --features=float-as-double --quiet
 FILES_AFFECTED=$(git diff --name-only --diff-filter=AMR|xargs)
 if [ ! -z "${FILES_AFFECTED}" ]; then
