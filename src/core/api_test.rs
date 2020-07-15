@@ -46,7 +46,7 @@ impl API for MockAPI {
     fn concat_transform(&mut self, _transform: [Float; 16]) {
         // unimplemented!()
     }
-    /// Creates a new coordinate system assigning `name` the current tranform matrix.
+    /// Creates a new coordinate system assigning `name` the current transform matrix.
     fn coordinate_system(&mut self, _name: &str) {
         // unimplemented!()
     }

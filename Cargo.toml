@@ -15,6 +15,7 @@ structopt = "0.3.5"
 thiserror = "1.0.20"
 stderrlog = "0.4.3"
 anyhow = "1.0.31"
+memmap = "0.7.0"
 
 [dev-dependencies]
 pretty_assertions = "0.5.0"

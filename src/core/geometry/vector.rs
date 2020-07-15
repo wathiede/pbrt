@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
-use std::ops::Div;
+use std::ops::{Div, Sub};
 
 use crate::core::geometry::Number;
 use crate::Float;
@@ -42,6 +42,38 @@ where
 {
     fn from((x, y): (T, T)) -> Self {
         Vector2 { x, y }
+    }
+}
+
+impl<T> Sub for Vector2<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `-` for Vector2<T> - Vector2<T>
+    ///
+    /// Mathematically a point minus a point is a vector, and a point minus a vector is a point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Vector2i;
+    ///
+    /// let p1: Vector2i = [2, 3].into();
+    /// let p2: Vector2i = [4, 5].into();
+    /// assert_eq!(p2 - p1, [2, 2].into());
+    ///
+    /// use pbrt::core::geometry::Vector2f;
+    ///
+    /// let p1: Vector2f = [2., 3.].into();
+    /// let p2: Vector2f = [4., 5.].into();
+    /// assert_eq!(p2 - p1, [2., 2.].into());
+    /// ```
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
     }
 }
 
@@ -191,7 +223,40 @@ impl<'a> Div<Float> for &'a Vector3f {
     }
 }
 
-/// 2D vector type with `isize` members.
+impl<T> Sub for Vector3<T>
+where
+    T: Number,
+{
+    type Output = Self;
+
+    /// Implement `-` for Vector3<T> - Vector3<T>
+    ///
+    /// Mathematically a point minus a point is a vector, and a point minus a vector is a point.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::geometry::Vector3i;
+    ///
+    /// let p1: Vector3i = [1, 2, 3].into();
+    /// let p2: Vector3i = [4, 5, 6].into();
+    /// assert_eq!(p2 - p1, [3, 3, 3].into());
+    ///
+    /// use pbrt::core::geometry::Vector3f;
+    ///
+    /// let p1: Vector3f = [1., 2., 3.].into();
+    /// let p2: Vector3f = [4., 5., 6.].into();
+    /// assert_eq!(p2 - p1, [3., 3., 3.].into());
+    /// ```
+    fn sub(self, rhs: Self) -> Self::Output {
+        Vector3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+/// 3D vector type with `isize` members.
 pub type Vector3i = Vector3<isize>;
 
 impl Vector3i {
@@ -246,4 +311,16 @@ impl<'a> Div<Float> for &'a Vector3i {
             z: (self.z as Float / rhs) as isize,
         }
     }
+}
+
+pub fn cross<T>(v1: Vector3<T>, v2: Vector3<T>) -> Vector3<T>
+where
+    T: Number,
+{
+    [
+        (v1.y * v2.z) - (v1.z * v2.y),
+        (v1.z * v2.x) - (v1.x * v2.z),
+        (v1.x * v2.y) - (v1.y * v2.x),
+    ]
+    .into()
 }

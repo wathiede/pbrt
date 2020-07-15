@@ -43,6 +43,7 @@ pub use crate::core::geometry::point::Point3f;
 pub use crate::core::geometry::point::Point3i;
 
 mod vector;
+pub use crate::core::geometry::vector::cross;
 pub use crate::core::geometry::vector::Vector2;
 pub use crate::core::geometry::vector::Vector2f;
 pub use crate::core::geometry::vector::Vector2i;

@@ -16,6 +16,7 @@
 //! member functions as it interprets a scene file.
 
 use std::collections::HashMap;
+use std::fs::File;
 use std::io;
 use std::ops::{Index, IndexMut};
 use std::path::Path;
@@ -23,14 +24,14 @@ use std::process::exit;
 use std::sync::Arc;
 
 use log::{error, info, warn};
+use memmap::MmapOptions;
 use thiserror::Error;
 
 use crate::core::filter::Filter;
 use crate::core::light::Light;
 use crate::core::medium::Medium;
-use crate::core::paramset::ParamSet;
-use crate::core::paramset::TextureParams;
-use crate::core::parser;
+use crate::core::paramset::{ParamSet, TextureParams};
+use crate::core::parser::{self, create_from_string, parse};
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Transform;
@@ -80,7 +81,7 @@ pub trait API {
     fn cleanup(&mut self);
     /// Multiples the current transform matrix by `transform`.
     fn concat_transform(&mut self, _transform: [Float; 16]);
-    /// Creates a new coordinate system assigning `name` the current tranform matrix.
+    /// Creates a new coordinate system assigning `name` the current transform matrix.
     fn coordinate_system(&mut self, _name: &str);
     /// Sets the current transform matrix to the one stored under `name`.
     fn coordinate_system_transform(&mut self, _name: &str);
@@ -341,16 +342,10 @@ impl API for PbrtAPI {
     /// Parse a scene file at `path` on the file-system.  This will parse the contents of the file
     /// generating an inmemory representation of the scene, and trigger the rendering and output of
     /// the image.
-    fn parse_file<P: AsRef<Path>>(&mut self, _path: P) -> Result<(), Error> {
-        /*
+    fn parse_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), Error> {
         let f = File::open(&path)?;
-        let mmap = unsafe {
-            MmapOptions::new()
-                .map(&f)
-                .with_context(|| format!("failed to mmap {}", path.display()))?
-        };
-        */
-        unimplemented!();
+        let mmap = unsafe { MmapOptions::new().map(&f)? };
+        self.parse_string(&mmap)
     }
 
     /// Moves the internal statemachine from `APIState::Uninitialized` to `APIState::OptionsBlock`.
@@ -467,7 +462,7 @@ impl API for PbrtAPI {
     fn transform_end(&mut self) {
         verify_world!(self, "pbrt.transform_end");
         if self.pushed_transforms.is_empty() || self.pushed_active_transform_bits.is_empty() {
-            error!("Unmatched pbrt.tranform_end() encountered. Ignoring it.");
+            error!("Unmatched pbrt.transform_end() encountered. Ignoring it.");
             return;
         }
         self.current_transform = self.pushed_transforms.pop().unwrap();
@@ -623,7 +618,8 @@ impl API for PbrtAPI {
     fn look_at(&mut self, eye: [Float; 3], look: [Float; 3], up: [Float; 3]) {
         verify_initialized!(self, "pbrt.look_at");
         info!("eye: {:?} look: {:?} up: {:?}", eye, look, up);
-        unimplemented!();
+        let look_at = Transform::look_at(eye, look, up);
+        self.for_active_transforms_mut(|ct| *ct = *ct * look_at);
     }
 
     /// Scales the currently active transform matrix by the given values.
@@ -661,7 +657,7 @@ impl API for PbrtAPI {
         self.for_active_transforms_mut(|ct| *ct = Transform::from(transform));
     }
 
-    /// Creates a new coordinate system assigning `name` the current tranform matrix.
+    /// Creates a new coordinate system assigning `name` the current transform matrix.
     fn coordinate_system(&mut self, name: &str) {
         verify_initialized!(self, "pbrt.coordinate_system");
         self.named_coordinate_systems
@@ -694,13 +690,15 @@ impl API for PbrtAPI {
 
     /// Sets the start/end times for the transform matrix to `start` & `end`.
     fn transform_times(&mut self, start: Float, end: Float) {
-        verify_options!(self, "pbrt.tranform_times");
+        verify_options!(self, "pbrt.transform_times");
         self.render_options.transform_start_time = start;
         self.render_options.transform_end_time = end;
     }
 
-    fn parse_string(&mut self, _data: &[u8]) -> Result<(), Error> {
-        todo!()
+    fn parse_string(&mut self, data: &[u8]) -> Result<(), Error> {
+        let t = create_from_string(data);
+        parse(t, self)?;
+        Ok(())
     }
 
     /// Sets the renderer's filter settings to `name` & `params`.

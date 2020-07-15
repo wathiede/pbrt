@@ -22,7 +22,7 @@ use std::ops::Mul;
 
 use log::error;
 
-use crate::core::geometry::Vector3f;
+use crate::core::geometry::{cross, Vector3f};
 use crate::{float, Degree, Float};
 
 /// Solve a 2x2 linear system in the form Ax = B.  For parameters `a` and `b`, the solution to `x`
@@ -479,6 +479,43 @@ impl Transform {
         Transform {
             m,
             m_inv: m.transpose(),
+        }
+    }
+
+    pub fn look_at<V>(pos: V, look: V, up: V) -> Transform
+    where
+        V: Into<Vector3f>,
+    {
+        let pos = pos.into();
+        let look = look.into();
+        let up = up.into();
+
+        let mut camera_to_world = Matrix4x4::identity();
+        // Set 4th column of viewing matrix.
+        camera_to_world.m[0][3] = pos.x;
+        camera_to_world.m[1][3] = pos.y;
+        camera_to_world.m[2][3] = pos.z;
+        camera_to_world.m[3][3] = 1.;
+
+        let dir = (look - pos).normalize();
+        let right = cross(up.normalize(), dir).normalize();
+        let new_up = cross(dir, right);
+        camera_to_world.m[0][0] = right.x;
+        camera_to_world.m[1][0] = right.y;
+        camera_to_world.m[2][0] = right.z;
+        camera_to_world.m[3][0] = 0.;
+        camera_to_world.m[0][1] = new_up.x;
+        camera_to_world.m[1][1] = new_up.y;
+        camera_to_world.m[2][1] = new_up.z;
+        camera_to_world.m[3][1] = 0.;
+        camera_to_world.m[0][2] = dir.x;
+        camera_to_world.m[1][2] = dir.y;
+        camera_to_world.m[2][2] = dir.z;
+        camera_to_world.m[3][2] = 0.;
+
+        Transform {
+            m: camera_to_world.inverse(),
+            m_inv: camera_to_world,
         }
     }
 

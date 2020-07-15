@@ -204,7 +204,7 @@ struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    fn parse<A: API>(t: Tokenizer, mut api: A) -> Result<(), Error> {
+    fn parse<A: API>(t: Tokenizer, api: &mut A) -> Result<(), Error> {
         let mut p = Parser {
             file_stack: vec![t],
             unget_token: None,
@@ -243,7 +243,26 @@ impl<'a> Parser<'a> {
                 "Include" => return Err(Error::NotImplemented("Include".to_string())),
                 "Integrator" => return Err(Error::NotImplemented("Integrator".to_string())),
                 "LightSource" => return Err(Error::NotImplemented("LightSource".to_string())),
-                "LookAt" => return Err(Error::NotImplemented("LookAt".to_string())),
+                "LookAt" => {
+                    let mut eye: [Float; 3] = Default::default();
+                    for i in 0..3 {
+                        let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
+                        eye[i] = tok.parse()?;
+                    }
+
+                    let mut look: [Float; 3] = Default::default();
+                    for i in 0..3 {
+                        let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
+                        look[i] = tok.parse()?;
+                    }
+
+                    let mut up: [Float; 3] = Default::default();
+                    for i in 0..3 {
+                        let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
+                        up[i] = tok.parse()?;
+                    }
+                    api.look_at(eye, look, up);
+                }
                 "MakeNamedMaterial" => {
                     return Err(Error::NotImplemented("MakeNamedMaterial".to_string()))
                 }
@@ -733,7 +752,7 @@ fn dequote_string(s: &str) -> Result<&str, Error> {
 }
 
 /// Parse the tokens provided by `t` and called the appropriate methos on `a`.
-pub fn parse<A: API>(t: Tokenizer, api: A) -> Result<(), Error> {
+pub fn parse<A: API>(t: Tokenizer, api: &mut A) -> Result<(), Error> {
     Parser::parse(t, api)
 }
 
@@ -758,9 +777,9 @@ mod tests {
 
     #[test]
     fn parser() {
-        let api = MockAPI::default();
+        let mut api = MockAPI::default();
         let t = create_from_string(r#"Sampler "halton" "integer pixelsamples" 128"#.as_bytes());
-        let res = parse(t, api);
+        let res = parse(t, &mut api);
         assert!(res.is_ok(), "error from parse: {}", res.err().unwrap());
     }
 }
