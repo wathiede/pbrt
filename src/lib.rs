@@ -18,6 +18,7 @@
 
 pub mod core;
 pub mod filters;
+pub mod lights;
 pub mod textures;
 
 #[cfg(feature = "float-as-double")]

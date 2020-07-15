@@ -26,6 +26,10 @@ impl API for MockAPI {
     fn active_transform_start_time(&mut self) {
         // unimplemented!()
     }
+    /// Creates area light when `AreaLightSource` found in scene.
+    fn area_light_source(&mut self, _name: &str, _params: ParamSet) {
+        // unimplemented!()
+    }
     /// Called when parser sees a `AttributeBegin` keyword
     fn attribute_begin(&mut self) {
         // unimplemented!()
@@ -69,6 +73,10 @@ impl API for MockAPI {
     }
     /// Sets the renderer's integrator settings to `name` & `params`.
     fn integrator(&mut self, _name: &str, _params: ParamSet) {
+        // unimplemented!()
+    }
+    /// Creates light when `LightSource` found in scene.
+    fn light_source(&mut self, _name: &str, _params: ParamSet) {
         // unimplemented!()
     }
     /// Sets the current transforms to look at the given directions.

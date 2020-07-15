@@ -21,3 +21,9 @@
 /// [PbrtAPI]: crate::core::api::PbrtAPI
 #[derive(Debug)]
 pub struct Medium {}
+
+#[derive(Debug, Default)]
+pub struct MediumInterface<'m> {
+    pub inside: Option<&'m Medium>,
+    pub outside: Option<&'m Medium>,
+}

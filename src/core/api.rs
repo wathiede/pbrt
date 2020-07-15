@@ -29,13 +29,14 @@ use thiserror::Error;
 
 use crate::core::filter::Filter;
 use crate::core::light::Light;
-use crate::core::medium::Medium;
+use crate::core::medium::{Medium, MediumInterface};
 use crate::core::paramset::{ParamSet, TextureParams};
 use crate::core::parser::{self, create_from_string, parse};
 use crate::core::spectrum::Spectrum;
 use crate::core::texture::Texture;
 use crate::core::transform::Transform;
 use crate::filters::boxfilter::BoxFilter;
+use crate::lights::infinite::create_infinite_light;
 use crate::textures::constant;
 use crate::Degree;
 use crate::Float;
@@ -71,6 +72,8 @@ pub trait API {
     fn active_transform_end_time(&mut self);
     /// Sets the active transform bits to `START_TRANSFORMS_BITS`.
     fn active_transform_start_time(&mut self);
+    /// Creates area light when `AreaLightSource` found in scene.
+    fn area_light_source(&mut self, _name: &str, _params: ParamSet);
     /// Called when parser sees a `AttributeBegin` keyword
     fn attribute_begin(&mut self);
     /// Called when parser sees a `AttributeEnd` keyword
@@ -94,6 +97,8 @@ pub trait API {
     fn init(&mut self);
     /// Sets the renderer's integrator settings to `name` & `params`.
     fn integrator(&mut self, _name: &str, _params: ParamSet);
+    /// Creates light when `LightSource` found in scene.
+    fn light_source(&mut self, _name: &str, _params: ParamSet);
     /// Sets the current transforms to look at the given directions.
     fn look_at(&mut self, _eye: [Float; 3], _look: [Float; 3], _up: [Float; 3]);
     /// Creates a medium with the given `params` and stores it as a named media under `name`.
@@ -206,7 +211,7 @@ struct RenderOptions {
     camera_params: ParamSet,
     camera_to_world: TransformSet,
     named_media: HashMap<String, Medium>,
-    lights: Vec<Light>,
+    lights: Vec<Arc<dyn Light>>,
     have_scattering_media: bool,
     /* TODO(wathiede):
      * std::vector<std::shared_ptr<Primitive>> primitives;
@@ -260,6 +265,28 @@ struct GraphicsState {
      * bool reverseOrientation = false; */
 }
 
+impl GraphicsState {
+    fn create_medium_interface<'ro>(
+        &mut self,
+        render_options: &'ro RenderOptions,
+    ) -> MediumInterface<'ro> {
+        let mut m = MediumInterface::default();
+        if self.current_inside_medium != "" {
+            match render_options.named_media.get(&self.current_inside_medium) {
+                Some(medium) => m.inside = Some(medium),
+                None => error!("Named medium '{}' undefined.", self.current_inside_medium),
+            }
+        }
+        if self.current_outside_medium != "" {
+            match render_options.named_media.get(&self.current_outside_medium) {
+                Some(medium) => m.outside = Some(medium),
+                None => error!("Named medium '{}' undefined.", self.current_outside_medium),
+            }
+        }
+        m
+    }
+}
+
 macro_rules! verify_initialized {
     ($pbrt:expr, $func:expr) => {
         if $pbrt.current_api_state == APIState::Uninitialized {
@@ -301,6 +328,18 @@ macro_rules! verify_world {
             return;
         }
     };
+}
+
+fn make_light(
+    name: &str,
+    params: &ParamSet,
+    light2world: &Transform,
+    medium_interface: &MediumInterface,
+) -> Arc<dyn Light> {
+    match name {
+        "infinite" | "exinfinite" => create_infinite_light(light2world, params),
+        _ => todo!("only infinite and exinfinite lights are currently implemented"),
+    }
 }
 
 /// PbrtAPI is the top-level global container for all rendering functionality.
@@ -423,6 +462,11 @@ impl API for PbrtAPI {
         //                              namedCoordinateSystems.end());
         // ImageTexture<Float, Float>::ClearCache();
         // ImageTexture<RGBSpectrum, Spectrum>::ClearCache();
+    }
+
+    /// Creates area light when `AreaLightSource` found in scene.
+    fn area_light_source(&mut self, _name: &str, _params: ParamSet) {
+        todo!("core::api::PbrtAPI::area_light_source");
     }
 
     /// Called when parser sees a `AttributeBegin` keyword
@@ -622,6 +666,15 @@ impl API for PbrtAPI {
         self.for_active_transforms_mut(|ct| *ct = *ct * look_at);
     }
 
+    /// Creates light when `LightSource` found in scene.
+    fn light_source(&mut self, name: &str, params: ParamSet) {
+        verify_world!(self, "pbrt.light_source");
+        self.warn_if_animated_transform("pbrt.light_source");
+        let mi = self
+            .graphics_state
+            .create_medium_interface(&self.render_options);
+        let lt = make_light(name, &params, &self.current_transform[0], &mi);
+    }
     /// Scales the currently active transform matrix by the given values.
     /// # Examples
     /// ```

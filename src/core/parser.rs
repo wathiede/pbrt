@@ -228,7 +228,7 @@ impl<'a> Parser<'a> {
                 }
                 "AttrbuteBegin" => api.attribute_begin(),
                 "AttributeEnd" => api.attribute_end(),
-                "Camera" => return Err(Error::NotImplemented("Camera".to_string())),
+                "Camera" => p.basic_param_list_entrypoint(|n, p| api.camera(n, p))?,
                 "ConcatTransform" => {
                     return Err(Error::NotImplemented("ConcatTransform".to_string()))
                 }
@@ -241,8 +241,8 @@ impl<'a> Parser<'a> {
                 "Film" => p.basic_param_list_entrypoint(|n, p| api.film(n, p))?,
                 "Identity" => return Err(Error::NotImplemented("Identity".to_string())),
                 "Include" => return Err(Error::NotImplemented("Include".to_string())),
-                "Integrator" => return Err(Error::NotImplemented("Integrator".to_string())),
-                "LightSource" => return Err(Error::NotImplemented("LightSource".to_string())),
+                "Integrator" => p.basic_param_list_entrypoint(|n, p| api.integrator(n, p))?,
+                "LightSource" => p.basic_param_list_entrypoint(|n, p| api.light_source(n, p))?,
                 "LookAt" => {
                     let mut eye: [Float; 3] = Default::default();
                     for i in 0..3 {
@@ -304,8 +304,8 @@ impl<'a> Parser<'a> {
                     return Err(Error::NotImplemented("TransformTimes".to_string()))
                 }
                 "Translate" => return Err(Error::NotImplemented("Translate".to_string())),
-                "WorldBegin" => return Err(Error::NotImplemented("WorldBegin".to_string())),
-                "WorldEnd" => return Err(Error::NotImplemented("WorldEnd".to_string())),
+                "WorldBegin" => api.world_begin(),
+                "WorldEnd" => api.world_end(),
                 _ => return Err(Error::Syntax(tok.to_string())),
             }
         }
@@ -419,7 +419,6 @@ impl<'a> Parser<'a> {
         let token = token?;
         let n = dequote_string(token)?;
         let params = self.parse_params()?;
-        dbg!(&params);
         api_func(n, params);
         Ok(())
     }
@@ -496,6 +495,7 @@ fn lookup_type(decl: &str) -> Option<(ParamType, &str)> {
 }
 
 fn add_param(ps: &mut ParamSet, item: ParamListItem) {
+    // TODO(wathiede): rewrite these using slice::chunk_exact().
     fn iter2d<'a>(items: &'a [f64]) -> impl Iterator<Item = (Float, Float)> + 'a {
         let xs =
             items

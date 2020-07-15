@@ -106,6 +106,7 @@ pub struct ParamSet {
     values: HashMap<String, ParamSetItem>,
 }
 
+// TODO(wathiede): try rewriting this using slice::chunks_exact()
 fn iter3d<'a>(items: &'a [Float]) -> impl Iterator<Item = (Float, Float, Float)> + 'a {
     let xs = items
         .iter()
@@ -190,15 +191,15 @@ impl ParamSet {
     }
 
     pub fn add_blackbody(&mut self, _name: &str, _values: Vec<Float>) {
-        todo!();
+        todo!("core::paramset::Paramset::add_blackbody");
     }
 
     pub fn add_sampled_spectrum_files(&mut self, _name: &str, _values: Vec<String>) {
-        todo!();
+        todo!("core::paramset::Paramset::add_sampled_spectrum_files");
     }
 
     pub fn add_sampled_spectrum(&mut self, _name: &str, _values: Vec<Float>) {
-        todo!();
+        todo!("core::paramset::Paramset::add_sampled_spectrum");
     }
 
     pub fn add_string(&mut self, name: &str, values: Vec<String>) {

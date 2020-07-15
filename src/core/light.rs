@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
-//!
-//! [PbrtAPI]: crate::core::api::PbrtAPI
+use std::fmt::Debug;
 
 /// Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
 ///
 /// [PbrtAPI]: crate::core::api::PbrtAPI
-#[derive(Debug)]
-pub struct Light {}
+pub trait Light: Debug {}
