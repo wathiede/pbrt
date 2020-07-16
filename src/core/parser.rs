@@ -179,7 +179,7 @@ pub fn create_from_string<'a>(data: &'a [u8]) -> Tokenizer<'a> {
     Tokenizer { data, pos: 0 }
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Token {
     Optional,
     Required,
@@ -446,21 +446,23 @@ impl TryFrom<&str> for ParamType {
     type Error = String;
     fn try_from(input: &str) -> Result<Self, Self::Error> {
         let p_type = match input {
+            "float" => ParamType::Float,
             "integer" => ParamType::Int,
             "bool" => ParamType::Bool,
-            "float" => ParamType::Float,
             "point2" => ParamType::Point2,
             "vector2" => ParamType::Vector2,
             "point3" => ParamType::Point3,
             "vector3" => ParamType::Vector3,
+            "point" => ParamType::Point3,
+            "vector" => ParamType::Vector3,
             "normal" => ParamType::Normal,
+            "string" => ParamType::String,
+            "texture" => ParamType::Texture,
             "color" => ParamType::RGB,
             "rgb" => ParamType::RGB,
             "xyz" => ParamType::XYZ,
             "blackbody" => ParamType::Blackbody,
             "spectrum" => ParamType::Spectrum,
-            "string" => ParamType::String,
-            "texture" => ParamType::Texture,
             _ => return Err(format!("unknown parameter type '{}'", input)),
         };
         Ok(p_type)
@@ -760,9 +762,23 @@ pub fn parse<A: API>(t: Tokenizer, api: &mut A) -> Result<(), Error> {
 mod tests {
     use super::*;
     use crate::core::api_test::MockAPI;
+    use std::sync::Once;
+
+    static LOGGING: Once = Once::new();
+
+    fn init_logging() {
+        LOGGING.call_once(|| {
+            stderrlog::new()
+                .verbosity(3)
+                .timestamp(stderrlog::Timestamp::Millisecond)
+                .init()
+                .expect("failed to init logging");
+        });
+    }
 
     #[test]
     fn tokenizer() {
+        init_logging();
         let mut t = create_from_string(r#"Sampler "halton" "integer pixelsamples" 128"#.as_bytes());
         assert_eq!(Some(Ok("Sampler")), t.next());
         assert_eq!(Some(Ok(r#""halton""#)), t.next());
@@ -777,9 +793,71 @@ mod tests {
 
     #[test]
     fn parser() {
+        init_logging();
         let mut api = MockAPI::default();
         let t = create_from_string(r#"Sampler "halton" "integer pixelsamples" 128"#.as_bytes());
         let res = parse(t, &mut api);
         assert!(res.is_ok(), "error from parse: {}", res.err().unwrap());
+    }
+
+    #[test]
+    fn basic_param_list_entrypoint() {
+        use crate::core::paramset::{ParamList, ParamSetItem, Value};
+        init_logging();
+
+        struct TestData {
+            input: &'static str,
+            want: (&'static str, ParamSet),
+        }
+
+        for TestData { input, want } in vec![
+            /*
+            TestData {
+                input: r#""perspective" "float fov" 45"#,
+                want: (
+                    "perspective",
+                    vec![ParamSetItem::new(
+                        "fov",
+                        &Value::Float(ParamList(vec![45.])),
+                    )]
+                    .into(),
+                ),
+            },
+            */
+            TestData {
+                input: r#""trianglemesh" "integer indices" [ 0 1 2 2 3 0 ] "point P" [-0.5 -0.5 0.5 -0.5 -0.5 -0.5 0.5 -0.5 -0.5 0.5 -0.5 0.5]"#,
+                want: (
+                    "trianglemesh",
+                    vec![
+                        ParamSetItem::new("indices", &Value::Int(vec![0, 1, 2, 2, 3, 0].into())),
+                        ParamSetItem::new(
+                            "P",
+                            &Value::Point3f(
+                                vec![
+                                    [-0.5, -0.5, 0.5].into(),
+                                    [-0.5, -0.5, -0.5].into(),
+                                    [0.5, -0.5, -0.5].into(),
+                                    [0.5, -0.5, 0.5].into(),
+                                ]
+                                .into(),
+                            ),
+                        ),
+                    ]
+                    .into(),
+                ),
+            },
+        ] {
+            let t = create_from_string(input.as_bytes());
+            let mut p = Parser {
+                file_stack: vec![t],
+                unget_token: None,
+            };
+
+            p.basic_param_list_entrypoint(|n, p| {
+                assert_eq!(want.0, n, "for input '{}'", input);
+                assert_eq!(want.1, p, "for input '{}'", input);
+            })
+            .expect(&format!("for input '{}'", input));
+        }
     }
 }
