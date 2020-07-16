@@ -374,6 +374,7 @@ impl<'a> Parser<'a> {
                     if !item.double_values.is_empty() {
                         return Err(Error::MixedParameters);
                     }
+                    let val = dequote_string(val)?;
                     item.string_values.push(val);
                 } else {
                     if !item.string_values.is_empty() {
@@ -760,9 +761,13 @@ pub fn parse<A: API>(t: Tokenizer, api: &mut A) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::core::api_test::MockAPI;
     use std::sync::Once;
+
+    use super::*;
+
+    use pretty_assertions::{assert_eq, assert_ne};
+
+    use crate::core::api_test::MockAPI;
 
     static LOGGING: Once = Once::new();
 
@@ -802,7 +807,7 @@ mod tests {
 
     #[test]
     fn basic_param_list_entrypoint() {
-        use crate::core::paramset::{ParamList, ParamSetItem, Value};
+        use crate::core::paramset::{ParamSetItem, Value};
         init_logging();
 
         struct TestData {
@@ -811,19 +816,13 @@ mod tests {
         }
 
         for TestData { input, want } in vec![
-            /*
             TestData {
                 input: r#""perspective" "float fov" 45"#,
                 want: (
                     "perspective",
-                    vec![ParamSetItem::new(
-                        "fov",
-                        &Value::Float(ParamList(vec![45.])),
-                    )]
-                    .into(),
+                    vec![ParamSetItem::new("fov", &Value::Float(vec![45.].into()))].into(),
                 ),
             },
-            */
             TestData {
                 input: r#""trianglemesh" "integer indices" [ 0 1 2 2 3 0 ] "point P" [-0.5 -0.5 0.5 -0.5 -0.5 -0.5 0.5 -0.5 -0.5 0.5 -0.5 0.5]"#,
                 want: (
@@ -841,6 +840,31 @@ mod tests {
                                 ]
                                 .into(),
                             ),
+                        ),
+                    ]
+                    .into(),
+                ),
+            },
+            TestData {
+                input: r#""imagemap"
+    "string filename" ["textures/BeoCom.png"]
+    "float scale" [1.000000]
+    "vector v1" [0.500000 0.000000 0.000000]
+"#,
+                want: (
+                    "imagemap",
+                    vec![
+                        // "string filename" ["textures/BeoCom.png"]
+                        ParamSetItem::new(
+                            "filename",
+                            &Value::String(vec!["textures/BeoCom.png".to_string()].into()),
+                        ),
+                        // "float scale" [1.000000]
+                        ParamSetItem::new("scale", &Value::Float(vec![1.].into())),
+                        // "vector v1" [0.500000 0.000000 0.000000]
+                        ParamSetItem::new(
+                            "v1",
+                            &Value::Vector3f(vec![[0.5, 0., 0.].into()].into()),
                         ),
                     ]
                     .into(),
