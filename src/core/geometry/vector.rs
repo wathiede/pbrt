@@ -313,6 +313,7 @@ impl<'a> Div<Float> for &'a Vector3i {
     }
 }
 
+/// Compute cross-product of two 3D vectors.
 pub fn cross<T>(v1: Vector3<T>, v2: Vector3<T>) -> Vector3<T>
 where
     T: Number,

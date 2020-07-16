@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! [Light] implementation for infinite area light.
+//!
+//! [Light]: crate::core::light::Light
 use std::sync::Arc;
 
 use crate::core::light::Light;
@@ -18,6 +22,7 @@ use crate::core::paramset::ParamSet;
 use crate::core::transform::Transform;
 
 #[derive(Debug)]
+/// InfiniteAreaLight represents a light infinitely far away that surrounds the entire scene.
 pub struct InfiniteAreaLight {
     /*
 // InfiniteAreaLight Private Data
@@ -29,6 +34,10 @@ std::unique_ptr<Distribution2D> distribution;
 
 impl Light for InfiniteAreaLight {}
 
-pub fn create_infinite_light(light2world: &Transform, params: &ParamSet) -> Arc<InfiniteAreaLight> {
+/// Creates an InfiniteAreaLight with the given `Transform` and parameters.
+pub fn create_infinite_light(
+    _light2world: &Transform,
+    _params: &ParamSet,
+) -> Arc<InfiniteAreaLight> {
     todo!("lights::infinite::create_infinite_light");
 }

@@ -334,7 +334,7 @@ fn make_light(
     name: &str,
     params: &ParamSet,
     light2world: &Transform,
-    medium_interface: &MediumInterface,
+    _medium_interface: &MediumInterface,
 ) -> Arc<dyn Light> {
     match name {
         "infinite" | "exinfinite" => create_infinite_light(light2world, params),
@@ -674,6 +674,7 @@ impl API for PbrtAPI {
             .graphics_state
             .create_medium_interface(&self.render_options);
         let lt = make_light(name, &params, &self.current_transform[0], &mi);
+        let _ = lt;
     }
     /// Scales the currently active transform matrix by the given values.
     /// # Examples

@@ -23,7 +23,10 @@
 pub struct Medium {}
 
 #[derive(Debug, Default)]
+/// MediumInterface defines the border between two media.
 pub struct MediumInterface<'m> {
+    /// The `Medium` inside the object.
     pub inside: Option<&'m Medium>,
+    /// The `Medium` outside the object.
     pub outside: Option<&'m Medium>,
 }

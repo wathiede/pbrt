@@ -765,7 +765,7 @@ mod tests {
 
     use super::*;
 
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
 
     use crate::core::api_test::MockAPI;
 

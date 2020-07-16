@@ -15,8 +15,8 @@
 //! Linear equation helpers.  Contains a [Matrix4x4] type, [Transform] type (which stores a
 //! [Matrix4x4] and its inverse), and helper for solving 2x2 linear systems.
 //!
-//! [Matrix4x4]: struct.Matrix4x4.html
-//! [Transform]: struct.Transform.html
+//! [Matrix4x4]: crate::core::transform::Matrix4x4
+//! [Transform]: crate::core::transform::Transform
 use std::fmt;
 use std::ops::Mul;
 
@@ -482,6 +482,8 @@ impl Transform {
         }
     }
 
+    /// Create a `Transform` based on the camera position (`pos`), the position of the object in
+    /// focus (`look`) and an up vector (`up).
     pub fn look_at<V>(pos: V, look: V, up: V) -> Transform
     where
         V: Into<Vector3f>,

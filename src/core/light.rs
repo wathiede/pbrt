@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Traits and helper types to define lighting.
+
 use std::fmt::Debug;
 
 /// Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
