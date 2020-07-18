@@ -19,6 +19,7 @@
 //! [Spectrum]: crate::core::spectrum::Spectrum
 use std::cmp;
 use std::fmt;
+use std::ops::Mul;
 
 use crate::Float;
 
@@ -45,6 +46,17 @@ impl From<Float> for $t {
     fn from(value: Float) -> Self {
         Self {
             c: [value; $n],
+        }
+    }
+}
+
+impl Mul for $t {
+    type Output = Self;
+    fn mul(self, rhs:Self)->Self::Output {
+        let mut tmp = [0.;$n];
+        self.c.iter().zip(rhs.c.iter()).enumerate().for_each(|(i, (l,r))| tmp[i]=l*r);
+        Self{
+            c:tmp,
         }
     }
 }
@@ -112,7 +124,7 @@ pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
 }
 
 /// `RGBSpectrum` is a sample implemented with 3 values at red, green and blue points in the
-/// spectrum.
+/// spectrum.  Values stored are in the range [0., 1.].
 #[derive(Debug, Clone, PartialEq)]
 pub struct RGBSpectrum {
     c: [Float; 3],
@@ -125,10 +137,20 @@ common_implementation!(RGBSpectrum, 3);
 pub type Spectrum = RGBSpectrum;
 
 impl RGBSpectrum {
+    /// Create an RGBSpectrum with each component set to `v`.
+    pub fn new(v: Float) -> RGBSpectrum {
+        RGBSpectrum { c: [v, v, v] }
+    }
     /// extract this `RGBSpectrum`'s value in the XYZ color space.
     pub fn to_xyz(&self) -> [Float; 3] {
         rgb_to_xyz(self.c)
     }
+
+    /// extract this `RGBSpectrum`'s value in the RGB color space.
+    pub fn to_rgb(&self) -> [Float; 3] {
+        self.c
+    }
+
     /// create an `RGBSpectrum` from the given tristimulus values in sRGB color space.
     pub fn from_rgb(c: [Float; 3]) -> RGBSpectrum {
         let s = RGBSpectrum { c };
