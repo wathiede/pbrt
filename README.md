@@ -19,15 +19,13 @@ If you're looking for a more fully-formed implementation, check out
  * Output parameters rewritten as multiple return values.
  * Functions that use bool return type with out parameter are rewritten to use
    Option<>.
- * Scene parsing is two-phase.  First phase parses the file into a series of
-   enums, see parser::{WorldBlock,OptionsBlock} into a parser::Scene object.
-   The second phase then walks the Scene object calling api::API methods as
-   appropriate.
  * Constructors: zero-parameter constructors should implement
    [`Default`](https://doc.rust-lang.org/std/default/trait.Default.html), or
    helpfully named constructors like `identity`.  Type changing constructors
    should implement
    [`From`](https://doc.rust-lang.org/std/convert/trait.From.html).
- * `pbrt.h`'s functionality has been put in `lib.rs`.  This is a different location from the C++ implmentation.  It allows usage like `use pbrt::Float;` instead of the more stuttery `use pbrt::core::pbrt::Float;`
+ * `pbrt.h`'s functionality has been put in `lib.rs`.  This is a different
+   location from the C++ implementation.  It allows usage like `use pbrt::Float;`
+   instead of the more stuttery `use pbrt::core::pbrt::Float;`
  * `Inside` and `InsideExclusive` are members on `Bounds[23]<T>` to overcome
    differences in parameter overloading abilities between C++ and rust.
