@@ -270,8 +270,14 @@ mod tests {
     use pretty_assertions::assert_eq;
     use tempfile::Builder;
 
-    #[test]
-    fn roundtrip() {
+    struct TestImage {
+        name: String,
+        res: Point2i,
+        bounds: Bounds2i,
+        pixels: Vec<Float>,
+    }
+
+    fn make_image(ext: &str) -> TestImage {
         let res: Point2i = [64, 64].into();
         let bounds: Bounds2i = [[0, 0].into(), res].into();
         let pixels: Vec<Float> = bounds
@@ -285,28 +291,80 @@ mod tests {
             .prefix("imageio-roundtrip")
             // Use pfm over png, because 8-bit formats apply gamma correction on write, therefore
             // roundtrip test fails.
-            .suffix(".pfm")
+            .suffix(ext)
             .tempfile()
             .expect("failed to create NamedTempFile");
-        let name = f.path().to_string_lossy();
+        let name = f.path().to_string_lossy().to_string();
+        TestImage {
+            name,
+            res,
+            bounds,
+            pixels,
+        }
+    }
 
-        write_image(&name, &pixels, bounds, res);
+    #[test]
+    fn roundtrip_png() {
+        let test_img = make_image(".png");
+        write_image(
+            &test_img.name,
+            &test_img.pixels,
+            test_img.bounds,
+            test_img.res,
+        );
         // To keep image around for inspection, force exit.  This causes the unit test to leak
         // images.
         // dbg!(&name);
         // std::process::exit(1);
-        match read_image(&name) {
+        match read_image(&test_img.name) {
             Ok((read_spectrum, read_res)) => {
                 let read_pixels: Vec<Float> = read_spectrum
                     .into_iter()
                     .map(|s| s.to_rgb().to_vec().into_iter())
                     .flatten()
                     .collect();
-                assert_eq!(res, read_res);
+                // 8-bit image formats gamma correct on save, so we need to gamma correct the
+                // original pixels before comparing.
+                let test_pixels: Vec<_> = test_img
+                    .pixels
+                    .into_iter()
+                    .map(|p| to_byte(p) as Float / 255.)
+                    .collect();
+                assert_eq!(test_img.res, read_res);
                 // Sample image for easier to digest failures.
-                assert_eq!(&pixels[..12], &read_pixels[..12]);
+                assert_eq!(&test_pixels[..12], &read_pixels[..12]);
                 // Still compare the whole image for correctness.
-                assert_eq!(pixels, read_pixels);
+                assert_eq!(test_pixels, read_pixels);
+            }
+            Err(e) => panic!(e.to_string()),
+        }
+    }
+
+    #[test]
+    fn roundtrip_pfm() {
+        let test_img = make_image(".pfm");
+        write_image(
+            &test_img.name,
+            &test_img.pixels,
+            test_img.bounds,
+            test_img.res,
+        );
+        // To keep image around for inspection, force exit.  This causes the unit test to leak
+        // images.
+        // dbg!(&name);
+        // std::process::exit(1);
+        match read_image(&test_img.name) {
+            Ok((read_spectrum, read_res)) => {
+                let read_pixels: Vec<Float> = read_spectrum
+                    .into_iter()
+                    .map(|s| s.to_rgb().to_vec().into_iter())
+                    .flatten()
+                    .collect();
+                assert_eq!(test_img.res, read_res);
+                // Sample image for easier to digest failures.
+                assert_eq!(&test_img.pixels[..12], &read_pixels[..12]);
+                // Still compare the whole image for correctness.
+                assert_eq!(test_img.pixels, read_pixels);
             }
             Err(e) => panic!(e.to_string()),
         }
