@@ -19,7 +19,7 @@
 //! [Spectrum]: crate::core::spectrum::Spectrum
 use std::cmp;
 use std::fmt;
-use std::ops::Mul;
+use std::ops::{Mul, MulAssign};
 
 use crate::Float;
 
@@ -50,10 +50,16 @@ impl From<Float> for $t {
     }
 }
 
+impl MulAssign for $t {
+    fn mul_assign(&mut self, rhs:Self) {
+        self.c.iter_mut().zip(rhs.c.iter()).enumerate().for_each(|(i, (l, r))| *l *= r);
+    }
+}
+
 impl Mul for $t {
     type Output = Self;
-    fn mul(self, rhs:Self)->Self::Output {
-        let mut tmp = [0.;$n];
+    fn mul(self, rhs:Self) -> Self::Output {
+        let mut tmp = [0.; $n];
         self.c.iter().zip(rhs.c.iter()).enumerate().for_each(|(i, (l,r))| tmp[i]=l*r);
         Self{
             c:tmp,
@@ -140,6 +146,11 @@ impl RGBSpectrum {
     /// Create an RGBSpectrum with each component set to `v`.
     pub fn new(v: Float) -> RGBSpectrum {
         RGBSpectrum { c: [v, v, v] }
+    }
+    /// Create an RGBSpectrum from Self.  This is a no-op on RGBSpectrum, but exists for a unified
+    /// API with SampledSpectrum.
+    pub fn to_rgb_spectrum(&self) -> RGBSpectrum {
+        RGBSpectrum { c: self.c }
     }
     /// extract this `RGBSpectrum`'s value in the XYZ color space.
     pub fn to_xyz(&self) -> [Float; 3] {
