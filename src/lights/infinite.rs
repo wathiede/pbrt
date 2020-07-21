@@ -17,27 +17,74 @@
 //! [Light]: crate::core::light::Light
 use std::sync::Arc;
 
-use crate::core::light::Light;
+use crate::core::geometry::Point3f;
+use crate::core::imageio::read_image;
+use crate::core::light::{Light, LightData};
+use crate::core::mipmap::MIPMap;
 use crate::core::paramset::ParamSet;
+use crate::core::sampling::Distribution2D;
+use crate::core::spectrum::{RGBSpectrum, Spectrum};
 use crate::core::transform::Transform;
+use crate::Float;
 
 #[derive(Debug)]
 /// InfiniteAreaLight represents a light infinitely far away that surrounds the entire scene.
 pub struct InfiniteAreaLight {
-    /*
-// InfiniteAreaLight Private Data
-std::unique_ptr<MIPMap<RGBSpectrum>> Lmap;
-Point3f worldCenter;
-Float worldRadius;
-std::unique_ptr<Distribution2D> distribution;
- */}
+    light_data: LightData,
+    lmap: MIPMap<RGBSpectrum>,
+    world_center: Point3f,
+    world_radius: Float,
+    distribution: Distribution2D,
+}
 
 impl Light for InfiniteAreaLight {}
+impl InfiniteAreaLight {
+    fn new(
+        _light2world: &Transform,
+        l: &Spectrum,
+        _n_samples: isize,
+        texmap: &str,
+    ) -> InfiniteAreaLight {
+        let (texels, resolution) = if !texmap.is_empty() {
+            if let Ok((mut texels, resolution)) = read_image(texmap) {
+                texels.iter_mut().for_each(|p| *p *= l.to_rgb_spectrum());
+                (texels, resolution)
+            } else {
+                (vec![l.to_rgb_spectrum()], [1, 1].into())
+            }
+        } else {
+            (vec![l.to_rgb_spectrum()], [1, 1].into())
+        };
+        let _ = texels;
+        let _ = resolution;
+        //lmap.reset(MIPMap::new(resolution, texels));
+
+        todo!("InfiniteAreaLight::new()");
+        /*
+        InfiniteAreaLight {
+            light_data: LightData::new(LightFlags::Infinite, n_samples, MediumInterface::default()),
+            lmap,
+            world_center,
+            world_radius,
+            distribution,
+        }
+        */
+    }
+}
 
 /// Creates an InfiniteAreaLight with the given `Transform` and parameters.
-pub fn create_infinite_light(
-    _light2world: &Transform,
-    _params: &ParamSet,
-) -> Arc<InfiniteAreaLight> {
-    todo!("lights::infinite::create_infinite_light");
+pub fn create_infinite_light(light2world: &Transform, params: &ParamSet) -> Arc<InfiniteAreaLight> {
+    let l = params.find_one_spectrum("L", Spectrum::new(1.0));
+    let sc = params.find_one_spectrum("scale", Spectrum::new(1.0));
+    let texmap = params.find_one_filename("mapname", "");
+    let n_samples = params.find_one_int("samples", params.find_one_int("nsamples", 1));
+    // TODO(wathiede): do we plumb options into this constructor or make options a singleton random
+    // things can grab?
+    //if (PbrtOptions.quickRender) nSamples =  (n_samples / 4).max(1);
+    Arc::new(InfiniteAreaLight::new(
+        light2world,
+        &(l * sc),
+        n_samples,
+        &texmap,
+    ))
 }

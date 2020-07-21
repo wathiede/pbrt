@@ -16,12 +16,13 @@ thiserror = "1.0.20"
 stderrlog = "0.4.3"
 anyhow = "1.0.31"
 memmap = "0.7.0"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 pretty_assertions = "0.5.0"
 rayon = "1.2.1"
+tempfile = "3.1.0"
 
 [features]
 float-as-double = []
 sampled-spectrum = []
-uble = []

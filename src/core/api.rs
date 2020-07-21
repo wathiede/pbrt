@@ -210,7 +210,7 @@ struct RenderOptions {
     camera_name: String,
     camera_params: ParamSet,
     camera_to_world: TransformSet,
-    named_media: HashMap<String, Medium>,
+    named_media: HashMap<String, Arc<dyn Medium>>,
     lights: Vec<Arc<dyn Light>>,
     have_scattering_media: bool,
     /* TODO(wathiede):
@@ -269,17 +269,17 @@ impl GraphicsState {
     fn create_medium_interface<'ro>(
         &mut self,
         render_options: &'ro RenderOptions,
-    ) -> MediumInterface<'ro> {
+    ) -> MediumInterface {
         let mut m = MediumInterface::default();
         if self.current_inside_medium != "" {
             match render_options.named_media.get(&self.current_inside_medium) {
-                Some(medium) => m.inside = Some(medium),
+                Some(medium) => m.inside = Some(Arc::clone(medium)),
                 None => error!("Named medium '{}' undefined.", self.current_inside_medium),
             }
         }
         if self.current_outside_medium != "" {
             match render_options.named_media.get(&self.current_outside_medium) {
-                Some(medium) => m.outside = Some(medium),
+                Some(medium) => m.outside = Some(Arc::clone(medium)),
                 None => error!("Named medium '{}' undefined.", self.current_outside_medium),
             }
         }
@@ -335,11 +335,18 @@ fn make_light(
     params: &ParamSet,
     light2world: &Transform,
     _medium_interface: &MediumInterface,
-) -> Arc<dyn Light> {
-    match name {
+) -> Option<Arc<dyn Light>> {
+    Some(match name {
         "infinite" | "exinfinite" => create_infinite_light(light2world, params),
-        _ => todo!("only infinite and exinfinite lights are currently implemented"),
-    }
+        "point" | "spot" | "goniometric" | "projection" | "distant" => {
+            todo!("only infinite and exinfinite lights are currently implemented")
+        }
+        _ => {
+            warn!("Light '{}' unknown.", name);
+            params.report_unused();
+            return None;
+        }
+    })
 }
 
 /// PbrtAPI is the top-level global container for all rendering functionality.
@@ -673,8 +680,10 @@ impl API for PbrtAPI {
         let mi = self
             .graphics_state
             .create_medium_interface(&self.render_options);
-        let lt = make_light(name, &params, &self.current_transform[0], &mi);
-        let _ = lt;
+        match make_light(name, &params, &self.current_transform[0], &mi) {
+            None => error!("light_source: light type '{}' unknown.", name),
+            Some(lt) => self.render_options.lights.push(lt),
+        };
     }
     /// Scales the currently active transform matrix by the given values.
     /// # Examples
@@ -804,7 +813,7 @@ impl API for PbrtAPI {
     fn make_named_medium(&mut self, name: &str, params: &mut ParamSet) {
         verify_initialized!(self, "pbrt.make_named_medium");
         self.warn_if_animated_transform("pbrt.make_named_medium");
-        let kind = params.find_one_string("type", "".to_string());
+        let kind = params.find_one_string("type", "");
         let medium = make_medium(&kind, params, self.current_transform[0]);
         self.render_options
             .named_media
@@ -921,7 +930,7 @@ fn make_spectrum_texture(
     }
 }
 
-fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) -> Medium {
+fn make_medium(_name: &str, _params: &mut ParamSet, _medium2world: Transform) -> Arc<dyn Medium> {
     unimplemented!("make_medium");
 }
 

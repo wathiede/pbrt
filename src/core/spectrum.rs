@@ -52,7 +52,7 @@ impl From<Float> for $t {
 
 impl MulAssign for $t {
     fn mul_assign(&mut self, rhs:Self) {
-        self.c.iter_mut().zip(rhs.c.iter()).enumerate().for_each(|(i, (l, r))| *l *= r);
+        self.c.iter_mut().zip(rhs.c.iter()).for_each(|(l, r)| *l *= r);
     }
 }
 

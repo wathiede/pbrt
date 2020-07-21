@@ -14,19 +14,21 @@
 
 //! Mediums represent volumetric scattering.
 
+use std::fmt::Debug;
+use std::sync::Arc;
+
 // TODO(wathiede): This is a virtual base class in C++, can we make it a trait?  How do you have a
 // collection of trait objects?
 /// Stub type for flushing out [PbrtAPI].  TODO(wathiede): actually implement and document.
 ///
 /// [PbrtAPI]: crate::core::api::PbrtAPI
-#[derive(Debug)]
-pub struct Medium {}
+pub trait Medium: Debug {}
 
 #[derive(Debug, Default)]
 /// MediumInterface defines the border between two media.
-pub struct MediumInterface<'m> {
+pub struct MediumInterface {
     /// The `Medium` inside the object.
-    pub inside: Option<&'m Medium>,
+    pub inside: Option<Arc<dyn Medium>>,
     /// The `Medium` outside the object.
-    pub outside: Option<&'m Medium>,
+    pub outside: Option<Arc<dyn Medium>>,
 }

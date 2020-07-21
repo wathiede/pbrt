@@ -449,21 +449,46 @@ impl ParamSet {
     /// use pbrt::core::paramset::testutils::make_string_param_set;
     ///
     /// let ps = make_string_param_set("value", vec!["found".to_string()]);
+    /// assert_eq!(ps.find_one_string("value", "default"), "found".to_string());
     /// assert_eq!(
-    ///     ps.find_one_string("value", "default".to_string()),
-    ///     "found".to_string()
-    /// );
-    /// assert_eq!(
-    ///     ps.find_one_string("non-existent", "default".to_string()),
+    ///     ps.find_one_string("non-existent", "default"),
     ///     "default".to_string()
     /// );
     /// ```
-    pub fn find_one_string(&self, name: &str, default: String) -> String {
+    pub fn find_one_string(&self, name: &str, default: &str) -> String {
         match self.find(name) {
-            Some(Value::String(pl)) => pl.0.first().map_or(default, |v| v.clone()),
-            None => default,
+            Some(Value::String(pl)) => pl.0.first().map_or(default.to_string(), |v| v.clone()),
+            None => default.to_string(),
             _ => panic!("Unexpected type returned from find"),
         }
+    }
+
+    /// find_one_filename will return the first parameter in the set for the given
+    /// `name`.  If no values are found `default` is returned. If the value by that
+    /// name is found but isn't of type `Filename` then `default` will be returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use pbrt::core::paramset::testutils::make_filename_param_set;
+    ///
+    /// let ps = make_filename_param_set("value", vec!["found".to_string()]);
+    /// assert_eq!(
+    ///     ps.find_one_filename("value", "default"),
+    ///     "found".to_string()
+    /// );
+    /// assert_eq!(
+    ///     ps.find_one_filename("non-existent", "default"),
+    ///     "default".to_string()
+    /// );
+    /// ```
+    pub fn find_one_filename(&self, name: &str, default: &str) -> String {
+        let filename = self.find_one_string(name, "");
+        if filename.is_empty() {
+            return default.to_string();
+        }
+        // TODO(wathiede): need to create equivalents for AbsolutePath and ResolveFilename and
+        // wrap `filename` in them.
+        filename
     }
 
     /// find_one_texture will return the first parameter in the set for the given
@@ -475,19 +500,16 @@ impl ParamSet {
     /// use pbrt::core::paramset::testutils::make_texture_param_set;
     ///
     /// let ps = make_texture_param_set("value", vec!["found".to_string()]);
+    /// assert_eq!(ps.find_one_texture("value", "default"), "found".to_string());
     /// assert_eq!(
-    ///     ps.find_one_texture("value", "default".to_string()),
-    ///     "found".to_string()
-    /// );
-    /// assert_eq!(
-    ///     ps.find_one_texture("non-existent", "default".to_string()),
+    ///     ps.find_one_texture("non-existent", "default"),
     ///     "default".to_string()
     /// );
     /// ```
-    pub fn find_one_texture(&self, name: &str, default: String) -> String {
+    pub fn find_one_texture(&self, name: &str, default: &str) -> String {
         match self.find(name) {
-            Some(Value::Texture(pl)) => pl.0.first().map_or(default, |v| v.clone()),
-            None => default,
+            Some(Value::Texture(pl)) => pl.0.first().map_or(default.to_string(), |v| v.clone()),
+            None => default.to_string(),
             _ => panic!("Unexpected type returned from find"),
         }
     }
@@ -633,7 +655,7 @@ mod tests {
         .into();
 
         let test2: String = "one".to_owned();
-        assert_eq!(ps.find_one_string("test2", "one".to_string()), test2);
+        assert_eq!(ps.find_one_string("test2", "one"), test2);
 
         // let test3: String = "one".to_owned();
         // assert_eq!(ps.find("test3").unwrap_or("one").first(), test3);

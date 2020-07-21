@@ -211,12 +211,9 @@ pub fn make_spectrum(name: &str, vals: Vec<Spectrum>) -> ParamSetItem {
 /// use pbrt::core::paramset::testutils::make_string_param_set;
 ///
 /// let ps = make_string_param_set("value", vec!["found".to_string()]);
+/// assert_eq!(ps.find_one_string("value", "default"), "found".to_string());
 /// assert_eq!(
-///     ps.find_one_string("value", "default".to_string()),
-///     "found".to_string()
-/// );
-/// assert_eq!(
-///     ps.find_one_string("non-existent", "default".to_string()),
+///     ps.find_one_string("non-existent", "default"),
 ///     "default".to_string()
 /// );
 /// ```
@@ -229,6 +226,15 @@ pub fn make_string(name: &str, vals: Vec<String>) -> ParamSetItem {
     ParamSetItem::new(name, &Value::String(ParamList(vals)))
 }
 
+pub fn make_filename_param_set(name: &str, vals: Vec<String>) -> ParamSet {
+    vec![make_filename(name, vals)].into()
+}
+
+/// Creates a `ParamSetItem` with `name` set to `vals`.
+pub fn make_filename(name: &str, vals: Vec<String>) -> ParamSetItem {
+    ParamSetItem::new(name, &Value::String(ParamList(vals)))
+}
+
 /// Creates a `ParamSet` with one entry containing `name` and set to `vals`.
 ///
 /// # Examples
@@ -236,12 +242,9 @@ pub fn make_string(name: &str, vals: Vec<String>) -> ParamSetItem {
 /// use pbrt::core::paramset::testutils::make_texture_param_set;
 ///
 /// let ps = make_texture_param_set("value", vec!["found".to_string()]);
+/// assert_eq!(ps.find_one_texture("value", "default"), "found".to_string());
 /// assert_eq!(
-///     ps.find_one_texture("value", "default".to_string()),
-///     "found".to_string()
-/// );
-/// assert_eq!(
-///     ps.find_one_texture("non-existent", "default".to_string()),
+///     ps.find_one_texture("non-existent", "default"),
 ///     "default".to_string()
 /// );
 /// ```
