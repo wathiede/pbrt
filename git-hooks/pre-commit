@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 cargo fmt -- --check || (echo 'To fix, run: cargo +nightly fmt' && false)
-cargo test --features=float-as-double --quiet
+cargo test --features=float-as-double,sampled-spectrum --quiet
 FILES_AFFECTED=$(git diff-index --name-only --cached --diff-filter=AMR HEAD|xargs)
 if [ ! -z "${FILES_AFFECTED}" ]; then
   scripts/insert.py --presubmit ${FILES_AFFECTED:?}
