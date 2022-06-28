@@ -17,8 +17,6 @@
 //! [RGBSpectrum]: crate::core::spectrum::RGBSpectrum
 //! [SampledSpectrum]: crate::core::spectrum::SampledSpectrum
 //! [Spectrum]: crate::core::spectrum::Spectrum
-use std::cmp;
-use std::fmt;
 use std::ops::{Mul, MulAssign};
 
 use crate::Float;
@@ -32,82 +30,24 @@ pub enum SpectrumType {
     Illuminant,
 }
 
-macro_rules! common_implementation {
-    ($($t:ty, $n:expr)*) => ($(
-impl Default for $t {
-    fn default() -> $t {
-     Self {
-            c: [0.; $n],
-        }
-    }
-}
-
-impl From<Float> for $t {
-    fn from(value: Float) -> Self {
-        Self {
-            c: [value; $n],
-        }
-    }
-}
-
-impl MulAssign for $t {
-    fn mul_assign(&mut self, rhs:Self) {
-        self.c.iter_mut().zip(rhs.c.iter()).for_each(|(l, r)| *l *= r);
-    }
-}
-
-impl Mul for $t {
-    type Output = Self;
-    fn mul(self, rhs:Self) -> Self::Output {
-        let mut tmp = [0.; $n];
-        self.c.iter().zip(rhs.c.iter()).enumerate().for_each(|(i, (l,r))| tmp[i]=l*r);
-        Self{
-            c:tmp,
-        }
-    }
-}
-
-impl $t {
-    #[allow(dead_code)]
-    fn has_nans(&self) -> bool {
-        for i in 0..$n {
-            if self.c[i].is_nan() {
-                return true;
-            }
-        }
-        false
-    }
-}
-
-    )*)
-}
-
 const N_SPECTRAL_SAMPLES: usize = 60;
 /// `SampledSpectrum` is a spectrum represented by `N_SPECTRAL_SAMPLES` (currently 60) values
 /// evenly spread across 400 nm to 700 nm.
-pub struct SampledSpectrum {
-    c: [Float; N_SPECTRAL_SAMPLES],
-}
+pub type SampledSpectrum = CoefficientSpectrum<N_SPECTRAL_SAMPLES>;
 
-common_implementation!(SampledSpectrum, N_SPECTRAL_SAMPLES);
-
-impl fmt::Debug for SampledSpectrum {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "SampledSpectrum({:?})", &self.c[..])
-    }
-}
-
+/*
 impl cmp::PartialEq for SampledSpectrum {
-    fn eq(&self, other: &SampledSpectrum) -> bool {
-        let it = self.c.iter().zip(other.c.iter());
-        for (&l, &r) in it {
-            if l != r {
-                return false;
-            }
-        }
-        true
-    }
+fn eq(&self, other: &SampledSpectrum) -> bool {
+let it = self.c.iter().zip(other.c.iter());
+for (&l, &r) in it {
+if l != r {
+return false;
 }
+}
+true
+}
+}
+*/
 
 /// Convert tristimulus values in the XYZ color space (as defined by CIE) matching the human eye's
 /// response to RGB values in the sRGB color space.
@@ -130,14 +70,65 @@ pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
     ]
 }
 
-/// `RGBSpectrum` is a sample implemented with 3 values at red, green and blue points in the
-/// spectrum.  Values stored are in the range [0., 1.].
+/// `CoefficientSpectrum is a spectrum represented by an arbitrary number of samples spread across
+/// the color spectrum. See doc for [RGBSpectrum] and [SampledSpectrum] for concrete
+/// implementations.
+/// [RGBSpectrum]: crate::core::spectrum::RGBSpectrum
+/// [SampledSpectrum]: crate::core::spectrum::SampledSpectrum
 #[derive(Debug, Clone, PartialEq)]
-pub struct RGBSpectrum {
-    c: [Float; 3],
+pub struct CoefficientSpectrum<const N: usize> {
+    // TODO(wathiede): try removing pub on `c`.
+    c: [Float; N],
 }
 
-common_implementation!(RGBSpectrum, 3);
+impl<const N: usize> From<Float> for CoefficientSpectrum<N> {
+    fn from(f: Float) -> CoefficientSpectrum<N> {
+        CoefficientSpectrum { c: [f; N] }
+    }
+}
+
+impl<const N: usize> Default for CoefficientSpectrum<N> {
+    fn default() -> CoefficientSpectrum<N> {
+        Float::from(0_u8).into()
+    }
+}
+
+impl<const N: usize> MulAssign for CoefficientSpectrum<N> {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.c
+            .iter_mut()
+            .zip(rhs.c.iter())
+            .for_each(|(l, r)| *l *= r);
+    }
+}
+
+impl<const N: usize> Mul for CoefficientSpectrum<N> {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        let mut tmp = [0.; N];
+        self.c
+            .iter()
+            .zip(rhs.c.iter())
+            .enumerate()
+            .for_each(|(i, (l, r))| tmp[i] = l * r);
+        Self { c: tmp }
+    }
+}
+
+impl<const N: usize> CoefficientSpectrum<N> {
+    #[allow(dead_code)]
+    fn has_nans(&self) -> bool {
+        for i in 0..N {
+            if self.c[i].is_nan() {
+                return true;
+            }
+        }
+        false
+    }
+}
+/// `RGBSpectrum` is a sample implemented with 3 values at red, green and blue points in the
+/// spectrum.  Values stored are in the range [0., 1.].
+pub type RGBSpectrum = CoefficientSpectrum<3>;
 
 #[cfg(not(feature = "sampled-spectrum"))]
 /// Define the `Spectrum` type to be `RGBSpectrum` when compiling without the `sampled-spectrum` feature enabled.
