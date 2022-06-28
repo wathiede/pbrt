@@ -30,46 +30,6 @@ pub enum SpectrumType {
     Illuminant,
 }
 
-const N_SPECTRAL_SAMPLES: usize = 60;
-/// `SampledSpectrum` is a spectrum represented by `N_SPECTRAL_SAMPLES` (currently 60) values
-/// evenly spread across 400 nm to 700 nm.
-pub type SampledSpectrum = CoefficientSpectrum<N_SPECTRAL_SAMPLES>;
-
-/*
-impl cmp::PartialEq for SampledSpectrum {
-fn eq(&self, other: &SampledSpectrum) -> bool {
-let it = self.c.iter().zip(other.c.iter());
-for (&l, &r) in it {
-if l != r {
-return false;
-}
-}
-true
-}
-}
-*/
-
-/// Convert tristimulus values in the XYZ color space (as defined by CIE) matching the human eye's
-/// response to RGB values in the sRGB color space.
-#[allow(clippy::excessive_precision)]
-pub fn xyz_to_rgb(xyz: [Float; 3]) -> [Float; 3] {
-    [
-        3.240479 * xyz[0] - 1.537150 * xyz[1] - 0.498535 * xyz[2],
-        -0.969256 * xyz[0] + 1.875991 * xyz[1] + 0.041556 * xyz[2],
-        0.055648 * xyz[0] - 0.204043 * xyz[1] + 1.057311 * xyz[2],
-    ]
-}
-
-/// Convert tristimulus values in the sRGB color space values to the XYZ color space (as defined by
-/// CIE) matching the human eye's response.
-pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
-    [
-        0.412453 * rgb[0] + 0.357580 * rgb[1] + 0.180423 * rgb[2],
-        0.212671 * rgb[0] + 0.715160 * rgb[1] + 0.072169 * rgb[2],
-        0.019334 * rgb[0] + 0.119193 * rgb[1] + 0.950227 * rgb[2],
-    ]
-}
-
 /// `CoefficientSpectrum is a spectrum represented by an arbitrary number of samples spread across
 /// the color spectrum. See doc for [RGBSpectrum] and [SampledSpectrum] for concrete
 /// implementations.
@@ -126,6 +86,64 @@ impl<const N: usize> CoefficientSpectrum<N> {
         false
     }
 }
+
+const N_SPECTRAL_SAMPLES: usize = 60;
+/// `SampledSpectrum` is a spectrum represented by `N_SPECTRAL_SAMPLES` (currently 60) values
+/// evenly spread across 400 nm to 700 nm.
+pub type SampledSpectrum = CoefficientSpectrum<N_SPECTRAL_SAMPLES>;
+
+impl SampledSpectrum {
+    /// Create an SampledSpectrum with each component set to `v`.
+    pub fn new(v: Float) -> SampledSpectrum {
+        v.into()
+    }
+    /// Create an SampledSpectrum from Self.  This is a no-op on SampledSpectrum, but exists for a unified
+    /// API with SampledSpectrum.
+    pub fn to_rgb_spectrum(&self) -> SampledSpectrum {
+        todo!("SampledSpectrum::to_rgb_spectrum");
+    }
+    /// extract this `SampledSpectrum`'s value in the XYZ color space.
+    pub fn to_xyz(&self) -> [Float; 3] {
+        todo!("SampledSpectrum::to_xyz")
+    }
+
+    /// extract this `SampledSpectrum`'s value in the RGB color space.
+    pub fn to_rgb(&self) -> [Float; 3] {
+        todo!("SampledSpectrum::to_rgb")
+    }
+
+    /// create an `SampledSpectrum` from the given tristimulus values in sRGB color space.
+    pub fn from_rgb(c: [Float; 3]) -> SampledSpectrum {
+        todo!("SampledSpectrum::from_rgb({:?})", c)
+    }
+
+    /// create an `SampledSpectrum` from the given tristimulus values in XYZ color space.
+    pub fn from_xyz(c: [Float; 3]) -> SampledSpectrum {
+        todo!("SampledSpectrum::from_xyz({:?})", c)
+    }
+}
+
+/// Convert tristimulus values in the XYZ color space (as defined by CIE) matching the human eye's
+/// response to RGB values in the sRGB color space.
+#[allow(clippy::excessive_precision)]
+pub fn xyz_to_rgb(xyz: [Float; 3]) -> [Float; 3] {
+    [
+        3.240479 * xyz[0] - 1.537150 * xyz[1] - 0.498535 * xyz[2],
+        -0.969256 * xyz[0] + 1.875991 * xyz[1] + 0.041556 * xyz[2],
+        0.055648 * xyz[0] - 0.204043 * xyz[1] + 1.057311 * xyz[2],
+    ]
+}
+
+/// Convert tristimulus values in the sRGB color space values to the XYZ color space (as defined by
+/// CIE) matching the human eye's response.
+pub fn rgb_to_xyz(rgb: [Float; 3]) -> [Float; 3] {
+    [
+        0.412453 * rgb[0] + 0.357580 * rgb[1] + 0.180423 * rgb[2],
+        0.212671 * rgb[0] + 0.715160 * rgb[1] + 0.072169 * rgb[2],
+        0.019334 * rgb[0] + 0.119193 * rgb[1] + 0.950227 * rgb[2],
+    ]
+}
+
 /// `RGBSpectrum` is a sample implemented with 3 values at red, green and blue points in the
 /// spectrum.  Values stored are in the range [0., 1.].
 pub type RGBSpectrum = CoefficientSpectrum<3>;
@@ -137,7 +155,7 @@ pub type Spectrum = RGBSpectrum;
 impl RGBSpectrum {
     /// Create an RGBSpectrum with each component set to `v`.
     pub fn new(v: Float) -> RGBSpectrum {
-        RGBSpectrum { c: [v, v, v] }
+        v.into()
     }
     /// Create an RGBSpectrum from Self.  This is a no-op on RGBSpectrum, but exists for a unified
     /// API with SampledSpectrum.
