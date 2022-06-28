@@ -57,7 +57,7 @@ impl<T> MIPMap<T> {
     /// Create a MIPMap for the texture represented by `data` of size `resolution`.
     pub fn new(resolution: &Point2i, data: Vec<T>) -> Self {
         let _ = MIPMap {
-            resolution: resolution.clone(),
+            resolution: *resolution,
             // TODO(wathiede): build actual pyramid,
             pyramid: vec![data],
             do_trilinear: false,

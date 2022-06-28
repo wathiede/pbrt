@@ -99,8 +99,8 @@ impl fmt::Debug for SampledSpectrum {
 
 impl cmp::PartialEq for SampledSpectrum {
     fn eq(&self, other: &SampledSpectrum) -> bool {
-        let mut it = self.c.iter().zip(other.c.iter());
-        while let Some((&l, &r)) = it.next() {
+        let it = self.c.iter().zip(other.c.iter());
+        for (&l, &r) in it {
             if l != r {
                 return false;
             }
@@ -111,6 +111,7 @@ impl cmp::PartialEq for SampledSpectrum {
 
 /// Convert tristimulus values in the XYZ color space (as defined by CIE) matching the human eye's
 /// response to RGB values in the sRGB color space.
+#[allow(clippy::excessive_precision)]
 pub fn xyz_to_rgb(xyz: [Float; 3]) -> [Float; 3] {
     [
         3.240479 * xyz[0] - 1.537150 * xyz[1] - 0.498535 * xyz[2],

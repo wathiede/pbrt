@@ -41,7 +41,7 @@ pub struct FilmTilePixel {
     filter_weight_sum: Float,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// Top level pixel type for `Film`.
 /// Not public in the C++ implementation, but necessary for docttest.
 pub struct Pixel {
@@ -52,16 +52,6 @@ pub struct Pixel {
     splat_xyz: [Float; 3],
     /* TODO(wathiede): figure how how to do this and if it is worth it to prevent unaligned struct.
      * _pad: Float, */
-}
-
-impl Default for Pixel {
-    fn default() -> Self {
-        Pixel {
-            xyz: Default::default(),
-            filter_weight_sum: Default::default(),
-            splat_xyz: Default::default(),
-        }
-    }
 }
 
 /// Film models the sensor on a simulated camera.  It may have a `crop_window` that limits
@@ -321,8 +311,8 @@ impl Film {
             let tile_pixel = tile.get_pixel(pixel);
             let merge_pixel = &mut pixels[self.pixel_offset(pixel)];
             let xyz = tile_pixel.contrib_sum.to_xyz();
-            for i in 0..3 {
-                merge_pixel.xyz[i] += xyz[i];
+            for (i, item) in xyz.iter().enumerate() {
+                merge_pixel.xyz[i] += item;
             }
             merge_pixel.filter_weight_sum += tile_pixel.filter_weight_sum;
         }
@@ -345,12 +335,11 @@ impl Film {
         let mut rgb: Vec<Float> = (0..(3 * self.cropped_pixel_bounds.area() as usize))
             .map(|_| 0.)
             .collect();
-        let mut offset = 0;
         let mut pixels = self.pixels.lock().unwrap();
-        for p in self.cropped_pixel_bounds.iter() {
+        for (offset, p) in self.cropped_pixel_bounds.iter().enumerate() {
             let pixel = &mut pixels[self.pixel_offset(p)];
             let c = xyz_to_rgb(pixel.xyz);
-            rgb[3 * offset + 0] = c[0];
+            rgb[3 * offset] = c[0];
             rgb[3 * offset + 1] = c[1];
             rgb[3 * offset + 2] = c[2];
 
@@ -359,22 +348,20 @@ impl Film {
             if filter_weight_sum != 0. {
                 let inv_wt = 1. / filter_weight_sum;
 
-                rgb[3 * offset + 0] = (rgb[3 * offset] * inv_wt).max(0.);
+                rgb[3 * offset] = (rgb[3 * offset] * inv_wt).max(0.);
                 rgb[3 * offset + 1] = (rgb[3 * offset + 1] * inv_wt).max(0.);
                 rgb[3 * offset + 2] = (rgb[3 * offset + 2] * inv_wt).max(0.);
             }
 
             // Add splat value at pixel
             let splat_rgb = xyz_to_rgb(pixel.splat_xyz);
-            rgb[3 * offset + 0] += splat_scale * splat_rgb[0];
+            rgb[3 * offset] += splat_scale * splat_rgb[0];
             rgb[3 * offset + 1] += splat_scale * splat_rgb[1];
             rgb[3 * offset + 2] += splat_scale * splat_rgb[2];
             //Scale pixel value by `scale`
-            rgb[3 * offset + 0] *= self.scale;
+            rgb[3 * offset] *= self.scale;
             rgb[3 * offset + 1] *= self.scale;
             rgb[3 * offset + 2] *= self.scale;
-
-            offset += 1;
         }
         info!(
             "Writing image {} with bounds {}",

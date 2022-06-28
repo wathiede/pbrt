@@ -61,10 +61,7 @@ fn to_byte(v: Float) -> u8 {
 }
 
 fn is_whitespace(b: u8) -> bool {
-    match b {
-        b' ' | b'\n' | b'\t' => true,
-        _ => false,
-    }
+    matches!(b, b' ' | b'\n' | b'\t')
 }
 
 fn read_word(buf: &mut dyn Read) -> Result<String, Error> {
@@ -164,22 +161,18 @@ pub fn read_image(name: &str) -> Result<(Vec<RGBSpectrum>, Point2i), Error> {
         }
         "exr" => Err(Error::ReadNotImplemented(".exr".to_string())),
         "tga" => Err(Error::ReadNotImplemented(".tga".to_string())),
-        "pfm" => read_image_pfm(&name),
-        ext @ _ => Err(Error::UnknownExtension(ext.to_string())),
+        "pfm" => read_image_pfm(name),
+        ext => Err(Error::UnknownExtension(ext.to_string())),
     }
 }
 
-fn write_image_pfm(name: &str, rgb: &Vec<Float>, resolution: Point2i) -> Result<(), Error> {
+fn write_image_pfm(name: &str, rgb: &[Float], resolution: Point2i) -> Result<(), Error> {
     let Point2i { x, y } = resolution;
     let (width, height) = (x, y);
     let f = File::create(name)?;
     let mut buf = BufWriter::new(f);
 
-    let host_little_endian = if 0x1234_u16.to_ne_bytes() == 0x1234_u16.to_le_bytes() {
-        true
-    } else {
-        false
-    };
+    let host_little_endian = 0x1234_u16.to_ne_bytes() == 0x1234_u16.to_le_bytes();
     let scale = if host_little_endian { -1. } else { 1. };
     // Write header, scale determines endianness of file on read.
     write!(buf, "PF\n{} {}\n{}\n", width, height, scale)?;
@@ -194,7 +187,7 @@ fn write_image_pfm(name: &str, rgb: &Vec<Float>, resolution: Point2i) -> Result<
         // definitely a 32-bit float...
         for x in 0..width * 3 {
             let idx = (x + y * width * 3) as usize;
-            buf.write(&(rgb[idx] as f32).to_ne_bytes()[..])?;
+            buf.write_all(&(rgb[idx] as f32).to_ne_bytes()[..])?;
         }
     }
 
@@ -221,12 +214,7 @@ fn write_image_pfm(name: &str, rgb: &Vec<Float>, resolution: Point2i) -> Result<
 /// let res = Point2i::from([2, 2]);
 /// write_image("target/doc/pbrt/test.png", &data, b, res);
 /// ```
-pub fn write_image(
-    name: &str,
-    rgb: &Vec<Float>,
-    output_bounds: Bounds2i,
-    _total_resolution: Point2i,
-) {
+pub fn write_image(name: &str, rgb: &[Float], output_bounds: Bounds2i, _total_resolution: Point2i) {
     let resolution = output_bounds.diagonal();
     match Path::new(name)
         .extension()
@@ -259,7 +247,7 @@ pub fn write_image(
                 error!("Failed to write PFM to '{}': {}", name, err);
             }
         }
-        ext @ _ => error!("unknown file extension {}", ext),
+        ext => error!("unknown file extension {}", ext),
     }
 }
 
@@ -336,7 +324,7 @@ mod tests {
                 // Still compare the whole image for correctness.
                 assert_eq!(test_pixels, read_pixels);
             }
-            Err(e) => panic!(e.to_string()),
+            Err(e) => panic!("{}", e.to_string()),
         }
     }
 
@@ -366,7 +354,7 @@ mod tests {
                 // Still compare the whole image for correctness.
                 assert_eq!(test_img.pixels, read_pixels);
             }
-            Err(e) => panic!(e.to_string()),
+            Err(e) => panic!("{}", e.to_string()),
         }
     }
 }

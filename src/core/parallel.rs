@@ -101,8 +101,8 @@ impl AtomicFloat {
     }
 }
 
-impl Into<Float> for AtomicFloat {
-    fn into(self) -> Float {
-        Float::from_bits(self.bits.load(Ordering::Relaxed))
+impl From<AtomicFloat> for Float {
+    fn from(af: AtomicFloat) -> Self {
+        Float::from_bits(af.bits.load(Ordering::Relaxed))
     }
 }
