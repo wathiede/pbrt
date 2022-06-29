@@ -2,6 +2,7 @@
   "done": [
     "core/error",
     "core/rng",
+    "core/sobolmatrices",
     "filters/box"
   ],
   "skipped": [

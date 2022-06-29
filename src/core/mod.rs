@@ -32,6 +32,7 @@ pub mod paramset;
 pub mod parser;
 pub mod rng;
 pub mod sampling;
+pub mod sobolmatrices;
 pub mod spectrum;
 pub mod texture;
 pub mod transform;
