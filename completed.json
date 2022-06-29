@@ -1,9 +1,11 @@
 {
   "done": [
     "core/error",
+    "core/rng",
     "filters/box"
   ],
   "skipped": [
-    "core/port"
+    "core/port",
+    "core/stringprint"
   ]
 }

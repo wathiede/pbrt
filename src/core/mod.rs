@@ -30,6 +30,7 @@ pub mod mipmap;
 pub mod parallel;
 pub mod paramset;
 pub mod parser;
+pub mod rng;
 pub mod sampling;
 pub mod spectrum;
 pub mod texture;
