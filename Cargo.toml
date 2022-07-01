@@ -8,21 +8,21 @@ readme = "README.md"
 repository = "https://github.com/wathiede/pbrt"
 version = "0.1.6-alpha.0"
 [dependencies]
-log = "0.4.1"
-image = "0.22.3"
-regex = "0.2.5"
-structopt = "0.3.5"
-thiserror = "1.0.20"
-stderrlog = "0.4.3"
-anyhow = "1.0.31"
+log = "0.4.17"
+image = "0.24.2"
+regex = "1.5.6"
+structopt = "0.3.26"
+thiserror = "1.0.31"
+stderrlog = "0.5.1"
+anyhow = "1.0.58"
 memmap = "0.7.0"
 lazy_static = "1.4.0"
 assert_approx_eq = "1.1.0"
 
 [dev-dependencies]
-pretty_assertions = "0.5.0"
-rayon = "1.2.1"
-tempfile = "3.1.0"
+pretty_assertions = "1.2.1"
+rayon = "1.5.3"
+tempfile = "3.3.0"
 
 [features]
 float-as-double = []

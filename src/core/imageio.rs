@@ -148,7 +148,7 @@ pub fn read_image(name: &str) -> Result<(Vec<RGBSpectrum>, Point2i), Error> {
     {
         "png" => {
             let img = image::open(name)?;
-            let rgb_img = img.to_rgb();
+            let rgb_img = img.to_rgb8();
             let pixels: Vec<_> = rgb_img
                 .pixels()
                 .map(|p| {
@@ -238,8 +238,8 @@ pub fn write_image(name: &str, rgb: &[Float], output_bounds: Bounds2i, _total_re
                 &rgb8,
                 resolution.x as u32,
                 resolution.y as u32,
-                ColorType::RGB(8),
-                ImageFormat::PNG,
+                ColorType::Rgb8,
+                ImageFormat::Png,
             ) {
                 error!("Failed to write PNG to '{}': {}", name, err);
             }
