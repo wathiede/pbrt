@@ -15,17 +15,14 @@
 //! This module provides helpers for generating `ParamSet` structures concisely. This is useful
 //! for doctests.
 
-use crate::core::geometry::Normal3f;
-use crate::core::geometry::Point2f;
-use crate::core::geometry::Point3f;
-use crate::core::geometry::Vector2f;
-use crate::core::geometry::Vector3f;
-use crate::core::paramset::ParamList;
-use crate::core::paramset::ParamSet;
-use crate::core::paramset::ParamSetItem;
-use crate::core::paramset::Value;
-use crate::core::spectrum::Spectrum;
-use crate::Float;
+use crate::{
+    core::{
+        geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f},
+        paramset::{ParamList, ParamSet, ParamSetItem, Value},
+        spectrum::Spectrum,
+    },
+    Float,
+};
 
 /// Creates a `ParamSet` with one entry containing `name` and set to `vals`.
 ///

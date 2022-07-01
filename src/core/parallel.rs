@@ -36,8 +36,7 @@ mod float {
     pub(super) type AtomicUsizeFloat = std::sync::atomic::AtomicU32;
 }
 
-use float::AtomicUsizeFloat;
-use float::UsizeFloat;
+use float::{AtomicUsizeFloat, UsizeFloat};
 
 /// AtomicFloat allows atomic addition of a `Float` by treating its bits as an unsigned integer of
 /// the same bit width.
@@ -74,8 +73,7 @@ impl AtomicFloat {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::parallel::AtomicFloat;
-    /// use pbrt::Float;
+    /// use pbrt::{core::parallel::AtomicFloat, Float};
     /// use rayon::prelude::*;
     ///
     /// let af = AtomicFloat::from(8.);

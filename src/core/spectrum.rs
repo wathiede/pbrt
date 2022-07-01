@@ -17,9 +17,10 @@
 //! [RGBSpectrum]: crate::core::spectrum::RGBSpectrum
 //! [SampledSpectrum]: crate::core::spectrum::SampledSpectrum
 //! [Spectrum]: crate::core::spectrum::Spectrum
-use std::cmp;
-use std::fmt;
-use std::ops::{Mul, MulAssign};
+use std::{
+    cmp, fmt,
+    ops::{Mul, MulAssign},
+};
 
 use crate::Float;
 

@@ -17,11 +17,14 @@
 //!
 //! [Filter]: crate::core::filter::Filter
 
-use crate::core::filter::Filter;
-use crate::core::geometry::Point2f;
-use crate::core::geometry::Vector2f;
-use crate::core::paramset::ParamSet;
-use crate::Float;
+use crate::{
+    core::{
+        filter::Filter,
+        geometry::{Point2f, Vector2f},
+        paramset::ParamSet,
+    },
+    Float,
+};
 
 /// Filter that returns 1. within the configured `radius`.
 pub struct BoxFilter {
@@ -41,9 +44,10 @@ impl BoxFilter {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::filter::Filter;
-    /// use pbrt::core::paramset::testutils::make_float_param_set;
-    /// use pbrt::filters::boxfilter::BoxFilter;
+    /// use pbrt::{
+    ///     core::{filter::Filter, paramset::testutils::make_float_param_set},
+    ///     filters::boxfilter::BoxFilter,
+    /// };
     ///
     /// let ps = make_float_param_set("xwidth", vec![1.]);
     /// let bf = BoxFilter::create_box_filter(&ps);

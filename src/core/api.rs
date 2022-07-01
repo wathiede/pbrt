@@ -15,32 +15,36 @@
 //! Top-level control of the pbrt state machine.  The parser will construct a `PbrtAPI` and call
 //! member functions as it interprets a scene file.
 
-use std::collections::HashMap;
-use std::fs::File;
-use std::io;
-use std::ops::{Index, IndexMut};
-use std::path::Path;
-use std::process::exit;
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io,
+    ops::{Index, IndexMut},
+    path::Path,
+    process::exit,
+    sync::Arc,
+};
 
 use log::{error, info, warn};
 use memmap::MmapOptions;
 use thiserror::Error;
 
-use crate::core::filter::Filter;
-use crate::core::light::Light;
-use crate::core::medium::{Medium, MediumInterface};
-use crate::core::paramset::{ParamSet, TextureParams};
-use crate::core::parser::{self, create_from_string, parse};
-use crate::core::spectrum::Spectrum;
-use crate::core::texture::Texture;
-use crate::core::transform::Transform;
-use crate::filters::boxfilter::BoxFilter;
-use crate::lights::infinite::create_infinite_light;
-use crate::textures::constant;
-use crate::Degree;
-use crate::Float;
-use crate::Options;
+use crate::{
+    core::{
+        filter::Filter,
+        light::Light,
+        medium::{Medium, MediumInterface},
+        paramset::{ParamSet, TextureParams},
+        parser::{self, create_from_string, parse},
+        spectrum::Spectrum,
+        texture::Texture,
+        transform::Transform,
+    },
+    filters::boxfilter::BoxFilter,
+    lights::infinite::create_infinite_light,
+    textures::constant,
+    Degree, Float, Options,
+};
 
 /// Common error type for all public methods in the `api` crate.
 #[derive(Debug, Error)]
@@ -569,8 +573,10 @@ impl API for PbrtAPI {
     /// Sets the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::{PbrtAPI, API};
-    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::{
+    ///     api::{PbrtAPI, API},
+    ///     transform::Matrix4x4,
+    /// };
     ///
     /// let mut pbrt = PbrtAPI::default();
     ///
@@ -591,8 +597,10 @@ impl API for PbrtAPI {
     /// Translates the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::{PbrtAPI, API};
-    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::{
+    ///     api::{PbrtAPI, API},
+    ///     transform::Matrix4x4,
+    /// };
     ///
     /// let mut pbrt = PbrtAPI::default();
     ///
@@ -618,9 +626,13 @@ impl API for PbrtAPI {
     /// Rotates the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::{PbrtAPI, API};
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::Degree;
+    /// use pbrt::{
+    ///     core::{
+    ///         api::{PbrtAPI, API},
+    ///         transform::Matrix4x4,
+    ///     },
+    ///     Degree,
+    /// };
     ///
     /// let mut pbrt = PbrtAPI::default();
     ///
@@ -688,8 +700,10 @@ impl API for PbrtAPI {
     /// Scales the currently active transform matrix by the given values.
     /// # Examples
     /// ```
-    /// use pbrt::core::api::{PbrtAPI, API};
-    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::{
+    ///     api::{PbrtAPI, API},
+    ///     transform::Matrix4x4,
+    /// };
     ///
     /// let mut pbrt = PbrtAPI::default();
     ///
@@ -845,8 +859,10 @@ impl PbrtAPI {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::api::{PbrtAPI, API};
-    /// use pbrt::core::transform::Matrix4x4;
+    /// use pbrt::core::{
+    ///     api::{PbrtAPI, API},
+    ///     transform::Matrix4x4,
+    /// };
     ///
     /// let mut pbrt: PbrtAPI = Default::default();
     ///
@@ -953,8 +969,7 @@ fn make_filter(name: &str, param_set: &ParamSet) -> Box<dyn Filter> {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::paramset::testutils::make_float_param_set;
-    use crate::core::transform::Matrix4x4;
+    use crate::core::{paramset::testutils::make_float_param_set, transform::Matrix4x4};
 
     use super::*;
 

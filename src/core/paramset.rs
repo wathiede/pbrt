@@ -17,20 +17,24 @@
 #![allow(missing_docs)]
 //! Generic storage types created by parser and passed to factory functions when building a scene.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::fmt::Formatter;
-use std::fmt::Result;
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fmt::{Debug, Formatter, Result},
+    str::FromStr,
+    sync::Arc,
+};
 
 use log::info;
 
-use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
-use crate::core::spectrum::Spectrum;
-use crate::core::texture::Texture;
-use crate::Float;
+use crate::{
+    core::{
+        geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f},
+        spectrum::Spectrum,
+        texture::Texture,
+    },
+    Float,
+};
 
 pub mod testutils;
 
@@ -284,8 +288,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Point2f;
-    /// use pbrt::core::paramset::testutils::make_point2f_param_set;
+    /// use pbrt::core::{geometry::Point2f, paramset::testutils::make_point2f_param_set};
     ///
     /// let ps = make_point2f_param_set("value", vec![Point2f::from([1., 1.])]);
     /// assert_eq!(
@@ -311,8 +314,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Vector2f;
-    /// use pbrt::core::paramset::testutils::make_vector2f_param_set;
+    /// use pbrt::core::{geometry::Vector2f, paramset::testutils::make_vector2f_param_set};
     ///
     /// let ps = make_vector2f_param_set("value", vec![Vector2f::from([1., 1.])]);
     /// assert_eq!(
@@ -338,8 +340,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Point3f;
-    /// use pbrt::core::paramset::testutils::make_point3f_param_set;
+    /// use pbrt::core::{geometry::Point3f, paramset::testutils::make_point3f_param_set};
     ///
     /// let ps = make_point3f_param_set("value", vec![Point3f::from([1., 1., 1.])]);
     /// assert_eq!(
@@ -365,8 +366,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Vector3f;
-    /// use pbrt::core::paramset::testutils::make_vector3f_param_set;
+    /// use pbrt::core::{geometry::Vector3f, paramset::testutils::make_vector3f_param_set};
     ///
     /// let ps = make_vector3f_param_set("value", vec![Vector3f::from([1., 1., 1.])]);
     /// assert_eq!(
@@ -392,8 +392,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Normal3f;
-    /// use pbrt::core::paramset::testutils::make_normal3f_param_set;
+    /// use pbrt::core::{geometry::Normal3f, paramset::testutils::make_normal3f_param_set};
     ///
     /// let ps = make_normal3f_param_set("value", vec![Normal3f::from([1., 1., 1.])]);
     /// assert_eq!(
@@ -419,8 +418,7 @@ impl ParamSet {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::paramset::testutils::make_spectrum_param_set;
-    /// use pbrt::core::spectrum::Spectrum;
+    /// use pbrt::core::{paramset::testutils::make_spectrum_param_set, spectrum::Spectrum};
     ///
     /// let ps = make_spectrum_param_set("value", vec![Spectrum::from_rgb([1., 1., 1.])]);
     /// assert_eq!(

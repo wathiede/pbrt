@@ -14,8 +14,7 @@
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 
-use crate::core::geometry::Number;
-use crate::Float;
+use crate::{core::geometry::Number, Float};
 
 /// Generic type for any 3D normal.
 #[derive(Copy, Clone, Debug, Default, PartialEq)]

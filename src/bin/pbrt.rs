@@ -15,11 +15,12 @@ use std::process;
 
 use anyhow::{Context, Result};
 use log::info;
-use structopt;
-use structopt::StructOpt;
+use structopt::{self, StructOpt};
 
-use pbrt;
-use pbrt::core::api::{PbrtAPI, API};
+use pbrt::{
+    self,
+    core::api::{PbrtAPI, API},
+};
 
 #[derive(Clone, Debug, Default, StructOpt)]
 #[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]

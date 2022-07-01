@@ -15,16 +15,15 @@
 //! Implements a [Texture] that always returns the given value.
 //!
 //! [Texture]: crate::core::texture::Texture
-use std::fmt::Debug;
-use std::fmt::Formatter;
-use std::fmt::Result;
+use std::fmt::{Debug, Formatter, Result};
 
-use crate::core::interaction::SurfaceInteraction;
-use crate::core::paramset::TextureParams;
-use crate::core::spectrum::Spectrum;
-use crate::core::texture::Texture;
-use crate::core::transform::Transform;
-use crate::Float;
+use crate::{
+    core::{
+        interaction::SurfaceInteraction, paramset::TextureParams, spectrum::Spectrum,
+        texture::Texture, transform::Transform,
+    },
+    Float,
+};
 
 #[derive(Clone)]
 /// Implements trait [Texture] to return the given `value`.
@@ -41,11 +40,14 @@ where
 ///
 /// # Examples
 /// ```
-/// use pbrt::core::paramset::testutils::make_float_param_set;
-/// use pbrt::core::paramset::TextureParams;
-/// use pbrt::core::texture::Texture;
-/// use pbrt::core::transform::Transform;
-/// use pbrt::textures::constant::create_constant_float_texture;
+/// use pbrt::{
+///     core::{
+///         paramset::{testutils::make_float_param_set, TextureParams},
+///         texture::Texture,
+///         transform::Transform,
+///     },
+///     textures::constant::create_constant_float_texture,
+/// };
 ///
 /// let tp = TextureParams::new(
 ///     make_float_param_set("value", vec![10.]),
@@ -69,12 +71,15 @@ pub fn create_constant_float_texture(
 ///
 /// # Examples
 /// ```
-/// use pbrt::core::paramset::testutils::make_spectrum_param_set;
-/// use pbrt::core::paramset::TextureParams;
-/// use pbrt::core::spectrum::Spectrum;
-/// use pbrt::core::texture::Texture;
-/// use pbrt::core::transform::Transform;
-/// use pbrt::textures::constant::create_constant_spectrum_texture;
+/// use pbrt::{
+///     core::{
+///         paramset::{testutils::make_spectrum_param_set, TextureParams},
+///         spectrum::Spectrum,
+///         texture::Texture,
+///         transform::Transform,
+///     },
+///     textures::constant::create_constant_spectrum_texture,
+/// };
 ///
 /// let tp = TextureParams::new(
 ///     make_spectrum_param_set("value", vec![Spectrum::from_rgb([1., 0., 0.])]),
@@ -105,9 +110,10 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::spectrum::Spectrum;
-    /// use pbrt::core::texture::Texture;
-    /// use pbrt::textures::constant::ConstantTexture;
+    /// use pbrt::{
+    ///     core::{spectrum::Spectrum, texture::Texture},
+    ///     textures::constant::ConstantTexture,
+    /// };
     ///
     /// let t = ConstantTexture::new(10.);
     /// assert_eq!(10., t.evaluate(&Default::default()));

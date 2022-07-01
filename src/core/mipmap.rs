@@ -15,8 +15,7 @@
 //! Module mimmap provides tools for building image pyramids for efficient texture lookups.
 use lazy_static::lazy_static;
 
-use crate::core::geometry::Point2i;
-use crate::Float;
+use crate::{core::geometry::Point2i, Float};
 
 /// ImageWrap describes the mipmap sampling behavior when the sample is outside the range of [0,
 /// 1].

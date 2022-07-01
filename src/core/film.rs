@@ -14,22 +14,22 @@
 
 //! Types to model film and pixels in the sensor of the simulated sensor.
 
-use std::convert::TryInto;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::{
+    convert::TryInto,
+    sync::{Arc, Mutex},
+};
 
 use log::info;
 
-use crate::core::filter::Filter;
-use crate::core::geometry::Bounds2f;
-use crate::core::geometry::Bounds2i;
-use crate::core::geometry::Point2f;
-use crate::core::geometry::Point2i;
-use crate::core::geometry::Vector2f;
-use crate::core::imageio::write_image;
-use crate::core::spectrum::xyz_to_rgb;
-use crate::core::spectrum::Spectrum;
-use crate::Float;
+use crate::{
+    core::{
+        filter::Filter,
+        geometry::{Bounds2f, Bounds2i, Point2f, Point2i, Vector2f},
+        imageio::write_image,
+        spectrum::{xyz_to_rgb, Spectrum},
+    },
+    Float,
+};
 
 const FILTER_TABLE_WIDTH: usize = 16;
 
@@ -150,10 +150,13 @@ impl Film {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::film::Film;
-    /// use pbrt::core::geometry::Bounds2i;
-    /// use pbrt::core::geometry::Point2i;
-    /// use pbrt::filters::boxfilter::BoxFilter;
+    /// use pbrt::{
+    ///     core::{
+    ///         film::Film,
+    ///         geometry::{Bounds2i, Point2i},
+    ///     },
+    ///     filters::boxfilter::BoxFilter,
+    /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
     /// let film = Film::new(
@@ -185,9 +188,10 @@ impl Film {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::film::Film;
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::filters::boxfilter::BoxFilter;
+    /// use pbrt::{
+    ///     core::{film::Film, geometry::Bounds2f},
+    ///     filters::boxfilter::BoxFilter,
+    /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
     /// let diag_mm = 100.;
@@ -238,9 +242,10 @@ impl Film {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::film::Film;
-    /// use pbrt::core::geometry::Bounds2i;
-    /// use pbrt::filters::boxfilter::BoxFilter;
+    /// use pbrt::{
+    ///     core::{film::Film, geometry::Bounds2i},
+    ///     filters::boxfilter::BoxFilter,
+    /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
     /// let film = Film::new(
@@ -289,12 +294,14 @@ impl Film {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::film::Film;
-    /// use pbrt::core::film::FilmTile;
-    /// use pbrt::core::film::Pixel;
-    /// use pbrt::core::geometry::Bounds2i;
-    /// use pbrt::core::spectrum::Spectrum;
-    /// use pbrt::filters::boxfilter::BoxFilter;
+    /// use pbrt::{
+    ///     core::{
+    ///         film::{Film, FilmTile, Pixel},
+    ///         geometry::Bounds2i,
+    ///         spectrum::Spectrum,
+    ///     },
+    ///     filters::boxfilter::BoxFilter,
+    /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
     /// let film = Film::new(
@@ -496,12 +503,15 @@ impl<'ft> FilmTile<'ft> {
 
 #[cfg(test)]
 mod test {
-    use crate::core::film::Film;
-    use crate::core::film::FilmTile;
-    use crate::core::geometry::Bounds2i;
-    use crate::core::spectrum::Spectrum;
-    use crate::filters::boxfilter::BoxFilter;
-    use crate::Float;
+    use crate::{
+        core::{
+            film::{Film, FilmTile},
+            geometry::Bounds2i,
+            spectrum::Spectrum,
+        },
+        filters::boxfilter::BoxFilter,
+        Float,
+    };
 
     #[test]
     fn merge_film_tile() {

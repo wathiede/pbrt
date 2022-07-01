@@ -13,42 +13,24 @@
 // limitations under the License.
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
-use std::fmt;
-use std::ops::Add;
-use std::ops::Div;
-use std::ops::Mul;
-use std::ops::Sub;
+use std::{
+    fmt,
+    ops::{Add, Div, Mul, Sub},
+};
 
-use crate::float;
-use crate::Float;
+use crate::{float, Float};
 
 mod bounds;
-pub use crate::core::geometry::bounds::Bounds2;
-pub use crate::core::geometry::bounds::Bounds2f;
-pub use crate::core::geometry::bounds::Bounds2i;
-pub use crate::core::geometry::bounds::Bounds3;
-pub use crate::core::geometry::bounds::Bounds3f;
-pub use crate::core::geometry::bounds::Bounds3i;
+pub use crate::core::geometry::bounds::{Bounds2, Bounds2f, Bounds2i, Bounds3, Bounds3f, Bounds3i};
 
 mod normal;
-pub use crate::core::geometry::normal::Normal3;
-pub use crate::core::geometry::normal::Normal3f;
+pub use crate::core::geometry::normal::{Normal3, Normal3f};
 
 mod point;
-pub use crate::core::geometry::point::Point2;
-pub use crate::core::geometry::point::Point2f;
-pub use crate::core::geometry::point::Point2i;
-pub use crate::core::geometry::point::Point3;
-pub use crate::core::geometry::point::Point3f;
-pub use crate::core::geometry::point::Point3i;
+pub use crate::core::geometry::point::{Point2, Point2f, Point2i, Point3, Point3f, Point3i};
 
 mod vector;
-pub use crate::core::geometry::vector::cross;
-pub use crate::core::geometry::vector::Vector2;
-pub use crate::core::geometry::vector::Vector2f;
-pub use crate::core::geometry::vector::Vector2i;
-pub use crate::core::geometry::vector::Vector3f;
-pub use crate::core::geometry::vector::Vector3i;
+pub use crate::core::geometry::vector::{cross, Vector2, Vector2f, Vector2i, Vector3f, Vector3i};
 
 /// Trait for ensuring methods present on only `{float}` or `{integer}` types have appropriate
 /// implementations as necessary for this crate.
@@ -66,9 +48,7 @@ where
     /// Returns true if this value is NaN.
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Number;
-    /// use pbrt::float::NAN;
-    /// use pbrt::Float;
+    /// use pbrt::{core::geometry::Number, float::NAN, Float};
     ///
     /// let i: isize = 1;
     /// let f1: Float = 1.;
@@ -83,8 +63,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Number;
-    /// use pbrt::Float;
+    /// use pbrt::{core::geometry::Number, Float};
     ///
     /// #[cfg(not(feature = "float-as-double"))]
     /// assert_eq!(<Float as Number>::min_value(), -3.4028235e+38);
@@ -98,8 +77,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Number;
-    /// use pbrt::Float;
+    /// use pbrt::{core::geometry::Number, Float};
     ///
     /// #[cfg(not(feature = "float-as-double"))]
     /// assert_eq!(<Float as Number>::max_value(), 3.4028235e+38);
@@ -113,8 +91,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Number;
-    /// use pbrt::Float;
+    /// use pbrt::{core::geometry::Number, Float};
     ///
     /// let x: Float = 1.;
     /// let y: Float = 2.;
@@ -142,8 +119,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Number;
-    /// use pbrt::Float;
+    /// use pbrt::{core::geometry::Number, Float};
     ///
     /// let x: Float = 1.;
     /// let y: Float = 2.;

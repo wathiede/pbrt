@@ -15,8 +15,7 @@
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 use std::ops::{Div, Sub};
 
-use crate::core::geometry::Number;
-use crate::Float;
+use crate::{core::geometry::Number, Float};
 
 /// Generic type for any 2D vector.
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -120,9 +119,7 @@ where
     /// assert_eq!(Vector3f::from([1., 2., 3.]), Vector3f::new(1., 2., 3.));
     /// ```
     /// ```should_panic
-    /// use pbrt;
-    /// use pbrt::core::geometry::Vector3f;
-    /// use pbrt::Float;
+    /// use pbrt::{self, core::geometry::Vector3f, Float};
     /// let v = Vector3f::from([pbrt::float::NAN, 2., 3.]);
     /// ```
     fn from(v: [T; 3]) -> Self {

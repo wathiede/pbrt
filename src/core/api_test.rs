@@ -15,11 +15,14 @@
 //! Implementation of [API] for testing.
 use std::path::Path;
 
-use crate::core::api::{Error, API};
-use crate::core::paramset::ParamSet;
-use crate::core::parser::Error as ParserError;
-use crate::Degree;
-use crate::Float;
+use crate::{
+    core::{
+        api::{Error, API},
+        paramset::ParamSet,
+        parser::Error as ParserError,
+    },
+    Degree, Float,
+};
 
 /// MockAPI is an empty implementation of [API] used for testing the parser.
 #[derive(Default)]

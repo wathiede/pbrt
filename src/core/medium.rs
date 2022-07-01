@@ -14,8 +14,7 @@
 
 //! Mediums represent volumetric scattering.
 
-use std::fmt::Debug;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 // TODO(wathiede): This is a virtual base class in C++, can we make it a trait?  How do you have a
 // collection of trait objects?

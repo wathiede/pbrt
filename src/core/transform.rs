@@ -17,13 +17,14 @@
 //!
 //! [Matrix4x4]: crate::core::transform::Matrix4x4
 //! [Transform]: crate::core::transform::Transform
-use std::fmt;
-use std::ops::Mul;
+use std::{fmt, ops::Mul};
 
 use log::error;
 
-use crate::core::geometry::{cross, Vector3f};
-use crate::{float, Degree, Float};
+use crate::{
+    core::geometry::{cross, Vector3f},
+    float, Degree, Float,
+};
 
 /// Solve a 2x2 linear system in the form Ax = B.  For parameters `a` and `b`, the solution to `x`
 /// will be returned if any exist.  None will be returned of the answer is numerically unstable or
@@ -309,8 +310,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// assert_eq!(
     ///     Transform::identity(),
@@ -334,8 +334,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// let t = Transform::identity();
     /// assert_eq!(
@@ -360,8 +359,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// assert_eq!(
     ///     Transform::translate([2., 4., 6.]),
@@ -397,10 +395,10 @@ impl Transform {
     /// Creates a `Transform` representing a rotation of `theta` about `axis`.
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
-    /// use pbrt::Degree;
-    /// use pbrt::Float;
+    /// use pbrt::{
+    ///     core::transform::{Matrix4x4, Transform},
+    ///     Degree, Float,
+    /// };
     ///
     /// let t_deg: Float = 180.;
     /// let t_rad = t_deg.to_radians();
@@ -525,8 +523,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// assert_eq!(
     ///     Transform::scale(2., 4., 6.),
@@ -564,8 +561,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// let t = Transform::identity();
     /// assert_eq!(
@@ -586,8 +582,7 @@ impl Transform {
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::transform::Matrix4x4;
-    /// use pbrt::core::transform::Transform;
+    /// use pbrt::core::transform::{Matrix4x4, Transform};
     ///
     /// let t = Transform::identity();
     /// assert_eq!(

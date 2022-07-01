@@ -15,12 +15,14 @@
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
 use std::fmt;
 
-use crate::core::geometry::point::Point2;
-use crate::core::geometry::point::Point2i;
-use crate::core::geometry::point::Point3;
-use crate::core::geometry::vector::Vector2;
-use crate::core::geometry::Number;
-use crate::Float;
+use crate::{
+    core::geometry::{
+        point::{Point2, Point2i, Point3},
+        vector::Vector2,
+        Number,
+    },
+    Float,
+};
 
 /// Generic type for and 2D bounding boxes.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -70,8 +72,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::{Bounds2f, Point2f};
     ///
     /// let b = Bounds2f::from([[2., 3.], [4., 5.]]);
     /// assert_eq!(
@@ -101,8 +102,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::{Bounds2f, Point2f};
     ///
     /// let b = Bounds2f::from([Point2f::from([2., 3.]), Point2f::from([4., 5.])]);
     /// assert_eq!(
@@ -139,8 +139,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::{Bounds2f, Point2f};
     ///
     /// let b = Bounds2f::from([Point2f::from([2., 3.]), Point2f::from([4., 5.])]);
     /// assert_eq!(
@@ -175,8 +174,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::core::geometry::Vector2f;
+    /// use pbrt::core::geometry::{Bounds2f, Vector2f};
     ///
     /// let b = Bounds2f::from([[1., 1.], [3., 3.]]);
     /// assert_eq!(b.diagonal(), Vector2f::from([2., 2.]));
@@ -189,8 +187,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2f;
-    /// use pbrt::core::geometry::Point2f;
+    /// use pbrt::core::geometry::{Bounds2f, Point2f};
     ///
     /// let b = Bounds2f::from([[1., 1.], [3., 3.]]);
     /// assert_eq!(b.area(), 4.);
@@ -204,8 +201,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2i;
-    /// use pbrt::core::geometry::Point2i;
+    /// use pbrt::core::geometry::{Bounds2i, Point2i};
     ///
     /// let b = Bounds2i::from([[2, 2], [4, 4]]);
     /// assert!(b.inside_exclusive(Point2i::from([2, 2])));
@@ -275,8 +271,7 @@ impl Bounds2i {
     /// Returns and iterator that visits each `Point2i` within the `Bound2i`.  
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds2i;
-    /// use pbrt::core::geometry::Point2i;
+    /// use pbrt::core::geometry::{Bounds2i, Point2i};
     ///
     /// let b = Bounds2i::from([[2, 2], [4, 4]]);
     /// let mut it = b.iter();
@@ -348,8 +343,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds3f;
-    /// use pbrt::core::geometry::Point3f;
+    /// use pbrt::core::geometry::{Bounds3f, Point3f};
     ///
     /// let b = Bounds3f::from([[2., 3., 4.], [4., 5., 6.]]);
     /// assert_eq!(
@@ -387,8 +381,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds3f;
-    /// use pbrt::core::geometry::Point3f;
+    /// use pbrt::core::geometry::{Bounds3f, Point3f};
     ///
     /// let b = Bounds3f::from([Point3f::from([2., 3., 4.]), Point3f::from([4., 5., 6.])]);
     /// assert_eq!(
@@ -434,8 +427,7 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Bounds3i;
-    /// use pbrt::core::geometry::Point3i;
+    /// use pbrt::core::geometry::{Bounds3i, Point3i};
     ///
     /// let b = Bounds3i::from([[2, 2, 2], [4, 4, 4]]);
     /// assert!(b.inside_exclusive(Point3i::from([2, 2, 2])));

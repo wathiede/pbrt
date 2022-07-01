@@ -17,15 +17,19 @@
 //! [Light]: crate::core::light::Light
 use std::sync::Arc;
 
-use crate::core::geometry::Point3f;
-use crate::core::imageio::read_image;
-use crate::core::light::{Light, LightData};
-use crate::core::mipmap::MIPMap;
-use crate::core::paramset::ParamSet;
-use crate::core::sampling::Distribution2D;
-use crate::core::spectrum::{RGBSpectrum, Spectrum};
-use crate::core::transform::Transform;
-use crate::Float;
+use crate::{
+    core::{
+        geometry::Point3f,
+        imageio::read_image,
+        light::{Light, LightData},
+        mipmap::MIPMap,
+        paramset::ParamSet,
+        sampling::Distribution2D,
+        spectrum::{RGBSpectrum, Spectrum},
+        transform::Transform,
+    },
+    Float,
+};
 
 #[derive(Debug)]
 /// InfiniteAreaLight represents a light infinitely far away that surrounds the entire scene.

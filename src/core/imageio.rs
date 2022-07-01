@@ -13,19 +13,24 @@
 // limitations under the License.
 
 //! Utilities for writing out `Float` based image data to common image file formats.
-use std::fs::File;
-use std::io::{self, BufReader, BufWriter, Read, Write};
-use std::path::Path;
+use std::{
+    fs::File,
+    io::{self, BufReader, BufWriter, Read, Write},
+    path::Path,
+};
 
 use image::{self, save_buffer_with_format, ColorType, ImageError, ImageFormat};
 use log::error;
 use thiserror::Error;
 
-use crate::clamp;
-use crate::core::geometry::{Bounds2i, Point2i};
-use crate::core::spectrum::RGBSpectrum;
-use crate::gamma_correct;
-use crate::Float;
+use crate::{
+    clamp,
+    core::{
+        geometry::{Bounds2i, Point2i},
+        spectrum::RGBSpectrum,
+    },
+    gamma_correct, Float,
+};
 
 /// Error type for reading images from disk.
 #[derive(Debug, Error)]
@@ -207,9 +212,10 @@ fn write_image_pfm(name: &str, rgb: &Vec<Float>, resolution: Point2i) -> Result<
 ///
 /// # Examples
 /// ```
-/// use pbrt::core::geometry::Bounds2i;
-/// use pbrt::core::geometry::Point2i;
-/// use pbrt::core::imageio::write_image;
+/// use pbrt::core::{
+///     geometry::{Bounds2i, Point2i},
+///     imageio::write_image,
+/// };
 ///
 /// let data = vec![
 ///     1., 0., 0., //

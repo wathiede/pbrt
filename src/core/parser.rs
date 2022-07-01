@@ -18,10 +18,14 @@ use std::convert::TryFrom;
 use log::{error, warn};
 use thiserror::Error;
 
-use crate::core::api::API;
-use crate::core::geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f};
-use crate::core::paramset::ParamSet;
-use crate::Float;
+use crate::{
+    core::{
+        api::API,
+        geometry::{Normal3f, Point2f, Point3f, Vector2f, Vector3f},
+        paramset::ParamSet,
+    },
+    Float,
+};
 
 /// Error type for tokenization and parsing errors.
 #[derive(PartialEq, Debug, Error)]

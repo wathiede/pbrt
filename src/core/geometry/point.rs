@@ -13,15 +13,15 @@
 // limitations under the License.
 
 //! Types and utilities for dealing with 2D and 3D, integer and float data types.
-use std::fmt;
-use std::ops::Add;
-use std::ops::Div;
-use std::ops::Mul;
-use std::ops::Sub;
+use std::{
+    fmt,
+    ops::{Add, Div, Mul, Sub},
+};
 
-use crate::core::geometry::vector::Vector2;
-use crate::core::geometry::Number;
-use crate::Float;
+use crate::{
+    core::geometry::{vector::Vector2, Number},
+    Float,
+};
 
 /// Generic type for any 2D point.
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -197,15 +197,13 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Point2i;
-    /// use pbrt::core::geometry::Vector2i;
+    /// use pbrt::core::geometry::{Point2i, Vector2i};
     ///
     /// let p1: Point2i = [4, 5].into();
     /// let v1: Vector2i = [2, 3].into();
     /// assert_eq!(p1 - v1, Point2i::from([2, 2]));
     ///
-    /// use pbrt::core::geometry::Point2f;
-    /// use pbrt::core::geometry::Vector2f;
+    /// use pbrt::core::geometry::{Point2f, Vector2f};
     ///
     /// let p1: Point2f = [4., 5.].into();
     /// let v1: Vector2f = [2., 3.].into();
@@ -259,15 +257,13 @@ where
     ///
     /// # Examples
     /// ```
-    /// use pbrt::core::geometry::Point2i;
-    /// use pbrt::core::geometry::Vector2i;
+    /// use pbrt::core::geometry::{Point2i, Vector2i};
     ///
     /// let p1: Point2i = [4, 5].into();
     /// let v1: Vector2i = [2, 3].into();
     /// assert_eq!(p1 + v1, Point2i::from([6, 8]));
     ///
-    /// use pbrt::core::geometry::Point2f;
-    /// use pbrt::core::geometry::Vector2f;
+    /// use pbrt::core::geometry::{Point2f, Vector2f};
     ///
     /// let p1: Point2f = [4., 5.].into();
     /// let v1: Vector2f = [2., 3.].into();
