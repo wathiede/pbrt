@@ -82,7 +82,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                             Some(b'\n') => return Some(Err(Error::UnterminatedString)),
                             Some(b'\\') => {
                                 have_escaped = true;
-                                if let None = self.get_byte() {
+                                if self.get_byte().is_none() {
                                     return Some(Err(Error::EOF));
                                 }
                             }
@@ -97,13 +97,13 @@ impl<'a> Iterator for Tokenizer<'a> {
                         /*
                         sEscaped.clear();
                         for (const char *p = tokenStart; p < pos; ++p) {
-                            if (*p != '\\')
-                                sEscaped.push_back(*p);
-                            else {
-                                ++p;
-                                CHECK_LT(p, pos);
-                                sEscaped.push_back(decodeEscaped(*p));
-                            }
+                        if (*p != '\\')
+                        sEscaped.push_back(*p);
+                        else {
+                        ++p;
+                        CHECK_LT(p, pos);
+                        sEscaped.push_back(decodeEscaped(*p));
+                        }
                         }
                         return {sEscaped.data(), sEscaped.size()};
                         */
@@ -171,15 +171,15 @@ impl<'a> Tokenizer<'a> {
 
 /*
 pub fn create_from_file<P: AsRef<Path>>(path: P) -> Tokenizer<'a> {
-    Tokenizer {
-    }
+Tokenizer {
+}
 }
 */
 
 /// Creates a [Tokenizer] from the scene file in `data`.
 ///
 /// [Tokenizer]: crate::core::parser::Tokenizer
-pub fn create_from_string<'a>(data: &'a [u8]) -> Tokenizer<'a> {
+pub fn create_from_string(data: &[u8]) -> Tokenizer<'_> {
     Tokenizer { data, pos: 0 }
 }
 
@@ -249,21 +249,21 @@ impl<'a> Parser<'a> {
                 "LightSource" => p.basic_param_list_entrypoint(|n, p| api.light_source(n, p))?,
                 "LookAt" => {
                     let mut eye: [Float; 3] = Default::default();
-                    for i in 0..3 {
+                    for i in &mut eye {
                         let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
-                        eye[i] = tok.parse()?;
+                        *i = tok.parse()?;
                     }
 
                     let mut look: [Float; 3] = Default::default();
-                    for i in 0..3 {
+                    for i in &mut look {
                         let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
-                        look[i] = tok.parse()?;
+                        *i = tok.parse()?;
                     }
 
                     let mut up: [Float; 3] = Default::default();
-                    for i in 0..3 {
+                    for i in &mut up {
                         let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
-                        up[i] = tok.parse()?;
+                        *i = tok.parse()?;
                     }
                     api.look_at(eye, look, up);
                 }
@@ -291,9 +291,9 @@ impl<'a> Parser<'a> {
                 "Sampler" => p.basic_param_list_entrypoint(|n, p| api.sampler(n, p))?,
                 "Scale" => {
                     let mut v: [Float; 3] = Default::default();
-                    for i in 0..3 {
+                    for i in &mut v {
                         let tok = p.next_token(Token::Required).unwrap_or(Ok(""))?;
-                        v[i] = tok.parse()?;
+                        *i = tok.parse()?;
                     }
                     api.scale(v[0], v[1], v[2]);
                 }
@@ -439,8 +439,8 @@ enum ParamType {
     Point3,
     Vector3,
     Normal,
-    RGB,
-    XYZ,
+    Rgb,
+    Xyz,
     Blackbody,
     Spectrum,
     String,
@@ -463,9 +463,9 @@ impl TryFrom<&str> for ParamType {
             "normal" => ParamType::Normal,
             "string" => ParamType::String,
             "texture" => ParamType::Texture,
-            "color" => ParamType::RGB,
-            "rgb" => ParamType::RGB,
-            "xyz" => ParamType::XYZ,
+            "color" => ParamType::Rgb,
+            "rgb" => ParamType::Rgb,
+            "xyz" => ParamType::Xyz,
             "blackbody" => ParamType::Blackbody,
             "spectrum" => ParamType::Spectrum,
             _ => return Err(format!("unknown parameter type '{}'", input)),
@@ -503,7 +503,7 @@ fn lookup_type(decl: &str) -> Option<(ParamType, &str)> {
 
 fn add_param(ps: &mut ParamSet, item: ParamListItem) {
     // TODO(wathiede): rewrite these using slice::chunk_exact().
-    fn iter2d<'a>(items: &'a [f64]) -> impl Iterator<Item = (Float, Float)> + 'a {
+    fn iter2d(items: &[f64]) -> impl Iterator<Item = (Float, Float)> + '_ {
         let xs =
             items
                 .iter()
@@ -515,8 +515,8 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                 .enumerate()
                 .filter_map(|(i, &v)| if i % 2 == 1 { Some(v as Float) } else { None });
         xs.zip(ys)
-    };
-    fn iter3d<'a>(items: &'a [f64]) -> impl Iterator<Item = (Float, Float, Float)> + 'a {
+    }
+    fn iter3d(items: &[f64]) -> impl Iterator<Item = (Float, Float, Float)> + '_ {
         let xs =
             items
                 .iter()
@@ -533,16 +533,16 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                 .enumerate()
                 .filter_map(|(i, &v)| if i % 3 == 2 { Some(v as Float) } else { None });
         xs.zip(ys).zip(zs).map(|((x, y), z)| (x, y, z))
-    };
+    }
     match lookup_type(&item.name) {
         Some((p_type, p_name)) => {
             match p_type {
                 ParamType::Texture | ParamType::String | ParamType::Bool => {
                     if item.string_values.is_empty() {
                         error!(
-                        "Expected string parameter value for parameter '{}' with type '{:?}' Ignoring.",
-                        p_name, p_type
-                    );
+                            "Expected string parameter value for parameter '{}' with type '{:?}' Ignoring.",
+                            p_name, p_type
+                        );
                         return;
                     }
                 }
@@ -553,14 +553,14 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                 | ParamType::Point3
                 | ParamType::Vector3
                 | ParamType::Normal
-                | ParamType::RGB
-                | ParamType::XYZ
+                | ParamType::Rgb
+                | ParamType::Xyz
                 | ParamType::Blackbody => {
                     if !item.string_values.is_empty() {
                         error!(
-                        "Expected numeric parameter value for parameter '{}' with type '{:?}' Ignoring.",
-                        p_name, p_type
-                    );
+                                "Expected numeric parameter value for parameter '{}' with type '{:?}' Ignoring.",
+                                p_name, p_type
+                            );
                         return;
                     }
                 }
@@ -607,9 +607,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     }
                     ps.add_point2f(
                         p_name,
-                        iter2d(&item.double_values)
-                            .map(|xy| Point2f::from(xy))
-                            .collect(),
+                        iter2d(&item.double_values).map(Point2f::from).collect(),
                     );
                 }
                 ParamType::Vector2 => {
@@ -618,9 +616,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     }
                     ps.add_vector2f(
                         p_name,
-                        iter2d(&item.double_values)
-                            .map(|xy| Vector2f::from(xy))
-                            .collect(),
+                        iter2d(&item.double_values).map(Vector2f::from).collect(),
                     );
                 }
                 ParamType::Point3 => {
@@ -629,9 +625,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     }
                     ps.add_point3f(
                         p_name,
-                        iter3d(&item.double_values)
-                            .map(|xyz| Point3f::from(xyz))
-                            .collect(),
+                        iter3d(&item.double_values).map(Point3f::from).collect(),
                     );
                 }
                 ParamType::Vector3 => {
@@ -640,9 +634,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     }
                     ps.add_vector3f(
                         p_name,
-                        iter3d(&item.double_values)
-                            .map(|xyz| Vector3f::from(xyz))
-                            .collect(),
+                        iter3d(&item.double_values).map(Vector3f::from).collect(),
                     );
                 }
                 ParamType::Normal => {
@@ -651,12 +643,10 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     }
                     ps.add_normal3f(
                         p_name,
-                        iter3d(&item.double_values)
-                            .map(|xyz| Normal3f::from(xyz))
-                            .collect(),
+                        iter3d(&item.double_values).map(Normal3f::from).collect(),
                     );
                 }
-                ParamType::RGB => {
+                ParamType::Rgb => {
                     if (n_items % 3) != 0 {
                         warn!("Excess RGB values given with parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
                     }
@@ -670,7 +660,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                             .collect(),
                     );
                 }
-                ParamType::XYZ => {
+                ParamType::Xyz => {
                     if (n_items % 3) != 0 {
                         warn!("Excess XYZ values given with parameter '{}'. Ignoring last {} of them.", item.name, n_items%3);
                     }
@@ -710,9 +700,9 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
                     } else {
                         if (n_items % 2) != 0 {
                             warn!(
-                            "Non-even number of values given with sampled spectrum '{}'. Ignoring extra.",
-                            item.name
-                        );
+                                    "Non-even number of values given with sampled spectrum '{}'. Ignoring extra.",
+                                    item.name
+                                );
                         }
                         let end = n_items - n_items % 2;
                         ps.add_sampled_spectrum(
@@ -748,7 +738,7 @@ fn add_param(ps: &mut ParamSet, item: ParamListItem) {
 }
 
 fn is_quoted_string(s: &str) -> bool {
-    s.len() >= 2 && s.starts_with("\"") && s.ends_with("\"")
+    s.len() >= 2 && s.starts_with('"') && s.ends_with('"')
 }
 
 fn dequote_string(s: &str) -> Result<&str, Error> {
@@ -854,7 +844,7 @@ mod tests {
     "string filename" ["textures/BeoCom.png"]
     "float scale" [1.000000]
     "vector v1" [0.500000 0.000000 0.000000]
-"#,
+    "#,
                 want: (
                     "imagemap",
                     vec![

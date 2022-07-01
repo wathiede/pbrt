@@ -73,9 +73,9 @@ fn main() -> Result<()> {
         quick_render: flags.quick_render,
         quiet: flags.quiet,
         verbose: flags.verbose,
-        image_file: flags.image_file.unwrap_or("".to_owned()),
+        image_file: flags.image_file.unwrap_or_else(|| "".to_owned()),
     };
-    let ref mut pbrt = PbrtAPI::from(opts.clone());
+    let pbrt = &mut PbrtAPI::from(opts.clone());
     pbrt.init();
     for f in &flags.scene_files {
         pbrt.parse_file(&f)

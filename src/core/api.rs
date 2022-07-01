@@ -270,18 +270,15 @@ struct GraphicsState {
 }
 
 impl GraphicsState {
-    fn create_medium_interface<'ro>(
-        &mut self,
-        render_options: &'ro RenderOptions,
-    ) -> MediumInterface {
+    fn create_medium_interface(&mut self, render_options: &RenderOptions) -> MediumInterface {
         let mut m = MediumInterface::default();
-        if self.current_inside_medium != "" {
+        if self.current_inside_medium.is_empty() {
             match render_options.named_media.get(&self.current_inside_medium) {
                 Some(medium) => m.inside = Some(Arc::clone(medium)),
                 None => error!("Named medium '{}' undefined.", self.current_inside_medium),
             }
         }
-        if self.current_outside_medium != "" {
+        if self.current_outside_medium.is_empty() {
             match render_options.named_media.get(&self.current_outside_medium) {
                 Some(medium) => m.outside = Some(Arc::clone(medium)),
                 None => error!("Named medium '{}' undefined.", self.current_outside_medium),
@@ -296,7 +293,7 @@ macro_rules! verify_initialized {
         if $pbrt.current_api_state == APIState::Uninitialized {
             let msg = format!("init() must be before calling \"{}()\".", $func);
             error!("{}. Ignoring.", msg);
-            debug_assert!(false, msg);
+            debug_assert!(false, "{}", msg);
             return;
         }
     };
@@ -312,7 +309,7 @@ macro_rules! verify_options {
                 $func
             );
             error!("{}. Ignoring.", msg);
-            debug_assert!(false, msg);
+            debug_assert!(false, "{}", msg);
             return;
         }
     };
@@ -328,7 +325,7 @@ macro_rules! verify_world {
                 $func
             );
             error!("{}. Ignoring.", msg);
-            debug_assert!(false, msg);
+            debug_assert!(false, "{}", msg);
             return;
         }
     };
@@ -535,7 +532,7 @@ impl API for PbrtAPI {
         // TODO(wathiede): consider removing clone by using references in TextureParams?
         let tp = TextureParams::new(
             params.clone(),
-            params.clone(),
+            params,
             self.graphics_state.float_textures.clone(),
             self.graphics_state.specturm_textures.clone(),
         );
@@ -546,7 +543,7 @@ impl API for PbrtAPI {
                     info!("Float texture '{}' is being redefined", name);
                 }
                 self.warn_if_animated_transform("pbrt.texture");
-                if let Some(ft) = make_float_texture(&texname, &self.current_transform[0], &tp) {
+                if let Some(ft) = make_float_texture(texname, &self.current_transform[0], &tp) {
                     self.graphics_state
                         .float_textures
                         .insert(name.to_owned(), Arc::new(ft));
@@ -557,7 +554,7 @@ impl API for PbrtAPI {
                     info!("Spectrum texture '{}' is being redefined", name);
                 }
                 self.warn_if_animated_transform("pbrt.texture");
-                if let Some(st) = make_spectrum_texture(&texname, &self.current_transform[0], &tp) {
+                if let Some(st) = make_spectrum_texture(texname, &self.current_transform[0], &tp) {
                     self.graphics_state
                         .specturm_textures
                         .insert(name.to_owned(), Arc::new(st));
@@ -565,7 +562,6 @@ impl API for PbrtAPI {
             }
             _ => {
                 error!("Texture type '{}' is unknown", &kind);
-                return;
             }
         }
     }

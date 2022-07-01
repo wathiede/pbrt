@@ -111,7 +111,7 @@ pub struct ParamSet {
 }
 
 // TODO(wathiede): try rewriting this using slice::chunks_exact()
-fn iter3d<'a>(items: &'a [Float]) -> impl Iterator<Item = (Float, Float, Float)> + 'a {
+fn iter3d(items: &[Float]) -> impl Iterator<Item = (Float, Float, Float)> + '_ {
     let xs = items
         .iter()
         .enumerate()
@@ -133,7 +133,7 @@ impl ParamSet {
         self.values.insert(
             name.clone(),
             ParamSetItem {
-                name: name.clone(),
+                name,
                 values,
                 looked_up: RefCell::new(false),
             },
@@ -236,7 +236,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_bool(&self, name: &str, default: bool) -> bool {
         match self.find(name) {
-            Some(Value::Bool(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Bool(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -256,7 +256,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_float(&self, name: &str, default: Float) -> Float {
         match self.find(name) {
-            Some(Value::Float(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Float(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -276,7 +276,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_int(&self, name: &str, default: isize) -> isize {
         match self.find(name) {
-            Some(Value::Int(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Int(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -302,7 +302,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_point2f(&self, name: &str, default: Point2f) -> Point2f {
         match self.find(name) {
-            Some(Value::Point2f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Point2f(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -328,7 +328,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_vector2f(&self, name: &str, default: Vector2f) -> Vector2f {
         match self.find(name) {
-            Some(Value::Vector2f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Vector2f(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -354,7 +354,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_point3f(&self, name: &str, default: Point3f) -> Point3f {
         match self.find(name) {
-            Some(Value::Point3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Point3f(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -380,7 +380,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_vector3f(&self, name: &str, default: Vector3f) -> Vector3f {
         match self.find(name) {
-            Some(Value::Vector3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Vector3f(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
@@ -406,7 +406,7 @@ impl ParamSet {
     /// ```
     pub fn find_one_normal3f(&self, name: &str, default: Normal3f) -> Normal3f {
         match self.find(name) {
-            Some(Value::Normal3f(pl)) => pl.0.first().map_or(default, |v| v.clone()),
+            Some(Value::Normal3f(pl)) => pl.0.first().map_or(default, |v| *v),
             None => default,
             _ => panic!("Unexpected type returned from find"),
         }
