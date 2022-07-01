@@ -557,7 +557,7 @@ dependencies = [
  "aho-corasick",
  "memchr",
  "regex-syntax",
- "thread_local",
+ "thread_local 0.3.4",
  "utf8-ranges",
 ]
 
@@ -593,15 +593,15 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "stderrlog"
-version = "0.4.3"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32e5ee9b90a5452c570a0b0ac1c99ae9498db7e56e33d74366de7f2a7add7f25"
+checksum = "45a53e2eff3e94a019afa6265e8ee04cb05b9d33fe9f5078b14e4e391d155a38"
 dependencies = [
  "atty",
  "chrono",
  "log",
  "termcolor",
- "thread_local",
+ "thread_local 1.0.1",
 ]
 
 [[package]]
@@ -728,6 +728,15 @@ checksum = "1697c4b57aeeb7a536b647165a2825faddffb1d3bad386d507709bd51a90bb14"
 dependencies = [
  "lazy_static 0.2.11",
  "unreachable",
+]
+
+[[package]]
+name = "thread_local"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d40c6d1b69745a6ec6fb1ca717914848da4b44ae29d9b3080cbee91d72a69b14"
+dependencies = [
+ "lazy_static 1.4.0",
 ]
 
 [[package]]
