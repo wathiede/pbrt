@@ -46,7 +46,7 @@ impl BoxFilter {
     /// ```
     /// use pbrt::{
     ///     core::{filter::Filter, paramset::testutils::make_float_param_set},
-    ///     filters::boxfilter::BoxFilter,
+    ///     filters::r#box::BoxFilter,
     /// };
     ///
     /// let ps = make_float_param_set("xwidth", vec![1.]);

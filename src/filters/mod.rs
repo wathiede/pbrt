@@ -15,4 +15,4 @@
 //! Various implementations of [Filter] for use during sampling.
 //!
 //! [Filter]: crate::core::filter::Filter
-pub mod boxfilter;
+pub mod r#box;

@@ -145,7 +145,7 @@ impl Film {
     ///         film::Film,
     ///         geometry::{Bounds2i, Point2i},
     ///     },
-    ///     filters::boxfilter::BoxFilter,
+    ///     filters::r#box::BoxFilter,
     /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
@@ -180,7 +180,7 @@ impl Film {
     /// ```
     /// use pbrt::{
     ///     core::{film::Film, geometry::Bounds2f},
-    ///     filters::boxfilter::BoxFilter,
+    ///     filters::r#box::BoxFilter,
     /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
@@ -234,7 +234,7 @@ impl Film {
     /// ```
     /// use pbrt::{
     ///     core::{film::Film, geometry::Bounds2i},
-    ///     filters::boxfilter::BoxFilter,
+    ///     filters::r#box::BoxFilter,
     /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
@@ -290,7 +290,7 @@ impl Film {
     ///         geometry::Bounds2i,
     ///         spectrum::Spectrum,
     ///     },
-    ///     filters::boxfilter::BoxFilter,
+    ///     filters::r#box::BoxFilter,
     /// };
     ///
     /// let filter = BoxFilter::new([8., 8.].into());
@@ -496,7 +496,7 @@ mod test {
             geometry::Bounds2i,
             spectrum::Spectrum,
         },
-        filters::boxfilter::BoxFilter,
+        filters::r#box::BoxFilter,
         Float,
     };
 

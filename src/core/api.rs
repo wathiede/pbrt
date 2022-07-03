@@ -40,7 +40,7 @@ use crate::{
         texture::Texture,
         transform::Transform,
     },
-    filters::boxfilter::BoxFilter,
+    filters::r#box::BoxFilter,
     lights::infinite::create_infinite_light,
     textures::constant,
     Degree, Float, Options,
