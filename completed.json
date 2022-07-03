@@ -6,6 +6,7 @@
     "filters/box"
   ],
   "skipped": [
+    "core/pbrt",
     "core/port",
     "core/stringprint"
   ]
