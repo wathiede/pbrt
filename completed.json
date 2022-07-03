@@ -1,6 +1,7 @@
 {
   "done": [
     "core/error",
+    "core/floatfile",
     "core/rng",
     "core/sobolmatrices",
     "filters/box"

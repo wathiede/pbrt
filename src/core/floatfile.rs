@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+//! floatfile module provides a helper for reading files containing one float number per line.
+//! Comments start with `#` anywhere in the line.
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
