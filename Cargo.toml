@@ -9,7 +9,7 @@ repository = "https://github.com/wathiede/pbrt"
 version = "0.1.6-alpha.0"
 [dependencies]
 log = "0.4.17"
-image = "0.24.2"
+image = "0.24.3"
 regex = "1.6.0"
 structopt = "0.3.26"
 thiserror = "1.0.31"
