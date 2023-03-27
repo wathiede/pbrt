@@ -10,7 +10,7 @@ version = "0.1.6-alpha.0"
 [dependencies]
 log = "0.4.17"
 image = "0.24.5"
-regex = "1.7.1"
+regex = "1.7.3"
 structopt = "0.3.26"
 thiserror = "1.0.40"
 stderrlog = "0.5.4"
