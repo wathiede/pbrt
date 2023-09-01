@@ -22,7 +22,7 @@ assert_approx_eq = "1.1.0"
 [dev-dependencies]
 pretty_assertions = "1.4.0"
 rayon = "1.7.0"
-tempfile = "3.7.0"
+tempfile = "3.8.0"
 
 [features]
 float-as-double = []
