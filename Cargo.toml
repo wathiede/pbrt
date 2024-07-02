@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/wathiede/pbrt"
 version = "0.1.6-alpha.0"
 [dependencies]
-log = "0.4.21"
+log = "0.4.22"
 image = "0.25.1"
 regex = "1.10.5"
 structopt = "0.3.26"
