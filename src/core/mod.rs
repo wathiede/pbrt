@@ -19,6 +19,7 @@ pub mod api;
 // Public so pbrt-compare can use it.
 pub mod api_test;
 pub mod error;
+pub mod fileutil;
 pub mod film;
 pub mod filter;
 pub mod floatfile;
