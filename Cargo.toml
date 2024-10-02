@@ -20,7 +20,7 @@ lazy_static = "1.5.0"
 assert_approx_eq = "1.1.0"
 
 [dev-dependencies]
-pretty_assertions = "1.4.0"
+pretty_assertions = "1.4.1"
 rayon = "1.10.0"
 tempfile = "3.13.0"
 
