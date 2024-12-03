@@ -268,7 +268,7 @@ impl From<Bounds2i> for Bounds2f {
 pub type Bounds2i = Bounds2<isize>;
 
 impl Bounds2i {
-    /// Returns and iterator that visits each `Point2i` within the `Bound2i`.  
+    /// Returns and iterator that visits each `Point2i` within the `Bound2i`.
     /// # Examples
     /// ```
     /// use pbrt::core::geometry::{Bounds2i, Point2i};
@@ -294,29 +294,6 @@ impl From<Bounds2f> for Bounds2i {
             p_min: b.p_min.into(),
             p_max: b.p_max.into(),
         }
-    }
-}
-
-pub struct Bounds2iIterator {
-    b: Bounds2i,
-    p: Point2i,
-}
-
-// For inspiration see:
-// https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=775d8823d2a9c97707be44b74ed77f2b
-impl Iterator for Bounds2iIterator {
-    type Item = Point2i;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.p.x += 1;
-        if self.p.x == self.b.p_max.x {
-            self.p.x = self.b.p_min.x;
-            self.p.y += 1;
-            if self.p.x == self.b.p_max.y {
-                return None;
-            }
-        }
-        Some(self.p)
     }
 }
 
