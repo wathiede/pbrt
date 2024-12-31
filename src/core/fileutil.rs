@@ -13,6 +13,7 @@
 // limitations under the License.
 //! Platform independent filename-handling functions.
 use std::{
+    ffi::OsStr,
     fs::canonicalize,
     path::{Path, PathBuf},
     sync::Mutex,
@@ -64,9 +65,19 @@ pub fn set_search_directory<P: AsRef<Path>>(dirname: Option<P>) {
 }
 
 /// Performs case insensitive comparison of `ext` to end of `path`.
+///
+/// # Examples
+/// ```
+/// use pbrt::core::fileutil::has_extension;
+///
+/// assert!(has_extension("/path/to/file.ext", "ext"));
+/// assert!(has_extension("/path/to/file.ext", "EXT"));
+/// assert!(has_extension("/path/to/file.EXT", "ext"));
+/// assert!(!has_extension("/path/to/file.ext", "html"));
 pub fn has_extension<P: AsRef<Path>>(path: P, ext: P) -> bool {
-    if let Some(ext) = path.as_ref().extension() {
-        return ext.to_ascii_lowercase() == ext.to_os_string().to_ascii_lowercase();
+    if let Some(p_ext) = path.as_ref().extension() {
+        return p_ext.to_ascii_lowercase()
+            == AsRef::<OsStr>::as_ref(ext.as_ref()).to_ascii_lowercase();
     }
     false
 }
