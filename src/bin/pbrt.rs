@@ -13,10 +13,9 @@
 // limitations under the License.
 use std::process;
 
-use anyhow::{Context, Result};
-use log::info;
+use log::{error, info};
 
-use clap::{Args, Parser};
+use clap::Parser;
 use pbrt::{
     self,
     core::api::{PbrtAPI, API},
@@ -44,7 +43,7 @@ pub struct Options {
     pub scene_files: Vec<String>,
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let flags = Options::parse();
     let verbosity = if flags.verbose {
         // Enable DEBUG logging.
@@ -73,8 +72,10 @@ fn main() -> Result<()> {
     let pbrt = &mut PbrtAPI::from(opts.clone());
     pbrt.init();
     for f in &flags.scene_files {
-        pbrt.parse_file(&f)
-            .with_context(|| format!("failed to parse {}", f))?;
+        if let Err(err) = pbrt.parse_file(&f) {
+            error!("Faild to parse '{f}': {err}");
+            std::process::exit(1);
+        }
         if opts.verbose {
             println!("Rendered {}\n{:#?}", f, pbrt);
         }
