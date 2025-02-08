@@ -15,36 +15,37 @@ use std::process;
 
 use anyhow::{Context, Result};
 use log::info;
-use structopt::{self, StructOpt};
 
+use clap::{Args, Parser};
 use pbrt::{
     self,
     core::api::{PbrtAPI, API},
 };
 
-#[derive(Clone, Debug, Default, StructOpt)]
-#[structopt(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
+#[derive(Clone, Debug, Default, Parser)]
+#[command(name = "pbrt", about = "Rust implementation of http://pbrt.org/")]
 pub struct Options {
-    #[structopt(short = "n", long = "nthreads")]
+    #[arg(short = 'n', long = "nthreads")]
     /// Use specified number of threads for rendering.
     pub num_threads: Option<u32>,
-    #[structopt(long = "quick")]
+    #[arg(long = "quick")]
     /// Automatically reduce a number of quality settings to render more quickly.
     pub quick_render: bool,
-    #[structopt(short = "q", long = "quiet")]
+    #[arg(short = 'q', long = "quiet")]
     /// Suppress all text output other than error messages.
     pub quiet: bool,
-    #[structopt(short = "v", long = "verbose")]
+    #[arg(short = 'v', long = "verbose")]
     /// Print out more detailed logging information.
     pub verbose: bool,
-    #[structopt(short = "o", long = "outfile")]
+    #[arg(short = 'o', long = "outfile")]
     /// Write the final image to the given filename.
     pub image_file: Option<String>,
+    #[arg(required = true)]
     pub scene_files: Vec<String>,
 }
 
 fn main() -> Result<()> {
-    let flags = Options::from_args();
+    let flags = Options::parse();
     let verbosity = if flags.verbose {
         // Enable DEBUG logging.
         3
@@ -60,12 +61,6 @@ fn main() -> Result<()> {
         .verbosity(verbosity)
         .timestamp(stderrlog::Timestamp::Millisecond)
         .init()?;
-
-    if flags.scene_files.is_empty() {
-        println!("One or more scene files required.\n");
-        Options::clap().print_help()?;
-        process::exit(1);
-    }
 
     info!("Options: {:#?}", &flags);
     let opts = pbrt::Options {
