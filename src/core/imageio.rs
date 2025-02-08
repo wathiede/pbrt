@@ -19,7 +19,6 @@ use std::{
     path::Path,
 };
 
-use image::{self, save_buffer_with_format, ColorType, ImageError, ImageFormat};
 use log::error;
 use thiserror::Error;
 
@@ -35,9 +34,12 @@ use crate::{
 /// Error type for reading images from disk.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// Error from the `image` crate.
-    #[error("decoding image")]
-    ImageError(#[from] ImageError),
+    /// Decode rrror from the `png` crate.
+    #[error("decoding PNG image: {0}")]
+    PngDecodingImageError(#[from] png::DecodingError),
+    /// Encode error from the `png` crate.
+    #[error("encoding PNG image: {0}")]
+    PngEncodingImageError(#[from] png::EncodingError),
     /// Attempt to read file type not yet implemented, but planned.
     #[error("reading '{0}' files is not yet implemented")]
     ReadNotImplemented(String),
@@ -147,22 +149,34 @@ pub fn read_image(name: &str) -> Result<(Vec<RGBSpectrum>, Point2i), Error> {
         .as_str()
     {
         "png" => {
-            let img = image::open(name)?;
-            let rgb_img = img.to_rgb8();
-            let pixels: Vec<_> = rgb_img
-                .pixels()
-                .map(|p| {
-                    let p = p.0;
+            let decoder = png::Decoder::new(File::open(name)?);
+            let mut reader = decoder.read_info()?;
+            // The decoder is a build for reader and can be used to set various decoding options
+            // via `Transformations`. The default output transformation is `Transformations::IDENTITY`.
+            let decoder = png::Decoder::new(File::open(name)?);
+            let mut reader = decoder.read_info()?;
+            // Allocate the output buffer.
+            let mut buf = vec![0; reader.output_buffer_size()];
+            // Read the next frame. An APNG might contain multiple frames.
+            let info = reader.next_frame(&mut buf)?;
+            // Grab the bytes of the image.
+            let bytes = &buf[..info.buffer_size()];
+
+            let pixels: Vec<_> = bytes
+                .chunks_exact(3)
+                .map(|rgb| {
                     let s = [
-                        p[0] as Float / 255.,
-                        p[1] as Float / 255.,
-                        p[2] as Float / 255.,
+                        rgb[0] as Float / 255.,
+                        rgb[1] as Float / 255.,
+                        rgb[2] as Float / 255.,
                     ];
                     RGBSpectrum::from_rgb(s)
                 })
                 .collect();
-            let dim = rgb_img.dimensions();
-            Ok((pixels, Point2i::from([dim.0 as isize, dim.1 as isize])))
+            Ok((
+                pixels,
+                Point2i::from([info.width as isize, info.height as isize]),
+            ))
         }
         "exr" => Err(Error::ReadNotImplemented(".exr".to_string())),
         "tga" => Err(Error::ReadNotImplemented(".tga".to_string())),
@@ -232,16 +246,29 @@ pub fn write_image(name: &str, rgb: &[Float], output_bounds: Bounds2i, _total_re
     {
         "png" => {
             let rgb8: Vec<u8> = rgb.iter().map(|f| to_byte(*f)).collect();
+            let file = match File::create(name) {
+                Err(err) => {
+                    error!("Failed to create file '{}': {}", name, err);
+                    return;
+                }
+                Ok(file) => file,
+            };
+            let ref mut w = BufWriter::new(file);
 
-            if let Err(err) = save_buffer_with_format(
-                name,
-                &rgb8,
-                resolution.x as u32,
-                resolution.y as u32,
-                ColorType::Rgb8,
-                ImageFormat::Png,
-            ) {
-                error!("Failed to write PNG to '{}': {}", name, err);
+            let mut encoder = png::Encoder::new(w, resolution.x as u32, resolution.y as u32);
+            encoder.set_color(png::ColorType::Rgb);
+            encoder.set_depth(png::BitDepth::Eight);
+
+            let mut w = match encoder.write_header() {
+                Err(err) => {
+                    error!("Failed to write PNG header to '{}': {}", name, err);
+                    return;
+                }
+                Ok(w) => w,
+            };
+            if let Err(err) = w.write_image_data(&rgb8) {
+                error!("Failed to write PNG data to '{}': {}", name, err);
+                return;
             }
         }
         "exr" => unimplemented!("writing .exr files is not implemented"),

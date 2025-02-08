@@ -9,13 +9,13 @@ repository = "https://github.com/wathiede/pbrt"
 version = "0.1.6-alpha.0"
 [dependencies]
 log = "0.4.25"
-image = "0.25.5"
 structopt = "0.3.26"
 stderrlog = "0.6.0"
 thiserror = "2.0.11"
 anyhow = "1.0.95"
 memmap = "0.7.0"
 lazy_static = "1.5.0"
+png = "0.17.16"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
