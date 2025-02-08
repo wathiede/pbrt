@@ -149,8 +149,6 @@ pub fn read_image(name: &str) -> Result<(Vec<RGBSpectrum>, Point2i), Error> {
         .as_str()
     {
         "png" => {
-            let decoder = png::Decoder::new(File::open(name)?);
-            let mut reader = decoder.read_info()?;
             // The decoder is a build for reader and can be used to set various decoding options
             // via `Transformations`. The default output transformation is `Transformations::IDENTITY`.
             let decoder = png::Decoder::new(File::open(name)?);

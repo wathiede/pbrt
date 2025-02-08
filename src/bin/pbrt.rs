@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for f in &flags.scene_files {
         if let Err(err) = pbrt.parse_file(&f) {
             error!("Faild to parse '{f}': {err}");
-            std::process::exit(1);
+            process::exit(1);
         }
         if opts.verbose {
             println!("Rendered {}\n{:#?}", f, pbrt);
