@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo build --verbose
+      - run: cargo build
 
   test:
     name: Test Suite
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --verbose
+      - run: cargo test
 
   fmt:
     name: Rustfmt
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo build --verbose --features=float-as-double
+      - run: cargo build --features=float-as-double
 
   build-single:
     name: Run tests (float-as-double)
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --verbose --features=float-as-double
+      - run: cargo test --features=float-as-double
 
   udeps:
     name: Disallow unused dependencies
