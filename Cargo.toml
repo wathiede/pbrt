@@ -20,7 +20,7 @@ clap = { version = "4.5.31", features = ["derive"] }
 assert_approx_eq = "1.1.0"
 pretty_assertions = "1.4.1"
 rayon = "1.10.0"
-tempfile = "3.17.1"
+tempfile = "3.19.1"
 
 [features]
 float-as-double = []
