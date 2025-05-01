@@ -14,7 +14,7 @@ thiserror = "2.0.12"
 memmap = "0.7.0"
 lazy_static = "1.5.0"
 png = "0.17.16"
-clap = { version = "4.5.35", features = ["derive"] }
+clap = { version = "4.5.37", features = ["derive"] }
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"
