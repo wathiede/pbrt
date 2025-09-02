@@ -261,7 +261,7 @@ impl Film {
     ///     Bounds2i::from([[492, 492], [608, 608]])
     /// );
     /// ```
-    pub fn get_film_tile(&self, sample_bounds: Bounds2i) -> FilmTile {
+    pub fn get_film_tile(&self, sample_bounds: Bounds2i) -> FilmTile<'_> {
         let half_pixel = Vector2f::from([0.5, 0.5]);
         let float_bounds = Bounds2f::from(sample_bounds);
         let p0 = Point2i::from((float_bounds.p_min - half_pixel - self.filter.radius()).ceil());
