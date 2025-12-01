@@ -20,7 +20,7 @@ png = "0.18.0"
 assert_approx_eq = "1.1.0"
 pretty_assertions = "1.4.1"
 rayon = "1.11.0"
-tempfile = "3.21.0"
+tempfile = "3.23.0"
 
 [features]
 float-as-double = []
